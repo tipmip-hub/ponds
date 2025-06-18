@@ -1,5 +1,5 @@
 # PONDS
-Perturbed Observables in Noisy/Nonelinear Dynamics Synthesiser
+Perturbed Observables in Noisy/Nonlinear Dynamics Synthesiser
 
 ___
 
