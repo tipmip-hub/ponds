@@ -1,2 +1,4 @@
 __pycache__
 *venv*
+ponds.egg*
+build/
