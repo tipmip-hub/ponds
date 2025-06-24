@@ -4,13 +4,13 @@ from scipy.stats import multivariate_normal
 
 
 def create_global_dataset(
-    lat_size=90,
-    lon_size=180,
-    time_size=80,
-    background_trend=0.0,
-    background_noise=0.005,
-    n_shifts=3,
-    random_seed=42,
+    lat_size: int = 90,
+    lon_size: int = 180,
+    time_size: int = 80,
+    background_trend: float = 0.0,
+    background_noise: float = 0.005,
+    n_shifts: int = 3,
+    random_seed: int = 42,
 ):
     """
     Generate a global dataset with background trend and spatially coherent abrupt shifts.
@@ -41,12 +41,12 @@ def create_global_dataset(
     """
     np.random.seed(random_seed)
 
-    # Create coordinate arrays
+    # 1) Set up coordinates
     time = np.linspace(0, 100, time_size)
     lats = np.linspace(-90, 90, lat_size)
     lons = np.linspace(-180, 180, lon_size)
 
-    # Generate background data with trend and noise
+    # 2) Generate background data with trend and noise
     data = np.zeros((time_size, lat_size, lon_size))
     for i in range(lat_size):
         for j in range(lon_size):
@@ -54,17 +54,19 @@ def create_global_dataset(
                 background_trend * time + background_noise * np.random.randn(time_size)
             )
 
-    # Create xarray DataArray
+    # - Create xarray DataArray
     data_xr = xr.DataArray(
         data,
         coords={"time": time, "lat": lats, "lon": lons},
         dims=["time", "lat", "lon"],
     )
 
-    # Generate distinct shift times
-    shift_times = np.linspace(20, 70, n_shifts).astype(int)
+    # 4) Add abrupt shifts to the data 
+    # - Generate distinct shift times - keep relative distance from the edges of time axis
+    time_buffer = time_size // 10
+    shift_times = np.linspace(time_buffer, time_size - time_buffer, n_shifts).astype(int)
 
-    # Generate shift parameters
+    # - Generate shift parameters
     center_lat = np.random.uniform(-80, 80, size=n_shifts)
     center_lon = np.random.uniform(-180, 180, size=n_shifts)
     sigma_lat = np.random.uniform(10, 20, size=n_shifts)
@@ -84,10 +86,10 @@ def create_global_dataset(
         "magnitude": shift_magnitude,
     }
 
-    # Initialize labels array
+    # - Initialize labels array
     labels = np.zeros_like(data, dtype=int)
 
-    # Add shifts to the data
+    # - Add shifts to the data
     for i in range(n_shifts):
         data_xr, shift_labels = add_shift_blob(
             data_xr,
@@ -100,9 +102,10 @@ def create_global_dataset(
             steepness=steepness[i],
             magnitude=shift_magnitude[i],
         )
+        # - ???
         labels = np.logical_or(labels, shift_labels.values).astype(int)
 
-    # Convert to dataset and add Cartesian coordinates
+    # 5) Convert to xarray-dataset and add Cartesian coordinates
     data_ds = data_xr.to_dataset(name="value")
     data_ds = add_xyz_coords(data_ds)
 
@@ -125,12 +128,16 @@ def add_shift_blob(
     steepness: float = 2.0,
     magnitude: float = 1.0,
 ):
-    """Add an abrupt shift blob to the data array."""
+    """
+    Add an abrupt shift blob to the data array.
+    """
+
+    # extract coordinates from the xarray DataArray
     lats = data_xr.coords["lat"].values
     lons = data_xr.coords["lon"].values
     time = data_xr.coords["time"].values
 
-    # Handle longitude periodicity
+    # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
     extended_lons = np.concatenate([lons - 360, lons, lons + 360])
 
     # Create grids
@@ -139,7 +146,9 @@ def add_shift_blob(
 
     # Calculate Gaussian blob
     cov = np.array([[sigma_lat**2, 0], [0, sigma_lon**2]])
+    # - create multivariate normal distribution
     rv = multivariate_normal(mean=[center_lat, center_lon], cov=cov)
+    # - compute probability density function (PDF) over the extended grid
     extended_blob = rv.pdf(pos_extended)
     blob_normalized = extended_blob / np.max(extended_blob)
 
@@ -150,10 +159,10 @@ def add_shift_blob(
         """Sigmoid transition function"""
         return 1 / (1 + np.exp(-k * (t - t0)))
 
-    # Apply shift to data
+    # Apply shift to data - iterate through lat/lon grid
     for i in range(len(lats)):
         for j in range(len(lons)):
-            # Sum contributions from periodic longitudes
+            # Sum contributions from periodic longitudes - lon grid is repeated 3 times
             blob_contribution = np.sum(
                 [blob_normalized[i, j + k * len(lons)] for k in range(3)]
             )
@@ -169,6 +178,7 @@ def add_shift_blob(
                     # * blob_contribution
                     * sigmoid(time, time[t_shift], steepness)
                 )
+                # add sigmoid shift effect to the data in single grid cell, all time steps at once
                 data_xr.values[:, i, j] += shift_effect
 
     labels_xr = xr.DataArray(labels, coords=data_xr.coords, dims=data_xr.dims)
@@ -176,22 +186,28 @@ def add_shift_blob(
 
 
 def add_xyz_coords(data):
-    """Add 3D Cartesian coordinates to the dataset for globe plotting."""
+    """
+    Add 3D Cartesian coordinates to the dataset for globe plotting.
+    
+    Reference: ???
+    """
     lat = data.coords["lat"].values
     lon = data.coords["lon"].values
 
-    # WGS84 parameters
-    a = 6378.137  # semi-major axis (km)
-    b = 6356.752  # semi-minor axis (km)
-    e2 = 1 - (b**2 / a**2)
+    # WGS84 parameters - consider globes oblateness
+    a = 6378.137            # semi-major axis (km)
+    b = 6356.752            # semi-minor axis (km)
+    e2 = 1 - (b**2 / a**2)  # square of first eccentricity
 
     lon_grid, lat_grid = np.meshgrid(lon, lat, indexing="ij")
 
     lat_rad = np.deg2rad(lat_grid)
     lon_rad = np.deg2rad(lon_grid)
 
+    # radius of curvature in the prime vertical - local radius of elip. at each lat
     N = a / np.sqrt(1 - e2 * np.sin(lat_rad) ** 2)
 
+    # compute Cartesian coordinates
     x = N * np.cos(lat_rad) * np.cos(lon_rad)
     y = N * np.cos(lat_rad) * np.sin(lon_rad)
     z = (b**2 / a**2 * N) * np.sin(lat_rad)
