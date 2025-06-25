@@ -1,3 +1,3 @@
-from ponds.core import PONDS, Cell
+from ponds.core import PONDS
 
-__all__ = ["PONDS", "Cell"]
+__all__ = ["PONDS"]
