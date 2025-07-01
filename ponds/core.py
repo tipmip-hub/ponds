@@ -100,7 +100,7 @@ class PONDS:
             - "SIGMOID": Adds a shift using a sigmoid function.
             - ...
         """
-        if random_seed != None:
+        if random_seed is not None:
             np.random.seed(random_seed)
         self.n_shifts += 1
 
