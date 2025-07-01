@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
-from scipy.stats import multivariate_normal
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
+
 
 class PONDS:
     """
@@ -18,7 +18,7 @@ class PONDS:
     shift is present in the time series data:
         - 0: sigmoid shift
         - 1: ...
-    
+
     The time series data itself is stored in the `data` DataArray.
 
     SIMPLE VERSION: random Gaussian blobs, sigmoid function for abrupt shifts.
@@ -32,13 +32,16 @@ class PONDS:
         n_shifts (int): Number of abrupt shift events to add
         random_seed (int): Seed for reproducible results
     """
-    def __init__(self,
-                 lat_size: int = 90,
-                 lon_size: int = 180,
-                 time_size: int = 80,
-                 background_trend: float = 0.0,
-                 background_noise: float = 0.005,
-                 random_seed: int = 42):
+
+    def __init__(
+        self,
+        lat_size: int = 90,
+        lon_size: int = 180,
+        time_size: int = 80,
+        background_trend: float = 0.0,
+        background_noise: float = 0.005,
+        random_seed: int = 42,
+    ):
         """
         Generate spatial grid and seed with time series generator parameters.
         """
@@ -62,7 +65,8 @@ class PONDS:
         for i in range(lat_size):
             for j in range(lon_size):
                 data[:, i, j] = (
-                    background_trend * self.time + background_noise * np.random.randn(self.time_size)
+                    background_trend * self.time
+                    + background_noise * np.random.randn(self.time_size)
                 )
 
         # - Create xarray DataArray
@@ -80,14 +84,17 @@ class PONDS:
                 "lon": self.lons,
             }
         )
-        self.ts_param["shift_id"] = (("lat", "lon"), np.empty((self.lat_size, self.lon_size),dtype=object))
+        self.ts_param["shift_id"] = (
+            ("lat", "lon"),
+            np.empty((self.lat_size, self.lon_size), dtype=object),
+        )
 
     def add_shift(
-            self,
-            shape_method: BlobsMethod,  # currently only gauss is implemented
-            shift_method: ShiftsMethod,  # currently only sigmoid is implemented
-            random_seed: int = None,
-            kwargs: dict = dict(),
+        self,
+        shape_method: BlobsMethod,  # currently only gauss is implemented
+        shift_method: ShiftsMethod,  # currently only sigmoid is implemented
+        random_seed: int = None,
+        kwargs: dict = dict(),
     ):
         """
         Adds a shift to the time series data.
@@ -96,7 +103,7 @@ class PONDS:
             - "GAUSS": Adds a shift in the shape of a Gaussian blob.
             - "SINGLE": Return a single time series.
             - ...
-        Shift Methods: 
+        Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
             - ...
         """
@@ -107,31 +114,33 @@ class PONDS:
         # 1) generate blob mask
         blob_generator = shape_method(self)
         blob_mask = blob_generator.make_blob()
-        
+
         # 2) generate shift data
         # - choose random time step
         time_buffer = self.time_size // 10
-        shift_time = np.random.uniform(time_buffer, self.time_size - time_buffer, 1).astype(int)
+        shift_time = np.random.uniform(
+            time_buffer, self.time_size - time_buffer, 1
+        ).astype(int)
 
         # - generate shift data and add to time series
         shift_generator = shift_method(self)
         new_data, dict_return = shift_generator.make_shift(
-                                                        mask=blob_mask,
-                                                        shift_time=shift_time,
-                                                        **kwargs)
+            mask=blob_mask, shift_time=shift_time, **kwargs
+        )
         self.data.values = new_data
         # - store shift parameter
-        self.param_append(blob_mask,
-                          val_list=list(dict_return.values()),
-                          var_str_list=list(dict_return.keys()),
-                          )
+        self.param_append(
+            blob_mask,
+            val_list=list(dict_return.values()),
+            var_str_list=list(dict_return.keys()),
+        )
 
     def param_append(
-            self,
-            mask: np.ndarray,
-            val_list: list,
-            var_str_list: list,
-        ):
+        self,
+        mask: np.ndarray,
+        val_list: list,
+        var_str_list: list,
+    ):
         """
         Append values to the corresponding list in the time series parameter grid based on a boolean mask.
         """
@@ -141,7 +150,10 @@ class PONDS:
 
             # CASE: variable does not exist yet
             if var_str not in self.ts_param:
-                self.ts_param[var_str] = (("lat", "lon"), np.empty((self.lat_size, self.lon_size), dtype=object))
+                self.ts_param[var_str] = (
+                    ("lat", "lon"),
+                    np.empty((self.lat_size, self.lon_size), dtype=object),
+                )
             # extract current variable data
             data = self.ts_param[var_str].values
 
@@ -157,8 +169,8 @@ class PONDS:
             self.ts_param[var_str].values = data
 
     def get_ts(
-            self,
-            single: bool = False,
+        self,
+        single: bool = False,
     ):
         """
         Retrieve all time series data as a numpy array.
@@ -169,11 +181,7 @@ class PONDS:
         else:
             return self.data.values
 
-    def get_cell_tsparam(
-            self,
-            lat_idx: int,
-            lon_idx: int
-        ):
+    def get_cell_tsparam(self, lat_idx: int, lon_idx: int):
         """
         Retrieve a specific cell from the grid based on latitude and longitude indices.
         """
