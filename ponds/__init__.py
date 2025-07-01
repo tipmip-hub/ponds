@@ -1,3 +1,12 @@
-from ponds.core import create_global_dataset
+from ponds.core import PONDS
+from ponds.blobgen import BlobsMethod, GAUSS, SINGLE
+from ponds.shiftgen import ShiftsMethod, SIGMOID
 
-__all__ = ["create_global_dataset"]
+__all__ = [
+    "PONDS",
+    "BlobsMethod",
+    "GAUSS",
+    "SINGLE",
+    "ShiftsMethod",
+    "SIGMOID",
+]
