@@ -38,7 +38,6 @@ class PONDS:
                  time_size: int = 80,
                  background_trend: float = 0.0,
                  background_noise: float = 0.005,
-                 #n_shifts: int = 3,
                  random_seed: int = 42):
         """
         Generate spatial grid and seed with time series generator parameters.
@@ -105,16 +104,9 @@ class PONDS:
             np.random.seed(random_seed)
         self.n_shifts += 1
 
-        #center_lat = np.random.uniform(-80, 80)
-        #center_lon = np.random.uniform(-180, 180)
-        #sigma_lat = np.random.uniform(10, 20)
-        #sigma_lon = np.random.uniform(15, 40)
-
         # 1) generate blob mask
         blob_generator = shape_method(self)
         blob_mask = blob_generator.make_blob()
-        print(f"Blob Mask: {blob_mask}")
-        print(f"Ponds Shape: {self.data.shape}")
         
         # 2) generate shift data
         # - choose random time step
@@ -127,12 +119,11 @@ class PONDS:
                                                         mask=blob_mask,
                                                         shift_time=shift_time,
                                                         **kwargs)
-        print(f"New Data: {new_data}")
         self.data.values = new_data
-        # - store sigmoid shift parameter
+        # - store shift parameter
         self.param_append(blob_mask,
-                          val_list=list(dict_return.values()),#[shift_id, shift_time, sigma_time, shift_steepness, shift_magnitude],
-                          var_str_list=list(dict_return.keys()),#["shift_id", "sig_time", "sig_tsg", "sig_ste", "sig_mag"],
+                          val_list=list(dict_return.values()),
+                          var_str_list=list(dict_return.keys()),
                           )
 
     def param_append(
@@ -142,7 +133,7 @@ class PONDS:
             var_str_list: list,
         ):
         """
-        Append a value to the corresponding list in the time series parameter grid based on a boolean mask.
+        Append values to the corresponding list in the time series parameter grid based on a boolean mask.
         """
         for k in range(len(var_str_list)):
             var_str = var_str_list[k]
@@ -164,6 +155,19 @@ class PONDS:
                             data[i, j].append(val)
 
             self.ts_param[var_str].values = data
+
+    def get_ts(
+            self,
+            single: bool = False,
+    ):
+        """
+        Retrieve all time series data as a numpy array.
+        """
+
+        if single:
+            return self.data.values.flatten()
+        else:
+            return self.data.values
 
     def get_cell_tsparam(
             self,

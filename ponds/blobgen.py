@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import xarray as xr
+import warnings
 
 # for gauss
 from scipy.stats import multivariate_normal
@@ -89,7 +90,8 @@ class SINGLE(BlobsMethod):
     ):
         # 1) check current size of ponds object
         if self.ponds.lat_size != 1 or self.ponds.lon_size != 1:
-            print(">> Changing size...")
+            warnings.warn("Shape method SINGLE used on a non-single ponds object." \
+            "This step erases all time series and starts the ponds object over.")
             self.ponds.lat_size = 1
             self.ponds.lon_size = 1
             self.ponds.lats = np.array([0])#np.linspace(-90, 90, self.lat_size)
@@ -110,6 +112,14 @@ class SINGLE(BlobsMethod):
                         self.ponds.background_trend * self.ponds.time + 
                         self.ponds.background_noise * np.random.randn(self.ponds.time_size)
                     )
+            self.ponds.data = xr.DataArray(
+                data,
+                coords={"time": self.ponds.time,
+                        "lat": self.ponds.lats,
+                        "lon": self.ponds.lons,
+                        },
+                dims=["time", "lat", "lon"],
+            )
         blob_mask = np.array([[True]])
 
         return blob_mask
