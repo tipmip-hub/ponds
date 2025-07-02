@@ -118,12 +118,11 @@ class PONDS:
         shift_time = np.random.uniform(time_buffer, self.time_size - time_buffer, 1).astype(int)
 
         # - generate shift data and add to time series
-        shift_generator = shift_method(self)
-        new_data, dict_return = shift_generator.make_shift(
-                                                        mask=blob_mask,
-                                                        shift_time=shift_time,
-                                                        **kwargs)
-        self.data.values = new_data
+        shift_generator = shift_method(self,
+                                       mask = blob_mask,
+                                       shift_time = shift_time)
+        dict_return = shift_generator.make_shift(**kwargs)
+        
         # - store shift parameter
         self.param_append(blob_mask,
                           val_list=list(dict_return.values()),

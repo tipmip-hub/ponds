@@ -6,7 +6,11 @@ import numpy as np
 class ShiftsMethod(ABC):
     @abstractmethod
     def make_shift(self,
+                   ponds,
+                   mask,
+                   shift_time,
     ) -> tuple[np.ndarray, dict]:
+        
         pass
     
 
@@ -16,15 +20,19 @@ class ShiftsMethod(ABC):
 
 class SIGMOID(ShiftsMethod):
     def __init__(self,
-                 ponds):
+                 ponds,
+                 mask,
+                 shift_time,
+                 ):
+        
         self.ponds = ponds
+        self.mask = mask
+        self.shift_time = shift_time
 
     def make_shift(self,
-                   mask,
-                   shift_time,
+                   sigma_time: float = None,
                    shift_steepness: float = None,
                    shift_magnitude: float = None,
-                   sigma_time: float = None,
         ):
         """
         Generate a shift in the time series data using a sigmoid function.
@@ -32,9 +40,9 @@ class SIGMOID(ShiftsMethod):
         Args:
             mask (np.ndarray): Boolean mask indicating where to apply the shift.
             shift_time (int): Time step at which the shift occurs.
+            sigma_time (float, optional): Standard deviation for the time shift. Defaults to 1.0 for a sharp shift.
             shift_steepness (float, optional): Steepness of the sigmoid function. Defaults to a random value between 1.5 and 3.0.
             shift_magnitude (float, optional): Magnitude of the shift. Defaults to a random value between 0.95 and 1.05.
-            sigma_time (float, optional): Standard deviation for the time shift. Defaults to 1.0 for a sharp shift.
         Returns:
             tuple: A tuple containing the modified data array and a dictionary with shift parameters.
         The dictionary includes:
@@ -52,8 +60,8 @@ class SIGMOID(ShiftsMethod):
 
         for i in range(len(self.ponds.lats)):
             for j in range(len(self.ponds.lons)):
-                if mask[i,j]:
-                    t_shift = int(shift_time + np.random.normal(0, sigma_time))
+                if self.mask[i,j]:
+                    t_shift = int(self.shift_time + np.random.normal(0, sigma_time))
                     t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
 
                     shift_effect = (
@@ -67,7 +75,7 @@ class SIGMOID(ShiftsMethod):
                        "shift_magnitude" : shift_magnitude,
                        "sigma_time" : sigma_time}
 
-        return self.ponds.data, dict_return
+        return dict_return
     
     def sigmoid(self,
                 t,
