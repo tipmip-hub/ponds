@@ -23,11 +23,13 @@ class SIGMOID(ShiftsMethod):
                  ponds,
                  mask,
                  shift_time,
+                 random_seed: int = None,
                  ):
         
         self.ponds = ponds
         self.mask = mask
         self.shift_time = shift_time
+        self.random_seed = random_seed
 
     def make_shift(self,
                    sigma_time: float = None,
@@ -54,6 +56,8 @@ class SIGMOID(ShiftsMethod):
         
         shift_id = 0  # id for sigmoid shift
 
+        if self.random_seed is not None:
+            np.random.seed(self.random_seed)
         if not(shift_steepness): shift_steepness = np.random.uniform(1.5, 3.0, size=1)
         if not(shift_magnitude): shift_magnitude = np.random.uniform(0.95, 1.05, size=1)
         if not(sigma_time): sigma_time = np.ones(1)  # Sharp shift
@@ -61,7 +65,7 @@ class SIGMOID(ShiftsMethod):
         for i in range(len(self.ponds.lats)):
             for j in range(len(self.ponds.lons)):
                 if self.mask[i,j]:
-                    t_shift = int(self.shift_time + np.random.normal(0, sigma_time))
+                    t_shift = int(self.shift_time + np.random.normal(-sigma_time, sigma_time)[0])
                     t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
 
                     shift_effect = (

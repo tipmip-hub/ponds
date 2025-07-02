@@ -29,10 +29,12 @@ class MockShift:
     def __init__(self,
                  ponds,
                  mask,
-                 shift_time):
+                 shift_time,
+                 random_seed):
         self.ponds = ponds
         self.mask = mask
         self.shift_time = shift_time
+        self.random_seed = random_seed
     def make_shift(self,):
         return {"shift_id": -1}
 

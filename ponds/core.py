@@ -116,12 +116,14 @@ class PONDS:
         # 2) generate shift data
         # - choose random time step
         time_buffer = self.time_size // 10
-        shift_time = np.random.uniform(time_buffer, self.time_size - time_buffer, 1).astype(int)
-
+        shift_time = np.random.uniform(time_buffer, self.time_size - time_buffer, 1).astype(int)[0]
+        
         # - generate shift data and add to time series
         shift_generator = shift_method(self,
                                        mask = blob_mask,
-                                       shift_time = shift_time)
+                                       shift_time = shift_time,
+                                       random_seed=random_seed,
+                                       )
         dict_return = shift_generator.make_shift(**kwargs)
 
         # - store shift parameter
