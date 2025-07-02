@@ -21,8 +21,6 @@ class PONDS:
     
     The time series data itself is stored in the `data` DataArray.
 
-    SIMPLE VERSION: random Gaussian blobs, sigmoid function for abrupt shifts.
-
     Args:
         lat_size (int): Number of latitude points
         lon_size (int): Number of longitude points
