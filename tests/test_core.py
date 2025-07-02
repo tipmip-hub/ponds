@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from ponds.core import PONDS
+from ponds import PONDS
 
 """
 Testing the PONDS core class and its methods.
@@ -112,10 +112,8 @@ def test_ponds_same_seed_reproducibility(R=5):
 
     for _ in range(R):
         # 1) setup variables
-        seed1 = np.random.randint(0, R)
-        seed2 = np.random.randint(0, R)
-        if seed1 == seed2:  # ensure different seeds
-            seed2 = (seed1 + 1) % R
+        seed1 = np.random.randint(0, 100)
+        seed2 = np.random.randint(100, 200)
         trend = np.random.uniform(0, 0.1)
         noise = np.random.uniform(0, 0.05)
 

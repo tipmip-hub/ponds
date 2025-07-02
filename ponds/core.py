@@ -109,7 +109,8 @@ class PONDS:
         self.n_shifts += 1
 
         # 1) generate blob mask
-        blob_generator = shape_method(self)
+        blob_generator = shape_method(self,
+                                      random_seed=random_seed)
         blob_mask = blob_generator.make_blob()
         
         # 2) generate shift data
@@ -122,7 +123,7 @@ class PONDS:
                                        mask = blob_mask,
                                        shift_time = shift_time)
         dict_return = shift_generator.make_shift(**kwargs)
-        
+
         # - store shift parameter
         self.param_append(blob_mask,
                           val_list=list(dict_return.values()),

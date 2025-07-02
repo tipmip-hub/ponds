@@ -9,8 +9,11 @@ class MockBlob:
     for a pond.
     """
 
-    def __init__(self, ponds):
+    def __init__(self,
+                 ponds,
+                 random_seed):
         self.ponds = ponds
+        self.random_seed = random_seed
     def make_blob(self):
         mask = np.zeros((self.ponds.lat_size, self.ponds.lon_size), dtype=bool)
         mask[0,0] = True
@@ -23,7 +26,10 @@ class MockShift:
     It simulates the behavior of a shift generator that creates a shift
     for a pond."""
     
-    def __init__(self, ponds, mask, shift_time):
+    def __init__(self,
+                 ponds,
+                 mask,
+                 shift_time):
         self.ponds = ponds
         self.mask = mask
         self.shift_time = shift_time
