@@ -167,8 +167,8 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     # 3) check results
     stored = ponds.ts_param["shift_id"].values
     assert stored[0,0] == [-1, -1]
-    assert stored[0,1] == None
-    assert stored[1,0] == None
-    assert stored[1,1] == None
+    assert stored[0,1] is None
+    assert stored[1,0] is None
+    assert stored[1,1] is None
 
 
