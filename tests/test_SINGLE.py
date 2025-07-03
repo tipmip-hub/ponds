@@ -1,7 +1,5 @@
-import pytest
 import warnings
 import numpy as np
-import xarray as xr
 from ponds import PONDS, SINGLE
 
 """
@@ -19,6 +17,7 @@ Legend:
     x : done
 """
 
+
 def test_single_blob_mask_shape_and_type():
     """
     - check if the blob mask is a boolean 2D array of shape (1, 1)
@@ -26,17 +25,16 @@ def test_single_blob_mask_shape_and_type():
     """
 
     # 1) setup variables
-    ponds = PONDS(lat_size=1,
-                  lon_size=1)
-    
+    ponds = PONDS(lat_size=1, lon_size=1)
+
     # 2) call function
     single_blob = SINGLE(ponds)
     blob_mask = single_blob.make_blob()
 
     # 3) check results
-    assert blob_mask.shape == (1,1)
+    assert blob_mask.shape == (1, 1)
     assert blob_mask.dtype == np.bool_, "Blob mask must be boolean."
-    assert blob_mask[0,0], "Blob mask must have a single True value."
+    assert blob_mask[0, 0], "Blob mask must have a single True value."
 
 
 def test_single_blob_collapses_non_single_ponds():
@@ -49,9 +47,7 @@ def test_single_blob_collapses_non_single_ponds():
     lat_size = 5
     lon_size = 5
     time_size = 10
-    ponds = PONDS(lat_size=lat_size,
-                  lon_size=lon_size,
-                  time_size=time_size)
+    ponds = PONDS(lat_size=lat_size, lon_size=lon_size, time_size=time_size)
     original_data = ponds.data.copy(deep=True)
 
     # 2) call function
@@ -61,9 +57,11 @@ def test_single_blob_collapses_non_single_ponds():
         _ = single_blob.make_blob()
 
         # - check if warning is raised when SINGLE is used on a non-single ponds object
-        assert any("Shape method SINGLE used on a non-single ponds object" in str(warning.message) for warning in w), \
-            "Warning not raised when SINGLE is used on non-single ponds object."
-
+        assert any(
+            "Shape method SINGLE used on a non-single ponds object"
+            in str(warning.message)
+            for warning in w
+        ), "Warning not raised when SINGLE is used on non-single ponds object."
 
     # 3) check results
     # - Check ponds is now single
@@ -75,8 +73,11 @@ def test_single_blob_collapses_non_single_ponds():
     for i in range(lat_size):
         for j in range(lon_size):
             ts_original = original_data.isel(lat=i, lon=j).values
-            assert not np.array_equal(ts_original, ponds.data.isel(lat=0, lon=0).values), \
+            assert not np.array_equal(
+                ts_original, ponds.data.isel(lat=0, lon=0).values
+            ), (
                 f"Original time series at lat={i}, lon={j} is still present in single ponds object."
+            )
 
 
 def test_single_blob_keeps_existing_single_ponds_data():
@@ -86,14 +87,13 @@ def test_single_blob_keeps_existing_single_ponds_data():
     """
 
     # 1) setup variables
-    ponds = PONDS(lat_size=1,
-                  lon_size=1,
-                  time_size=50)
+    ponds = PONDS(lat_size=1, lon_size=1, time_size=50)
     original_data = ponds.data.copy()
     # - Add a variable to ts_param
-    ponds.ts_param["test_param"] = (("lat", "lon"),
-                                    np.empty((ponds.lat_size, ponds.lon_size),
-                                             dtype=object))
+    ponds.ts_param["test_param"] = (
+        ("lat", "lon"),
+        np.empty((ponds.lat_size, ponds.lon_size), dtype=object),
+    )
     ponds.ts_param["test_param"].values[0, 0] = ["value"]
 
     # 2) call function
@@ -106,4 +106,4 @@ def test_single_blob_keeps_existing_single_ponds_data():
 
     # - Check ts_param is unchanged for existing variable
     assert "test_param" in ponds.ts_param
-    assert ponds.ts_param["test_param"].values[0,0] == ["value"]
+    assert ponds.ts_param["test_param"].values[0, 0] == ["value"]
