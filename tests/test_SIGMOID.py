@@ -79,7 +79,7 @@ def test_sigmoid_shift_time_used():
     sigmoid_shift = SIGMOID(ponds,
                             mask,
                             shift_time)
-    params = sigmoid_shift.make_shift(**shift_dict)
+    _ = sigmoid_shift.make_shift(**shift_dict)
 
     # 3) check results
     # - Calculate where sigmoid crosses ~0.5
@@ -128,13 +128,13 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
                         mask,
                         shift_time,
                         random_seed=random_seed)    # <- testing this
-        params1 = sigmoid1.make_shift()             # <- testing this: no shift parameters provided, so random values are used
+        _ = sigmoid1.make_shift()             # <- testing this: no shift parameters provided, so random values are used
 
         sigmoid2 = SIGMOID(ponds2,
                            mask,
                            shift_time,
                            random_seed=random_seed) # <- testing this
-        params2 = sigmoid2.make_shift()             # <- testing this: no shift parameters provided, so random values are used
+        _ = sigmoid2.make_shift()             # <- testing this: no shift parameters provided, so random values are used
 
         # 3) check results
         assert np.array_equal(ponds1.data.values, ponds2.data.values), "Shifts with same seed should produce identical results."
@@ -171,7 +171,7 @@ def test_sigmoid_custom_parameters_used(err_toll=1e-1):
     sigmoid_shift = SIGMOID(ponds,
                             mask,
                             shift_time)
-    params = sigmoid_shift.make_shift(sigma_time=custom_sigma_time,
+    _ = sigmoid_shift.make_shift(sigma_time=custom_sigma_time,
                                       shift_steepness=custom_steepness,
                                       shift_magnitude=custom_magnitude)
 

@@ -36,7 +36,7 @@ def test_single_blob_mask_shape_and_type():
     # 3) check results
     assert blob_mask.shape == (1,1)
     assert blob_mask.dtype == np.bool_, "Blob mask must be boolean."
-    assert blob_mask[0,0] == True
+    assert blob_mask[0,0], "Blob mask must have a single True value."
 
 
 def test_single_blob_collapses_non_single_ponds():
@@ -53,13 +53,12 @@ def test_single_blob_collapses_non_single_ponds():
                   lon_size=lon_size,
                   time_size=time_size)
     original_data = ponds.data.copy(deep=True)
-    original_tsparam = ponds.ts_param.copy(deep=True)
 
     # 2) call function
     single_blob = SINGLE(ponds)
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        blob_mask = single_blob.make_blob()
+        _ = single_blob.make_blob()
 
         # - check if warning is raised when SINGLE is used on a non-single ponds object
         assert any("Shape method SINGLE used on a non-single ponds object" in str(warning.message) for warning in w), \
@@ -99,7 +98,7 @@ def test_single_blob_keeps_existing_single_ponds_data():
 
     # 2) call function
     single_blob = SINGLE(ponds)
-    blob_mask = single_blob.make_blob()
+    _ = single_blob.make_blob()
 
     # 3) check results
     # - Check data is unchanged
