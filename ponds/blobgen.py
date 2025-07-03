@@ -24,8 +24,10 @@ class GAUSS(BlobsMethod):
 
     def __init__(self,                       # kind of parameter:
                  ponds,
+                 random_seed=None,  # random seed for reproducibility
         ):
         self.ponds = ponds
+        self.random_seed = random_seed
     
     def make_blob(self,
                   ) -> np.ndarray:
@@ -38,7 +40,8 @@ class GAUSS(BlobsMethod):
         Returns:
             blob_mask (np.ndarray): A 2D array of shape (lat_size, lon_size).
         """
-
+        if self.random_seed is not None:
+            np.random.seed(self.random_seed)  # set random seed for reproducibility
         center_lat = np.random.uniform(-80, 80)
         center_lon = np.random.uniform(-180, 180)
         sigma_lat = np.random.uniform(10, 20)
@@ -68,7 +71,7 @@ class GAUSS(BlobsMethod):
                             axis=0).reshape(len(self.ponds.lats),
                                             len(self.ponds.lons))
         # create mask where blob_contribution is above 0.5
-        blob_mask = np.where(blob_contribution > 0.5, 1, 0)
+        blob_mask = np.where(blob_contribution > 0.5, True, False)
 
         return blob_mask
 
