@@ -9,11 +9,13 @@ Things to Test:
         x is the right shift time used
     x Random sigmoid shift
         x do same seed produce same shift
+        - check if random parameters are stored correctly in ts_param
     - Custom sigmoid shift
         - check if custom parameters are used
             x sigma_time
             - shift_steepness
             - shift_magnitude
+        - check if custom parameters are stored correctly in ts_param
 
 Legend:
     - : to do
@@ -208,7 +210,10 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
         custom_sigma_time * 2 / np.sqrt(12)
     )  # for a uniform distribution, the standard deviation is (b-a)/sqrt(12), where a and b are the bounds of the distribution
     assert np.isclose(t0_std, t0_std_expected, atol=err_tol), (
-        f"Expected standard deviation {t0_std_expected} not used, got {t0_std}"
+        f"Expected standard deviation {t0_std_expected} not used, got {t0_std}."
+    )
+    assert np.abs(t0_std - custom_sigma_time) > 0, (
+        f"Custom sigma_time {custom_sigma_time} not used, got {t0_std}."
     )
 
     # -- shift_steepness
