@@ -88,8 +88,10 @@ class SINGLE(BlobsMethod):
     def __init__(
         self,
         ponds,
+        random_seed=None,  # random seed for reproducibility
     ):
         self.ponds = ponds
+        self.random_seed = random_seed
 
     def make_blob(
         self,
