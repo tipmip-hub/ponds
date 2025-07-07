@@ -1,4 +1,4 @@
-# toml-file started Jun 2025 by Lukas Röhrich
+# toml-file started June 2025 by Lukas Röhrich
 #
 # This file acts as a configuration file for the ponds packages
 # by Potsdam Institute for Climate Impact Research, GER
@@ -38,6 +38,14 @@ dependencies = [
         "xarray",
         "matplotlib",
 ]
+
+[project.optional-dependencies]
+# developer mode: install with `pip install .[dev]`
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
 
 [tool.setuptools]
 packages = {find = {}}

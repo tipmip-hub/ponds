@@ -38,5 +38,5 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest --cov=toad
+          pytest --cov=ponds
         shell: bash
