@@ -95,8 +95,10 @@ class SINGLE(BlobsMethod):
         self,
     ):
         """
-        Reshapes the ponds object to a single time series, erasing all previous time series.
-        Returns a mask of shape (1, 1) with True value indicating the single time series.
+        If this method is used on a ponds object with more than one grid-cell, it is reshaped to a
+        single cell, erasing all previous time series and returns a mask of shape (1, 1) with True
+        value indicating the single time series. If the ponds object is already a single cell, it
+        only returns the mask and does nothing else.
 
         Returns:
             blob_mask (np.ndarray): A 2D array of shape (1, 1) with a single True value.

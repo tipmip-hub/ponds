@@ -159,7 +159,7 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
 ###################################################################################################
 
 
-def test_sigmoid_custom_parameters_used(err_toll=1e-1):
+def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     """
     - Test if custom parameters for the sigmoid shift are used correctly.
     - expected bevahior:
@@ -207,7 +207,7 @@ def test_sigmoid_custom_parameters_used(err_toll=1e-1):
     t0_std_expected = (
         custom_sigma_time * 2 / np.sqrt(12)
     )  # for a uniform distribution, the standard deviation is (b-a)/sqrt(12), where a and b are the bounds of the distribution
-    assert np.isclose(t0_std, t0_std_expected, atol=err_toll), (
+    assert np.isclose(t0_std, t0_std_expected, atol=err_tol), (
         f"Expected standard deviation {t0_std_expected} not used, got {t0_std}"
     )
 
