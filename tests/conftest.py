@@ -36,7 +36,9 @@ class MockShift:
     def make_shift(
         self,
     ):
-        return {"shift_id": -1}
+        shift_effect = np.zeros(self.ponds.time_size)
+        shift_id = -1  # Fixed shift_id for testing purposes
+        return shift_effect, shift_id
 
 
 @pytest.fixture

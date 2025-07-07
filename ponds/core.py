@@ -111,6 +111,8 @@ class PONDS:
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
+        dict_param = kwargs.copy()
+
         if random_seed is not None:
             np.random.seed(random_seed)
         self.n_shifts += 1
@@ -126,20 +128,25 @@ class PONDS:
             time_buffer, self.time_size - time_buffer, 1
         ).astype(int)[0]
 
-        # - generate shift data and add to time series
-        shift_generator = shift_method(
-            self,
-            mask=blob_mask,
-            shift_time=shift_time,
-            random_seed=random_seed,
-        )
-        dict_return = shift_generator.make_shift(**kwargs)
+        # - generate shift data and add to time serie
+        for i in range(self.lat_size):
+            for j in range(self.lon_size):
+                if blob_mask[i, j]:
+                    shift_generator = shift_method(
+                        self,
+                        mask=blob_mask,
+                        shift_time=shift_time,
+                        random_seed=random_seed,
+                    )
+                    shift_effect, dict_param = shift_generator.make_shift(**kwargs)
+                    # add shift effect to the data in single grid cell, all time steps at once
+                    self.data.values[:, i, j] += shift_effect
 
         # - store shift parameter
         self.param_append(
             blob_mask,
-            val_list=list(dict_return.values()),
-            var_str_list=list(dict_return.keys()),
+            val_list=list(dict_param.values()),
+            var_str_list=list(dict_param.keys()),
         )
 
     def param_append(

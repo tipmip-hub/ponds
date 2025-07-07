@@ -64,23 +64,19 @@ class SIGMOID(ShiftsMethod):
             shift_magnitude = np.random.uniform(0.95, 1.05, size=1)
         if sigma_time is None:
             sigma_time = np.ones(1)  # Sharp shift
+        
+        t_shift = int(
+            np.round(
+                self.shift_time
+                + np.random.uniform(-sigma_time, sigma_time, size=1)[0]
+            )
+        )
+        # Ensure t_shift is within bounds
+        t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
+        shift_effect = shift_magnitude * sigmoid(
+            self.ponds.time, self.ponds.time[t_shift], shift_steepness
+        )
 
-        for i in range(len(self.ponds.lats)):
-            for j in range(len(self.ponds.lons)):
-                if self.mask[i, j]:
-                    t_shift = int(
-                        np.round(
-                            self.shift_time
-                            + np.random.uniform(-sigma_time, sigma_time, size=1)[0]
-                        )
-                    )
-                    t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
-
-                    shift_effect = shift_magnitude * sigmoid(
-                        self.ponds.time, self.ponds.time[t_shift], shift_steepness
-                    )
-                    # add sigmoid shift effect to the data in single grid cell, all time steps at once
-                    self.ponds.data.values[:, i, j] += shift_effect
         dict_return = {
             "shift_id": shift_id,
             "shift_steepness": shift_steepness,
@@ -88,7 +84,7 @@ class SIGMOID(ShiftsMethod):
             "sigma_time": sigma_time,
         }
 
-        return dict_return
+        return shift_effect, dict_return
 
 ###################################################################################################
 ################################### Helper Functions ##############################################
