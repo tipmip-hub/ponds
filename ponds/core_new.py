@@ -139,19 +139,26 @@ class PONDS:
                         random_seed=random_seed,
                     )
                     shift_effect, dict_param = shift_generator.make_shift(**kwargs)
+                    self.param_append(i,
+                                      j,
+                                      val_list=list(dict_param.values()),
+                                      var_str_list=list(dict_param.keys()),
+                                      )
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.values[:, i, j] += shift_effect
 
         # - store shift parameter
-        self.param_append(
-            blob_mask,
-            val_list=list(dict_param.values()),
-            var_str_list=list(dict_param.keys()),
-        )
+        #self.param_append(
+        #    blob_mask,
+        #    val_list=list(dict_param.values()),
+        #    var_str_list=list(dict_param.keys()),
+        #)
 
     def param_append(
         self,
-        mask: np.ndarray,
+        #mask: np.ndarray,
+        ix_lat: int,
+        ix_lon: int,
         val_list: list,
         var_str_list: list,
     ):
@@ -173,19 +180,23 @@ class PONDS:
                     ("lat", "lon"),
                     np.empty((self.lat_size, self.lon_size), dtype=object),
                 )
+            if self.ts_param[var_str].values[ix_lat,ix_lon] is None:
+                self.ts_param[var_str].values[ix_lat, ix_lon] = [val]
+            else:
+                self.ts_param[var_str].values[ix_lat, ix_lon].append(val)
             # extract current variable data
-            data = self.ts_param[var_str].values
+            #data = self.ts_param[var_str].values
 
             # init list or append value to existing list for each cell
-            for i in range(len(self.lats)):
-                for j in range(len(self.lons)):
-                    if mask[i, j]:
-                        if data[i, j] is None:
-                            data[i, j] = [val]
-                        else:
-                            data[i, j].append(val)
+            #for i in range(len(self.lats)):
+            #    for j in range(len(self.lons)):
+            #        if mask[i, j]:
+            #            if data[i, j] is None:
+            #                data[i, j] = [val]
+            #            else:
+            #                data[i, j].append(val)
 
-            self.ts_param[var_str].values = data
+            #self.ts_param[var_str].values = data
 
     def get_ts(
         self,
