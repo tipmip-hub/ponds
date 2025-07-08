@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from ponds.blobgen import BlobsMethod
-from ponds.shiftgen import ShiftsMethod
+from ponds.shiftgen_new import ShiftsMethod
 
 
 class PONDS:
