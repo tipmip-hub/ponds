@@ -16,15 +16,25 @@ def main():
         background_trend=0.002,
     )
 
-    pd.add_shift(random_seed=1,
-                 shape_method=GAUSS,
-                 shift_method=SIGMOID_new)
+    #pd.add_shift(random_seed=1,
+    #             shape_method=GAUSS,
+    #             shift_method=SIGMOID_new)
+    
 
-if __name__ == "__main__":
     profiler = cProfile.Profile()
     profiler.enable()
+    pd.add_shift(random_seed=4,
+                 shape_method=GAUSS,
+                 shift_method=SIGMOID_new)
+    
+    profiler.disable()
+    profiler.dump_stats("profile_output.prof")
+
+if __name__ == "__main__":
+    #profiler = cProfile.Profile()
+    #profiler.enable()
 
     main()
 
-    profiler.disable()
-    profiler.dump_stats("profile_output.prof")
+    #profiler.disable()
+    #profiler.dump_stats("profile_output.prof")
