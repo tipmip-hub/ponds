@@ -40,7 +40,7 @@ class PONDS:
         background_trend: float = 0.0,
         background_noise: float = 0.005,
         random_seed: int = 42,
-        cluster_key: str = 'c',
+        cluster_key: str = "c",
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
@@ -75,10 +75,7 @@ class PONDS:
             {
                 "ts": (["time", "lat", "lon"], data_ts),
             },
-            coords={
-                "time": self.time,
-                "lat": self.lats,
-                "lon": self.lons},
+            coords={"time": self.time, "lat": self.lats, "lon": self.lons},
         )
 
     def add_shift(
@@ -137,10 +134,10 @@ class PONDS:
         )
 
     def _add_shift_to_ds(
-            self,
-            mask: np.ndarray,
-            param_dict: dict,
-            cluster_key: str = 'c',
+        self,
+        mask: np.ndarray,
+        param_dict: dict,
+        cluster_key: str = "c",
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -160,23 +157,25 @@ class PONDS:
 
         # get variable name for new cluster
         variable_names = list(self.data.data_vars.keys())
-        #print(f"Current variable names: {variable_names}")
-        variable_names = [name for name in variable_names if name.startswith(cluster_key)]
-        #print(f"Variable names: {variable_names}")
+        # print(f"Current variable names: {variable_names}")
+        variable_names = [
+            name for name in variable_names if name.startswith(cluster_key)
+        ]
+        # print(f"Variable names: {variable_names}")
         last_variable_index = int(len(variable_names))
         new_variable_name = f"{cluster_key}{last_variable_index + 1}"
 
         # Create a new DataArray with the same shape as the mask
-        new_da = xr.DataArray(
-            mask,
-            dims=self.data.dims,
-            coords=self.data.coords
-        )
-        new_da.attrs["type"] = param_dict.get("type", "UNKNOWN")    # set type to "UNKNOWN" if not specified
-        new_da.attrs["generation_params"] = {k: v for k, v          # exclude "type" from generation_params
-                                             in param_dict.items()
-                                             if k != "type"}
-        
+        new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)
+        new_da.attrs["type"] = param_dict.get(
+            "type", "UNKNOWN"
+        )  # set type to "UNKNOWN" if not specified
+        new_da.attrs["generation_params"] = {
+            k: v
+            for k, v in param_dict.items()  # exclude "type" from generation_params
+            if k != "type"
+        }
+
         # Append the new DataArray to the Dataset
         self.data[new_variable_name] = new_da
 
@@ -200,22 +199,21 @@ class PONDS:
             return self.data.ts.values
 
     def get_cluster_masks(
-            self,
-            cluster_key: str = 'c',
+        self,
+        cluster_key: str = "c",
     ):
         """
         Returns all the variables that start with 'cluster_key'. These arrays are
         the masks that identify if a shift happened in a given space-time-coordinate.
 
         Args:
-            cluster_key (str): 
+            cluster_key (str):
         """
 
         masks = []
         shift_ids = []
         for name, da in self.data.data_vars.items():
             if name.startswith(cluster_key):
-
                 # get shift_id
                 ids = np.unique(da.values)
                 if len(ids[ids >= 0]) > 1:

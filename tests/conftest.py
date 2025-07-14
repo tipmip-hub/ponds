@@ -37,7 +37,7 @@ class MockShift:
         self,
     ):
         mask3d = np.zeros((self.ponds.time_size, *self.mask.shape), dtype=bool)
-        mask3d[0,0,0] = True
+        mask3d[0, 0, 0] = True
         return mask3d, {"type": "MOCK"}
 
 

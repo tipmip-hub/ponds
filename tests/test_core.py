@@ -165,18 +165,22 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     """
 
     # 1) setup variables
-    ponds = PONDS(lat_size=2,
-                  lon_size=2,
-                  time_size=10,
-                  cluster_key='custom_key',)
+    ponds = PONDS(
+        lat_size=2,
+        lon_size=2,
+        time_size=10,
+        cluster_key="custom_key",
+    )
 
     # 2) call function
-    ponds.add_shift(mock_blob,
-                    mock_shift,
-                    )
-    ponds.add_shift(mock_blob,
-                    mock_shift,
-                    )
+    ponds.add_shift(
+        mock_blob,
+        mock_shift,
+    )
+    ponds.add_shift(
+        mock_blob,
+        mock_shift,
+    )
 
     # 3) check results
     stored_type = ponds.data.custom_key1.attrs["type"]

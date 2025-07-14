@@ -117,12 +117,15 @@ class SINGLE(BlobsMethod):
             self.ponds.lons = np.array([0])
 
             # 2) Generate background data with trend and noise
-            data_ts = np.zeros((self.ponds.time_size, self.ponds.lat_size, self.ponds.lon_size))
+            data_ts = np.zeros(
+                (self.ponds.time_size, self.ponds.lat_size, self.ponds.lon_size)
+            )
             for i in range(self.ponds.lat_size):
                 for j in range(self.ponds.lon_size):
                     data_ts[:, i, j] = (
                         self.ponds.background_trend * self.ponds.time
-                        + self.ponds.background_noise * np.random.randn(self.ponds.time_size)
+                        + self.ponds.background_noise
+                        * np.random.randn(self.ponds.time_size)
                     )
             # - Create xarray Dataset, init with background time series data
             self.ponds.data = xr.Dataset(
@@ -132,9 +135,10 @@ class SINGLE(BlobsMethod):
                 coords={
                     "time": self.ponds.time,
                     "lat": self.ponds.lats,
-                    "lon": self.ponds.lons},
+                    "lon": self.ponds.lons,
+                },
             )
-            
+
         blob_mask = np.array([[True]])
 
         return blob_mask
