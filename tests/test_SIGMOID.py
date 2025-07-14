@@ -54,7 +54,7 @@ def test_sigmoid_blob_mask_applied_correctly():
     # Only [0,1] cell should be non-zero
     for i in range(3):
         for j in range(3):
-            ts = ponds.data[:, i, j].values
+            ts = ponds.data.ts[:, i, j].values
             if mask[i, j]:
                 assert not np.allclose(ts, 0), (
                     f"Shift not applied to masked cell {(i, j)}"
@@ -86,7 +86,7 @@ def test_sigmoid_shift_time_used():
 
     # 3) check results
     # - Calculate where sigmoid crosses ~0.5
-    ts = ponds.data[:, 0, 0].values
+    ts = ponds.data.ts[:, 0, 0].values
     t0_index = np.argmax(np.diff(ts)) + 1  # +1 because np.diff reduces length by 1
     # -
     assert abs(t0_index - shift_time) == 0, (
@@ -149,7 +149,7 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
         )  # <- testing this: no shift parameters provided, so random values are used
 
         # 3) check results
-        assert np.array_equal(ponds1.data.values, ponds2.data.values), (
+        assert np.array_equal(ponds1.data.ts.values, ponds2.data.ts.values), (
             "Shifts with same seed should produce identical results."
         )
 
@@ -199,7 +199,7 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     # -- sigma_time
     t0_std = np.std(
         [
-            np.argmax(np.diff(ponds.data[:, i, j].values)) + 1
+            np.argmax(np.diff(ponds.data.ts[:, i, j].values)) + 1
             for i in range(lat_size)
             for j in range(lon_size)
         ]
