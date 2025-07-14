@@ -54,8 +54,6 @@ class SIGMOID(ShiftsMethod):
             - "sigma_time": Standard deviation for the time shift.
         """
 
-        shift_id = 0  # id for sigmoid shift
-
         if self.random_seed is not None:
             np.random.seed(self.random_seed)
         if shift_steepness is None:
