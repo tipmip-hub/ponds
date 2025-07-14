@@ -84,8 +84,14 @@ class SIGMOID(ShiftsMethod):
                     self.ponds.data["ts"][:, i, j] += shift_effect
                     # update mask3d to indicate where the shift was applied
                     mask3d[t_shift, i, j] = True
+        param_dict = {
+            "type": "SIGMOID",
+            "shift_steepness": shift_steepness,
+            "shift_magnitude": shift_magnitude,
+            "sigma_time": sigma_time,
+        }
 
-        return mask3d, shift_id
+        return mask3d, param_dict
 
 ###################################################################################################
 ################################### Helper Functions ##############################################
