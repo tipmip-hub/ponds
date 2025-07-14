@@ -113,39 +113,28 @@ class SINGLE(BlobsMethod):
             )
             self.ponds.lat_size = 1
             self.ponds.lon_size = 1
-            self.ponds.lats = np.array([0])  # np.linspace(-90, 90, self.lat_size)
-            self.ponds.lons = np.array([0])  # np.linspace(-180, 180, self.lon_size)
-            self.ponds.ts_param = xr.Dataset(
-                coords={
-                    "lat": self.ponds.lats,
-                    "lon": self.ponds.lons,
-                }
-            )
-            self.ponds.ts_param["shift_id"] = (
-                ("lat", "lon"),
-                np.empty((self.ponds.lat_size, self.ponds.lon_size), dtype=object),
-            )
+            self.ponds.lats = np.array([0])
+            self.ponds.lons = np.array([0])
 
             # 2) Generate background data with trend and noise
-            data = np.zeros(
-                (self.ponds.time_size, self.ponds.lat_size, self.ponds.lon_size)
-            )
+            data_ts = np.zeros((self.ponds.time_size, self.ponds.lat_size, self.ponds.lon_size))
             for i in range(self.ponds.lat_size):
                 for j in range(self.ponds.lon_size):
-                    data[:, i, j] = (
+                    data_ts[:, i, j] = (
                         self.ponds.background_trend * self.ponds.time
-                        + self.ponds.background_noise
-                        * np.random.randn(self.ponds.time_size)
+                        + self.ponds.background_noise * np.random.randn(self.ponds.time_size)
                     )
-            self.ponds.data = xr.DataArray(
-                data,
+            # - Create xarray Dataset, init with background time series data
+            self.ponds.data = xr.Dataset(
+                {
+                    "ts": (["time", "lat", "lon"], data_ts),
+                },
                 coords={
                     "time": self.ponds.time,
                     "lat": self.ponds.lats,
-                    "lon": self.ponds.lons,
-                },
-                dims=["time", "lat", "lon"],
+                    "lon": self.ponds.lons},
             )
+            
         blob_mask = np.array([[True]])
 
         return blob_mask

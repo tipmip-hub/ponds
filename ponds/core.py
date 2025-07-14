@@ -1,5 +1,7 @@
 import numpy as np
 import xarray as xr
+import warnings
+
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
 
@@ -59,32 +61,23 @@ class PONDS:
         self.time = np.linspace(0, self.time_size, self.time_size)
 
         # 2) Generate background data with trend and noise
-        data = np.zeros((time_size, lat_size, lon_size))
+        data_ts = np.zeros((time_size, lat_size, lon_size))
         for i in range(lat_size):
             for j in range(lon_size):
-                data[:, i, j] = (
+                data_ts[:, i, j] = (
                     background_trend * self.time
                     + background_noise * np.random.randn(self.time_size)
                 )
 
-        # - Create xarray DataArray
-        self.data = xr.DataArray(
-            data,
-            coords={"time": self.time, "lat": self.lats, "lon": self.lons},
-            dims=["time", "lat", "lon"],
-        )
-
-        # 3) Define time series seeds on spatial grid
-        # init grid of time series parameters
-        self.ts_param = xr.Dataset(
+        # - Create xarray Dataset, init with background time series data
+        self.data = xr.Dataset(
+            {
+                "ts": (["time", "lat", "lon"], data_ts),
+            },
             coords={
+                "time": self.time,
                 "lat": self.lats,
-                "lon": self.lons,
-            }
-        )
-        self.ts_param["shift_id"] = (
-            ("lat", "lon"),
-            np.empty((self.lat_size, self.lon_size), dtype=object),
+                "lon": self.lons},
         )
 
     def add_shift(
@@ -133,52 +126,55 @@ class PONDS:
             shift_time=shift_time,
             random_seed=random_seed,
         )
-        dict_return = shift_generator.make_shift(**kwargs)
+        mask3d, shift_id = shift_generator.make_shift(**kwargs)
 
-        # - store shift parameter
-        self.param_append(
-            blob_mask,
-            val_list=list(dict_return.values()),
-            var_str_list=list(dict_return.keys()),
+        # - store shift id
+        self._add_shift_id(
+            mask=mask3d,
+            shift_id=shift_id,
         )
 
-    def param_append(
-        self,
-        mask: np.ndarray,
-        val_list: list,
-        var_str_list: list,
+    def _add_shift_id(
+            self,
+            mask: np.ndarray,
+            shift_id: int,
+            false_value: int = -1,
+            cluster_key: str = 'c',
     ):
         """
-        Append values to the corresponding list in the time series parameter grid based on a boolean mask.
+        Append a xr.DataArray to the time series parameter grid with a specific shift ID.
+        This method assumed that each added cluster is stored in a separate variable in the
+        time series parameter grid, where the cluster_key is used as the variable name followed
+        by a number (e.g. "c1", "c2", ...).
 
         Args:
-            mask (np.ndarray): Boolean mask indicating where to append values.
-            val_list (list): List of values to append.
-            var_str_list (list): List of variable names corresponding to the values.
+            mask (np.ndarray): Boolean mask indicating where to append the shift ID.
+            shift_id (int): The ID of the shift to append.
+            false_value (int): Value to fill in for cells without a shift. Defaults to -1.
+            cluster_key (str): Key to use for the variable name in the time series parameter grid
+                               (e.g. "c" for "c1", "c2", ...).
         """
-        for k in range(len(var_str_list)):
-            var_str = var_str_list[k]
-            val = val_list[k]
 
-            # CASE: variable does not exist yet
-            if var_str not in self.ts_param:
-                self.ts_param[var_str] = (
-                    ("lat", "lon"),
-                    np.empty((self.lat_size, self.lon_size), dtype=object),
-                )
-            # extract current variable data
-            data = self.ts_param[var_str].values
+        # get variable name for new cluster
+        variable_names = list(self.data.data_vars.keys())
+        #print(f"Current variable names: {variable_names}")
+        variable_names = [name for name in variable_names if name.startswith(cluster_key)]
+        #print(f"Variable names: {variable_names}")
+        last_variable_index = int(len(variable_names))
+        new_variable_name = f"{cluster_key}{last_variable_index + 1}"
 
-            # init list or append value to existing list for each cell
-            for i in range(len(self.lats)):
-                for j in range(len(self.lons)):
-                    if mask[i, j]:
-                        if data[i, j] is None:
-                            data[i, j] = [val]
-                        else:
-                            data[i, j].append(val)
-
-            self.ts_param[var_str].values = data
+        # Create a new DataArray with the same shape as the mask
+        new_da = xr.DataArray(
+            np.full(mask.shape, false_value, dtype=int),
+            dims=self.data.dims,
+            coords=self.data.coords
+        )
+        
+        # Set values where mask is True
+        new_da.values[mask] = shift_id
+        
+        # Append the new DataArray to the Dataset
+        self.data[new_variable_name] = new_da
 
     def get_ts(
         self,
@@ -195,16 +191,40 @@ class PONDS:
         """
 
         if single:
-            return self.data.values.flatten()
+            return self.data.ts.values.flatten()
         else:
-            return self.data.values
+            return self.data.ts.values
 
-    def get_cell_tsparam(self, lat_idx: int, lon_idx: int):
+    def get_cluster_masks(
+            self,
+            cluster_key: str = 'c',
+    ):
         """
-        Retrieve a specific cell from the grid based on latitude and longitude indices.
+        Returns all the variables that start with 'cluster_key'. These arrays are
+        the masks that identify if a shift happened in a given space-time-coordinate.
 
         Args:
-            lat_idx (int): Index of the latitude.
-            lon_idx (int): Index of the longitude.
+            cluster_key (str): 
         """
-        return self.ts_param[lat_idx][lon_idx]
+
+        masks = []
+        shift_ids = []
+        for name, da in self.data.data_vars.items():
+            if name.startswith(cluster_key):
+
+                # get shift_id
+                ids = np.unique(da.values)
+                if len(ids[ids >= 0]) > 1:
+                    warnings.warn(
+                        "More than one shift-id found in cluster mask."
+                        "Smallest shift-id chosen to proceed..."
+                    )
+                shift_ids.append(ids[ids >= 0][0])
+
+                # convert shift_id-mask to boolean mask
+                da_mask = np.zeros(da.shape, dtype=bool)
+                mask_ix = np.argwhere(da.values >= 0)
+                da_mask[mask_ix[:, 0], mask_ix[:, 1], mask_ix[:, 2]] = True
+                masks.append(da_mask)
+
+        return np.array(masks), np.array(shift_ids)

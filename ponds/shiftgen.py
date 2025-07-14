@@ -65,6 +65,7 @@ class SIGMOID(ShiftsMethod):
         if sigma_time is None:
             sigma_time = np.ones(1)  # Sharp shift
 
+        mask3d = np.zeros((self.ponds.time_size, *self.mask.shape), dtype=bool)
         for i in range(len(self.ponds.lats)):
             for j in range(len(self.ponds.lons)):
                 if self.mask[i, j]:
@@ -80,15 +81,11 @@ class SIGMOID(ShiftsMethod):
                         self.ponds.time, self.ponds.time[t_shift], shift_steepness
                     )
                     # add sigmoid shift effect to the data in single grid cell, all time steps at once
-                    self.ponds.data.values[:, i, j] += shift_effect
-        dict_return = {
-            "shift_id": shift_id,
-            "shift_steepness": shift_steepness,
-            "shift_magnitude": shift_magnitude,
-            "sigma_time": sigma_time,
-        }
+                    self.ponds.data["ts"][:, i, j] += shift_effect
+                    # update mask3d to indicate where the shift was applied
+                    mask3d[t_shift, i, j] = True
 
-        return dict_return
+        return mask3d, shift_id
 
 ###################################################################################################
 ################################### Helper Functions ##############################################
