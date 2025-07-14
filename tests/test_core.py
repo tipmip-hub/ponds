@@ -6,13 +6,13 @@ Testing the PONDS core class and its methods.
 
 Things to Test:
     x Initialization of PONDS object
-        x does the grid have the right shape (space & time)
+        x does the ts data grid exist and have the right shape (space & time)
         x is a background trend added correctly (check slope)
         x is a background noise added correctly (check variance)
         x does the same seed produce the same data
     x Adding shifts -> use mock methods for shape and shift
         x is the shape of the grid unaltered
-        x are the time series parameters stored correctly (check multiple)
+        x is the shift type stored as an attribute
 
 Legend:
     - : to do
@@ -40,8 +40,8 @@ def test_ponds_initialization_shape():
     ponds2 = PONDS(lat_size=lat_size2, lon_size=lon_size2, time_size=time_size2)
 
     # 3) check results
-    assert ponds1.data.shape == (time_size1, lat_size1, lon_size1)
-    assert ponds2.data.shape == (time_size2, lat_size2, lon_size2)
+    assert ponds1.data.ts.shape == (time_size1, lat_size1, lon_size1)
+    assert ponds2.data.ts.shape == (time_size2, lat_size2, lon_size2)
 
 
 def test_ponds_background_trend(err_tol=1e-4):
@@ -59,10 +59,10 @@ def test_ponds_background_trend(err_tol=1e-4):
     )
 
     # 3) check results
-    ts1 = ponds.data[:, 0, 0].values
-    ts2 = ponds.data[:, 0, 1].values
-    ts3 = ponds.data[:, 1, 0].values
-    ts4 = ponds.data[:, 1, 1].values
+    ts1 = ponds.data.ts[:, 0, 0].values
+    ts2 = ponds.data.ts[:, 0, 1].values
+    ts3 = ponds.data.ts[:, 1, 0].values
+    ts4 = ponds.data.ts[:, 1, 1].values
     # - Fit a linear regression to confirm the slope
     slope1 = (ts1[-1] - ts1[0]) / (ponds.time[-1] - ponds.time[0])
     slope2 = (ts2[-1] - ts2[0]) / (ponds.time[-1] - ponds.time[0])
@@ -90,10 +90,10 @@ def test_ponds_background_noise_variance(err_tol=1e-4):
     )
 
     # 3) check results
-    ts1 = ponds.data[:, 0, 0].values
-    ts2 = ponds.data[:, 0, 1].values
-    ts3 = ponds.data[:, 1, 0].values
-    ts4 = ponds.data[:, 1, 1].values
+    ts1 = ponds.data.ts[:, 0, 0].values
+    ts2 = ponds.data.ts[:, 0, 1].values
+    ts3 = ponds.data.ts[:, 1, 0].values
+    ts4 = ponds.data.ts[:, 1, 1].values
     # -
     assert np.isclose(np.std(ts1), noise, atol=err_tol)
     assert np.isclose(np.std(ts2), noise, atol=err_tol)
@@ -134,8 +134,8 @@ def test_ponds_same_seed_reproducibility(R=5):
         )
 
         # 3) check results
-        assert np.array_equal(ponds1.data.values, ponds2.data.values)
-        assert not np.array_equal(ponds1.data.values, ponds3.data.values)
+        assert np.array_equal(ponds1.data.ts.values, ponds2.data.ts.values)
+        assert not np.array_equal(ponds1.data.ts.values, ponds3.data.ts.values)
 
 
 ###################################################################################################
@@ -155,20 +155,36 @@ def test_add_shift_shape_unaltered(mock_blob, mock_shift):
     ponds.add_shift(mock_blob, mock_shift)
 
     # 3) check results
-    assert ponds.data.shape == original_shape
+    assert ponds.data.ts.shape == original_shape
 
 
 def test_add_shift_parameter_storage(mock_blob, mock_shift):
+    """
+    - check if the shift type is stored as an attribute in the xarray DataArray
+    - check if PONDS takes a custom cluster_key for the variable name
+    """
+
     # 1) setup variables
-    ponds = PONDS(lat_size=2, lon_size=2, time_size=10)
+    ponds = PONDS(
+        lat_size=2,
+        lon_size=2,
+        time_size=10,
+        cluster_key="custom_key",
+    )
 
     # 2) call function
-    ponds.add_shift(mock_blob, mock_shift)
-    ponds.add_shift(mock_blob, mock_shift)
+    ponds.add_shift(
+        mock_blob,
+        mock_shift,
+    )
+    ponds.add_shift(
+        mock_blob,
+        mock_shift,
+    )
 
     # 3) check results
-    stored = ponds.ts_param["shift_id"].values
-    assert stored[0, 0] == [-1, -1]
-    assert stored[0, 1] is None
-    assert stored[1, 0] is None
-    assert stored[1, 1] is None
+    stored_type = ponds.data.custom_key1.attrs["type"]
+    assert stored_type == "MOCK"
+
+    stored_type = ponds.data.custom_key2.attrs["type"]
+    assert stored_type == "MOCK"
