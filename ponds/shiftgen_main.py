@@ -84,9 +84,9 @@ class SIGMOID(ShiftsMethod):
                     mask3d[t_shift, i, j] = True
         param_dict = {
             "type": "SIGMOID",
-            "shift_steepness": shift_steepness,
-            "shift_magnitude": shift_magnitude,
-            "sigma_time": sigma_time,
+            #"shift_steepness": shift_steepness,
+            #"shift_magnitude": shift_magnitude,
+            #"sigma_time": sigma_time,
         }
 
         return mask3d, param_dict
