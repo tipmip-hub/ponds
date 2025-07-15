@@ -10,12 +10,14 @@ class MockBlob:
     for a pond.
     """
 
-    def __init__(self, ponds, random_seed):
-        self.ponds = ponds
+    def __init__(self,
+                 random_seed=None):
         self.random_seed = random_seed
 
-    def make_blob(self):
-        mask = np.zeros((self.ponds.lat_size, self.ponds.lon_size), dtype=bool)
+    def make_blob(self,
+                  lats,
+                  lons):
+        mask = np.zeros((len(lats), len(lons)), dtype=bool)
         mask[0, 0] = True
         return mask
 
@@ -28,11 +30,7 @@ class MockShift:
     for a pond."""
 
     def __init__(self,
-                 ponds,
-                 shift_time,
-                 random_seed):
-        self.ponds = ponds
-        self.shift_time = shift_time
+                 random_seed=None):
         self.random_seed = random_seed
 
         self.param_dict = {
@@ -41,9 +39,11 @@ class MockShift:
 
     def make_shift(
         self,
+        time,
+        shift_time,
     ):
-        t_shift = 0
-        shift_effect = 0
+        t_shift = shift_time
+        shift_effect = np.zeros_like(time, dtype=float)
         
         return shift_effect, t_shift
 

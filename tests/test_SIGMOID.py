@@ -42,10 +42,9 @@ def test_sigmoid_shift_time_used():
     shift_dict = {"sigma_time": 0,
                   "shift_steepness": 1,
                   "shift_magnitude": 1}
-    sigmoid_shift = SIGMOID(ponds,
-                            shift_time_in,
-                            **shift_dict)
-    _, shift_time_out = sigmoid_shift.make_shift()
+    sigmoid_shift = SIGMOID(**shift_dict)
+    _, shift_time_out = sigmoid_shift.make_shift(ponds.time,
+                                                 shift_time_in)
 
     # 3) check results
     assert abs(shift_time_out - shift_time_in) == 0, (
@@ -66,48 +65,21 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
     """
 
     # 1) setup variables
-    lat_size = 1
-    lon_size = 1
-    time_size = 10
-    background_trend = 0
-    background_noise = 0
+    time = np.arange(0, 20, 1)  # Example time array
     shift_time = 5
-    # - create two PONDS instances with same parameters
-    ponds1 = PONDS(
-        lat_size=lat_size,
-        lon_size=lon_size,
-        time_size=time_size,
-        background_trend=background_trend,
-        background_noise=background_noise,
-    )
-    ponds2 = PONDS(
-        lat_size=lat_size,
-        lon_size=lon_size,
-        time_size=time_size,
-        background_trend=background_trend,
-        background_noise=background_noise,
-    )
 
     for _ in range(R):
         random_seed = np.random.randint(0, 1000)
 
         # 2) call function
-        sigmoid1 = SIGMOID(
-            ponds1, shift_time, random_seed=random_seed
-        )  # <- testing this
-        _ = (
-            sigmoid1.make_shift()
-        )  # <- testing this: no shift parameters provided, so random values are used
+        sigmoid1 = SIGMOID(random_seed=random_seed)  # <- testing this
+        shift_effect1, _ = sigmoid1.make_shift(time, shift_time)  # <- testing this: no shift parameters provided, so random values are used
 
-        sigmoid2 = SIGMOID(
-            ponds2, shift_time, random_seed=random_seed
-        )  # <- testing this
-        _ = (
-            sigmoid2.make_shift()
-        )  # <- testing this: no shift parameters provided, so random values are used
+        sigmoid2 = SIGMOID(random_seed=random_seed)  # <- testing this
+        shift_effect2, _ = sigmoid2.make_shift(time, shift_time)   # <- testing this: no shift parameters provided, so random values are used
 
         # 3) check results
-        assert np.array_equal(ponds1.data.ts.values, ponds2.data.ts.values), (
+        assert np.array_equal(shift_effect1, shift_effect2), (
             "Shifts with same seed should produce identical results."
         )
 
@@ -127,14 +99,15 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     # 1) setup variables
     lat_size = 100
     lon_size = 100
-    time_size = 10
-    ponds = PONDS(
-        lat_size=lat_size,
-        lon_size=lon_size,
-        time_size=time_size,
-        background_trend=0,
-        background_noise=0,
-    )
+    time = np.arange(0, 20, 1)  # Example time array
+    #time_size = 10
+    #ponds = PONDS(
+    #    lat_size=lat_size,
+    #    lon_size=lon_size,
+    #    time_size=time_size,
+    #    background_trend=0,
+    #    background_noise=0,
+    #)
     shift_time = 5
 
     custom_sigma_time = 3.0
@@ -143,15 +116,14 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
 
     # 2) call function
     t_shifts = np.zeros((lat_size,lon_size))
-    sigmoid_shift = SIGMOID(ponds,
-                            shift_time,
-                            sigma_time=custom_sigma_time,
+    sigmoid_shift = SIGMOID(sigma_time=custom_sigma_time,
                             shift_steepness=custom_steepness,
                             shift_magnitude=custom_magnitude,
                             )
     for i in range(lat_size):
         for j in range(lon_size):
-            _, t_shifts[i, j] = sigmoid_shift.make_shift()
+            _, t_shifts[i, j] = sigmoid_shift.make_shift(time,
+                                                         shift_time)
 
     # 3) check results
     # - extract the shift parameters from the generated data
