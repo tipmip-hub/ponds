@@ -98,8 +98,8 @@ def test_gauss_blob_add_shift_integration(mock_shift):
 
     # 3) check results
     # - Check ts_param is updated at least somewhere
-    shift_grid = ponds.ts_param["shift_id"].values
-    assert any(cell is not None for row in shift_grid for cell in row), (
+    shift_grid = ponds.data.c1.values
+    assert any(cell is not False for row in shift_grid for cell in row), (
         "Shift should be applied somewhere on grid."
     )
 

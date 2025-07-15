@@ -36,9 +36,9 @@ class MockShift:
     def make_shift(
         self,
     ):
-        shift_effect = np.zeros(self.ponds.time_size)
-        shift_id = -1  # Fixed shift_id for testing purposes
-        return shift_effect, shift_id
+        mask3d = np.zeros((self.ponds.time_size, *self.mask.shape), dtype=bool)
+        mask3d[0, 0, 0] = True
+        return mask3d, {"type": "MOCK"}
 
 
 @pytest.fixture
