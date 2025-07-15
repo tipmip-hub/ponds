@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 import warnings
 
-from ponds.blobgen import BlobsMethod
+from ponds.blobgen_old import BlobsMethod
 from ponds.shiftgen_old import ShiftsMethod
 
 

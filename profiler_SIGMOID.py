@@ -2,16 +2,16 @@ import cProfile
 import pstats
 
 
-from ponds.blobgen import GAUSS
+from ponds.blobgen import GAUSS as GAUSS_new
 from ponds.core import PONDS as PONDS_new
 from ponds.shiftgen import SIGMOID as SIGMOID_new
 
 def main():
 
     pd = PONDS_new(
-        lat_size=20,
-        lon_size=40,
-        time_size=200,
+        lat_size=200,
+        lon_size=400,
+        time_size=500,
         background_noise=0.01,
         background_trend=0.002,
     )
@@ -23,12 +23,19 @@ def main():
 
     profiler = cProfile.Profile()
     profiler.enable()
-    pd.add_shift(random_seed=4,
-                 shape_method=GAUSS,
-                 shift_method=SIGMOID_new)
+    #shift_dict = {
+        #"shift_steepness": 0.2,
+        #"shift_magnitude": 0.5,
+    #}
+    pd.add_shift(
+        random_seed=4,
+        shape_method=GAUSS_new(),
+        shift_method=SIGMOID_new(),
+    #    kwargs=shift_dict,
+    )
     
     profiler.disable()
-    profiler.dump_stats("profile_output.prof")
+    profiler.dump_stats("profile_output_new.prof")
 
 if __name__ == "__main__":
     #profiler = cProfile.Profile()

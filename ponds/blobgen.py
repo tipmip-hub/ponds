@@ -24,15 +24,15 @@ class BlobsMethod(ABC):
 
 class GAUSS(BlobsMethod):
     def __init__(
-        self,  # kind of parameter:
-        ponds,
+        self,
         random_seed=None,  # random seed for reproducibility
     ):
-        self.ponds = ponds
         self.random_seed = random_seed
 
     def make_blob(
         self,
+        lats,
+        lons,
     ) -> np.ndarray:
         """
         Generate a spatial blob of parameters on the grid in shape of a 2D Gauss, given positional and
@@ -51,12 +51,12 @@ class GAUSS(BlobsMethod):
 
         # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
         extended_lons = np.concatenate(
-            [self.ponds.lons - 360, self.ponds.lons, self.ponds.lons + 360]
+            [lons - 360, lons, lons + 360]
         )
 
         # Create grids
         lat_grid, extended_lon_grid = np.meshgrid(
-            self.ponds.lats, extended_lons, indexing="ij"
+            lats, extended_lons, indexing="ij"
         )
         pos_extended = np.dstack((lat_grid, extended_lon_grid))
 
@@ -71,10 +71,10 @@ class GAUSS(BlobsMethod):
         # add up contributions from periodic longitudes, blob_contribution is of shape (lat_size, lon_size)
         blob_contribution = np.sum(
             blob_normalized.reshape(
-                len(self.ponds.lats), 3, len(self.ponds.lons)
+                len(lats), 3, len(lons)
             ).transpose(1, 0, 2),
             axis=0,
-        ).reshape(len(self.ponds.lats), len(self.ponds.lons))
+        ).reshape(len(lats), len(lons))
         # create mask where blob_contribution is above 0.5
         blob_mask = np.where(blob_contribution > 0.5, True, False)
 
@@ -82,63 +82,3 @@ class GAUSS(BlobsMethod):
 
 
 ###################################################################################################
-
-
-class SINGLE(BlobsMethod):
-    def __init__(
-        self,
-        ponds,
-        random_seed=None,  # random seed for reproducibility
-    ):
-        self.ponds = ponds
-        self.random_seed = random_seed
-
-    def make_blob(
-        self,
-    ):
-        """
-        If this method is used on a ponds object with more than one grid-cell, it is reshaped to a
-        single cell, erasing all previous time series and returns a mask of shape (1, 1) with True
-        value indicating the single time series. If the ponds object is already a single cell, it
-        only returns the mask and does nothing else.
-
-        Returns:
-            blob_mask (np.ndarray): A 2D array of shape (1, 1) with a single True value.
-        """
-        # 1) check current size of ponds object
-        if self.ponds.lat_size != 1 or self.ponds.lon_size != 1:
-            warnings.warn(
-                "Shape method SINGLE used on a non-single ponds object."
-                "This step erases all time series and starts the ponds object over."
-            )
-            self.ponds.lat_size = 1
-            self.ponds.lon_size = 1
-            self.ponds.lats = np.array([0])
-            self.ponds.lons = np.array([0])
-
-            # 2) Generate background data with trend and noise
-            data_ts = np.zeros(
-                (self.ponds.time_size, self.ponds.lat_size, self.ponds.lon_size)
-            )
-            for i in range(self.ponds.lat_size):
-                for j in range(self.ponds.lon_size):
-                    data_ts[:, i, j] = (
-                        self.ponds.background_trend * self.ponds.time
-                        + self.ponds.background_noise
-                        * np.random.randn(self.ponds.time_size)
-                    )
-            # - Create xarray Dataset, init with background time series data
-            self.ponds.data = xr.Dataset(
-                {
-                    "ts": (["time", "lat", "lon"], data_ts),
-                },
-                coords={
-                    "time": self.ponds.time,
-                    "lat": self.ponds.lats,
-                    "lon": self.ponds.lons,
-                },
-            )
-
-        blob_mask = np.array([[True]])
-
-        return blob_mask

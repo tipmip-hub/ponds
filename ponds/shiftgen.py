@@ -13,24 +13,22 @@ class ShiftsMethod(ABC):
     ) -> tuple[np.ndarray, dict]:
         pass
 
-
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
-
 
 class SIGMOID(ShiftsMethod):
     def __init__(
         self,
-        ponds,
-        shift_time: int,
+        #ponds,
+        #shift_time: int,
         random_seed: int = None,
         sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
     ):
-        self.ponds = ponds
-        self.shift_time = shift_time
+        #self.ponds = ponds
+        #self.shift_time = shift_time
 
         if random_seed is not None:
             np.random.seed(random_seed)
@@ -55,6 +53,8 @@ class SIGMOID(ShiftsMethod):
 
     def make_shift(
         self,
+        time,
+        shift_time,
     ):
         """
         Generate a shift in the time series data using a sigmoid function.
@@ -74,14 +74,14 @@ class SIGMOID(ShiftsMethod):
 
         t_shift = int(
             np.round(
-                self.shift_time
+                shift_time
                 + np.random.uniform(-self.sigma_time, self.sigma_time, size=1)[0]
             )
         )
         # Ensure t_shift is within bounds
-        t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
+        t_shift = max(0, min(t_shift, len(time) - 1))
         shift_effect = self.shift_magnitude * sigmoid(
-            self.ponds.time, self.ponds.time[t_shift], self.shift_steepness
+            time, time[t_shift], self.shift_steepness
         )
 
         return shift_effect, t_shift

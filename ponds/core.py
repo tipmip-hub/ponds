@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+import warnings
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
 
@@ -33,9 +34,9 @@ class PONDS:
 
     def __init__(
         self,
-        lat_size: int = 90,
-        lon_size: int = 180,
-        time_size: int = 80,
+        lat_size: int = 1,
+        lon_size: int = 1,
+        time_size: int = 100,
         background_trend: float = 0.0,
         background_noise: float = 0.005,
         random_seed: int = 42,
@@ -79,8 +80,8 @@ class PONDS:
 
     def add_shift(
         self,
-        shape_method: BlobsMethod,  # currently only gauss is implemented
-        shift_method: ShiftsMethod,  # currently only sigmoid is implemented
+        shift_method: ShiftsMethod,         # currently only sigmoid is implemented
+        shape_method: BlobsMethod = None,
         random_seed: int = None,
         kwargs: dict = dict(),
     ):
@@ -108,8 +109,21 @@ class PONDS:
         self.n_shifts += 1
 
         # 1) generate blob mask
-        blob_generator = shape_method(self, random_seed=random_seed)
-        blob_mask = blob_generator.make_blob()
+        if shape_method == None:
+            if self.lat_size != 1 or self.lon_size != 1:
+                warnings.warn(
+                    "No shape method provided for a non-single ponds grid."
+                    "Shift method is applied to all cells."
+                )
+            blob_mask = np.ones((self.lat_size,self.lon_size),dtype=bool)
+        else:
+            if self.lat_size == 1 and self.lon_size == 1:
+                warnings.warn(
+                    "Shape method specified for a (1x1) grid. PONDS is in single-mode."
+                    "Chosen shape method is likely to fail."
+                )
+            blob_mask = shape_method.make_blob(lats=self.lats,
+                                               lons=self.lons,)
 
         # 2) generate shift data
         # - choose random time step
@@ -120,17 +134,11 @@ class PONDS:
 
         # - generate shift data and add to time serie
         mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
-        shift_generator = shift_method(
-            self,
-            #mask=blob_mask,
-            shift_time=shift_time,
-            random_seed=random_seed,
-            **kwargs,
-        )
         for i in range(self.lat_size):
             for j in range(self.lon_size):
                 if blob_mask[i, j]:
-                    shift_effect, t_shift = shift_generator.make_shift()
+                    shift_effect, t_shift = shift_method.make_shift(self.time,
+                                                                    shift_time)
                     
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.ts.values[:, i, j] += shift_effect
@@ -140,14 +148,13 @@ class PONDS:
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=shift_generator.param_dict,
+            param_dict=shift_method.param_dict,
         )
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
         param_dict: dict,
-        #cluster_key: str = "c",
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
