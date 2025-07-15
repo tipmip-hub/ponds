@@ -20,15 +20,11 @@ class ShiftsMethod(ABC):
 class SIGMOID(ShiftsMethod):
     def __init__(
         self,
-        #ponds,
-        #shift_time: int,
         random_seed: int = None,
         sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
     ):
-        #self.ponds = ponds
-        #self.shift_time = shift_time
 
         if random_seed is not None:
             np.random.seed(random_seed)

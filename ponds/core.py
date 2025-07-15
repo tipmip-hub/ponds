@@ -83,7 +83,6 @@ class PONDS:
         shift_method: ShiftsMethod,         # currently only sigmoid is implemented
         shape_method: BlobsMethod = None,
         random_seed: int = None,
-        kwargs: dict = dict(),
     ):
         """
         Adds a shift to the time series data.
@@ -102,7 +101,6 @@ class PONDS:
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
-        #dict_param = kwargs.copy()
 
         if random_seed is not None:
             np.random.seed(random_seed)
