@@ -91,13 +91,16 @@ def test_gauss_blob_add_shift_integration(mock_shift):
     """
 
     # 1) setup variables
-    ponds = PONDS(lat_size=10, lon_size=20, time_size=30)
+    ponds = PONDS(lat_size=10,
+                  lon_size=20,
+                  time_size=30)
 
     # 2) call function
-    ponds.add_shift(shape_method=GAUSS, shift_method=mock_shift)
+    ponds.add_shift(shape_method=GAUSS,
+                    shift_method=mock_shift)
 
     # 3) check results
-    # - Check ts_param is updated at least somewhere
+    # - Check if cluster mask is True at least somewhere
     shift_grid = ponds.data.c1.values
     assert any(cell is not False for row in shift_grid for cell in row), (
         "Shift should be applied somewhere on grid."

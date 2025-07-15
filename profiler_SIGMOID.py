@@ -3,8 +3,8 @@ import pstats
 
 
 from ponds.blobgen import GAUSS
-from ponds.core_new import PONDS as PONDS_new
-from ponds.shiftgen_new import SIGMOID as SIGMOID_new
+from ponds.core import PONDS as PONDS_new
+from ponds.shiftgen import SIGMOID as SIGMOID_new
 
 def main():
 

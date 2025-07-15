@@ -27,9 +27,11 @@ class MockShift:
     It simulates the behavior of a shift generator that creates a shift
     for a pond."""
 
-    def __init__(self, ponds, mask, shift_time, random_seed):
+    def __init__(self,
+                 ponds,
+                 shift_time,
+                 random_seed):
         self.ponds = ponds
-        self.mask = mask
         self.shift_time = shift_time
         self.random_seed = random_seed
 
@@ -40,9 +42,10 @@ class MockShift:
     def make_shift(
         self,
     ):
-        mask3d = np.zeros((self.ponds.time_size, *self.mask.shape), dtype=bool)
-        mask3d[0, 0, 0] = True
-        return mask3d
+        t_shift = 0
+        shift_effect = 0
+        
+        return shift_effect, t_shift
 
 
 @pytest.fixture

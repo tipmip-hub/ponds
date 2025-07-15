@@ -1,7 +1,5 @@
 import numpy as np
 import xarray as xr
-import warnings
-
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
 
@@ -31,6 +29,7 @@ class PONDS:
         cluster_key (str): Key to use for the variable name in the time series parameter grid
                            (e.g. "c" for "c1", "c2", ...).
     """
+
 
     def __init__(
         self,
@@ -102,6 +101,8 @@ class PONDS:
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
+        #dict_param = kwargs.copy()
+
         if random_seed is not None:
             np.random.seed(random_seed)
         self.n_shifts += 1
@@ -117,15 +118,24 @@ class PONDS:
             time_buffer, self.time_size - time_buffer, 1
         ).astype(int)[0]
 
-        # - generate shift data and add to time series
+        # - generate shift data and add to time serie
+        mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
         shift_generator = shift_method(
             self,
-            mask=blob_mask,
+            #mask=blob_mask,
             shift_time=shift_time,
             random_seed=random_seed,
-            **kwargs
+            **kwargs,
         )
-        mask3d = shift_generator.make_shift()
+        for i in range(self.lat_size):
+            for j in range(self.lon_size):
+                if blob_mask[i, j]:
+                    shift_effect, t_shift = shift_generator.make_shift()
+                    
+                    # add shift effect to the data in single grid cell, all time steps at once
+                    self.data.ts.values[:, i, j] += shift_effect
+                    # update mask3d to indicate where the shift was applied
+                    mask3d[t_shift, i, j] = True
 
         # - store shift id
         self._add_shift_to_ds(

@@ -35,6 +35,7 @@ class SIGMOID(ShiftsMethod):
         self.shift_time = shift_time
         #self.random_seed = random_seed
 
+
         if random_seed is not None:
             np.random.seed(random_seed)
         
@@ -56,6 +57,7 @@ class SIGMOID(ShiftsMethod):
             "sigma_time": sigma_time,
         }
 
+
     def make_shift(
         self,
     ):
@@ -75,23 +77,33 @@ class SIGMOID(ShiftsMethod):
             - "sigma_time": Standard deviation for the time shift.
         """
 
-        t_shift = int(
-            np.round(
-                self.shift_time
-                + np.random.uniform(-self.sigma_time, self.sigma_time, size=1)[0]
-            )
-        )
-        # Ensure t_shift is within bounds
-        t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
-        shift_effect = self.shift_magnitude * sigmoid(
-            self.ponds.time, self.ponds.time[t_shift], self.shift_steepness
-        )
+        mask3d = np.zeros((self.ponds.time_size, *self.mask.shape), dtype=bool)
+        for i in range(len(self.ponds.lats)):
+            for j in range(len(self.ponds.lons)):
+                if self.mask[i, j]:
+                    t_shift = int(
+                        np.round(
+                            self.shift_time
+                            + np.random.uniform(-self.sigma_time, self.sigma_time, size=1)[0]
+                        )
+                    )
+                    t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
 
-        return shift_effect, t_shift
+                    shift_effect = self.shift_magnitude * sigmoid(
+                        self.ponds.time, self.ponds.time[t_shift], self.shift_steepness
+                    )
+                    # add sigmoid shift effect to the data in single grid cell, all time steps at once
+                    self.ponds.data["ts"][:, i, j] += shift_effect
+                    # update mask3d to indicate where the shift was applied
+                    mask3d[t_shift, i, j] = True
+
+        return mask3d
+
 
 ###################################################################################################
 ################################### Helper Functions ##############################################
 ###################################################################################################
+
 
 def sigmoid(t, t0, k: float = 1.0) -> np.ndarray:
     """
