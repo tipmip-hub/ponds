@@ -120,34 +120,34 @@ class PONDS:
 
         # - generate shift data and add to time serie
         mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
+        shift_generator = shift_method(
+            self,
+            mask=blob_mask,
+            shift_time=shift_time,
+            random_seed=random_seed,
+            **kwargs,
+        )
         for i in range(self.lat_size):
             for j in range(self.lon_size):
                 if blob_mask[i, j]:
-                    shift_generator = shift_method(
-                        self,
-                        mask=blob_mask,
-                        shift_time=shift_time,
-                        random_seed=random_seed,
-                    )
-                    shift_effect, param_dict = shift_generator.make_shift(**kwargs)
+                    shift_effect, t_shift = shift_generator.make_shift()
                     
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.ts.values[:, i, j] += shift_effect
                     # update mask3d to indicate where the shift was applied
-                    mask3d[param_dict["t_shift"], i, j] = True
+                    mask3d[t_shift, i, j] = True
 
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=param_dict,
-            cluster_key=self.cluster_key,
+            param_dict=shift_generator.param_dict,
         )
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
         param_dict: dict,
-        cluster_key: str = "c",
+        #cluster_key: str = "c",
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -169,11 +169,11 @@ class PONDS:
         variable_names = list(self.data.data_vars.keys())
         # print(f"Current variable names: {variable_names}")
         variable_names = [
-            name for name in variable_names if name.startswith(cluster_key)
+            name for name in variable_names if name.startswith(self.cluster_key)
         ]
         # print(f"Variable names: {variable_names}")
         last_variable_index = int(len(variable_names))
-        new_variable_name = f"{cluster_key}{last_variable_index + 1}"
+        new_variable_name = f"{self.cluster_key}{last_variable_index + 1}"
 
         # Create a new DataArray with the same shape as the mask
         new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)

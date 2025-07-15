@@ -26,17 +26,38 @@ class SIGMOID(ShiftsMethod):
         mask: np.ndarray,
         shift_time: int,
         random_seed: int = None,
+        sigma_time: float = None,
+        shift_steepness: float = None,
+        shift_magnitude: float = None,
     ):
         self.ponds = ponds
         self.mask = mask
         self.shift_time = shift_time
-        self.random_seed = random_seed
+        #self.random_seed = random_seed
+
+        if random_seed is not None:
+            np.random.seed(random_seed)
+        
+        if shift_steepness is None:
+            shift_steepness = np.random.uniform(1.5, 3.0, size=1)
+        if shift_magnitude is None:
+            shift_magnitude = np.random.uniform(0.95, 1.05, size=1)
+        if sigma_time is None:
+            sigma_time = np.ones(1)  # Sharp shift
+
+        self.sigma_time = sigma_time
+        self.shift_steepness = shift_steepness
+        self.shift_magnitude = shift_magnitude
+
+        self.param_dict = {
+            "type": "SIGMOID",
+            "shift_steepness": shift_steepness,
+            "shift_magnitude": shift_magnitude,
+            "sigma_time": sigma_time,
+        }
 
     def make_shift(
         self,
-        sigma_time: float = None,
-        shift_steepness: float = None,
-        shift_magnitude: float = None,
     ):
         """
         Generate a shift in the time series data using a sigmoid function.
@@ -54,38 +75,19 @@ class SIGMOID(ShiftsMethod):
             - "sigma_time": Standard deviation for the time shift.
         """
 
-        shift_id = 0  # id for sigmoid shift
-
-        if self.random_seed is not None:
-            np.random.seed(self.random_seed)
-        if shift_steepness is None:
-            shift_steepness = np.random.uniform(1.5, 3.0, size=1)
-        if shift_magnitude is None:
-            shift_magnitude = np.random.uniform(0.95, 1.05, size=1)
-        if sigma_time is None:
-            sigma_time = np.ones(1)  # Sharp shift
-        
         t_shift = int(
             np.round(
                 self.shift_time
-                + np.random.uniform(-sigma_time, sigma_time, size=1)[0]
+                + np.random.uniform(-self.sigma_time, self.sigma_time, size=1)[0]
             )
         )
         # Ensure t_shift is within bounds
         t_shift = max(0, min(t_shift, len(self.ponds.time) - 1))
-        shift_effect = shift_magnitude * sigmoid(
-            self.ponds.time, self.ponds.time[t_shift], shift_steepness
+        shift_effect = self.shift_magnitude * sigmoid(
+            self.ponds.time, self.ponds.time[t_shift], self.shift_steepness
         )
 
-        dict_return = {
-            "t_shift": t_shift,
-            "type": "SIGMOID",
-            #"shift_steepness": shift_steepness,
-            #"shift_magnitude": shift_magnitude,
-            #"sigma_time": sigma_time,
-        }
-
-        return shift_effect, dict_return
+        return shift_effect, t_shift
 
 ###################################################################################################
 ################################### Helper Functions ##############################################

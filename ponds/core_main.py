@@ -123,21 +123,21 @@ class PONDS:
             mask=blob_mask,
             shift_time=shift_time,
             random_seed=random_seed,
+            **kwargs
         )
-        mask3d, param_dict = shift_generator.make_shift(**kwargs)
+        mask3d = shift_generator.make_shift()
 
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=param_dict,
-            cluster_key=self.cluster_key,
+            param_dict=shift_generator.param_dict,
         )
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
         param_dict: dict,
-        cluster_key: str = "c",
+        #cluster_key: str = "c",
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -159,11 +159,11 @@ class PONDS:
         variable_names = list(self.data.data_vars.keys())
         # print(f"Current variable names: {variable_names}")
         variable_names = [
-            name for name in variable_names if name.startswith(cluster_key)
+            name for name in variable_names if name.startswith(self.cluster_key)
         ]
         # print(f"Variable names: {variable_names}")
         last_variable_index = int(len(variable_names))
-        new_variable_name = f"{cluster_key}{last_variable_index + 1}"
+        new_variable_name = f"{self.cluster_key}{last_variable_index + 1}"
 
         # Create a new DataArray with the same shape as the mask
         new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)
