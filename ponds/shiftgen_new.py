@@ -78,10 +78,11 @@ class SIGMOID(ShiftsMethod):
         )
 
         dict_return = {
-            "shift_id": shift_id,
-            "shift_steepness": shift_steepness,
-            "shift_magnitude": shift_magnitude,
-            "sigma_time": sigma_time,
+            "t_shift": t_shift,
+            "type": "SIGMOID",
+            #"shift_steepness": shift_steepness,
+            #"shift_magnitude": shift_magnitude,
+            #"sigma_time": sigma_time,
         }
 
         return shift_effect, dict_return
