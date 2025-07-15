@@ -83,8 +83,8 @@ def test_sigmoid_shift_time_used():
     # 2) call function
     # - fix sigmoid parameters, otherwise they would be random
     shift_dict = {"sigma_time": 0, "shift_steepness": 1, "shift_magnitude": 1}
-    sigmoid_shift = SIGMOID(ponds, mask, shift_time)
-    _ = sigmoid_shift.make_shift(**shift_dict)
+    sigmoid_shift = SIGMOID(ponds, mask, shift_time, **shift_dict)
+    _ = sigmoid_shift.make_shift()
 
     # 3) check results
     # - Calculate where sigmoid crosses ~0.5
@@ -189,12 +189,14 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     custom_magnitude = 2.0
 
     # 2) call function
-    sigmoid_shift = SIGMOID(ponds, mask, shift_time)
-    _ = sigmoid_shift.make_shift(
-        sigma_time=custom_sigma_time,
-        shift_steepness=custom_steepness,
-        shift_magnitude=custom_magnitude,
-    )
+    sigmoid_shift = SIGMOID(ponds,
+                            mask,
+                            shift_time,
+                            sigma_time=custom_sigma_time,
+                            shift_steepness=custom_steepness,
+                            shift_magnitude=custom_magnitude,
+                            )
+    _ = sigmoid_shift.make_shift()
 
     # 3) check results
     # - extract the shift parameters from the generated data

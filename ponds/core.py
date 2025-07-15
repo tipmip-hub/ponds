@@ -3,7 +3,7 @@ import xarray as xr
 import warnings
 
 from ponds.blobgen import BlobsMethod
-from ponds.shiftgen_main import ShiftsMethod
+from ponds.shiftgen import ShiftsMethod
 
 
 class PONDS:
