@@ -107,7 +107,7 @@ class PONDS:
         self.n_shifts += 1
 
         # 1) generate blob mask
-        if shape_method == None:
+        if shape_method is None:
             if self.lat_size != 1 or self.lon_size != 1:
                 warnings.warn(
                     "No shape method provided for a non-single ponds grid."
