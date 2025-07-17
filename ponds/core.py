@@ -1,7 +1,6 @@
 import numpy as np
 import xarray as xr
 import warnings
-
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
 
@@ -34,9 +33,9 @@ class PONDS:
 
     def __init__(
         self,
-        lat_size: int = 90,
-        lon_size: int = 180,
-        time_size: int = 80,
+        lat_size: int = 1,
+        lon_size: int = 1,
+        time_size: int = 100,
         background_trend: float = 0.0,
         background_noise: float = 0.005,
         random_seed: int = 42,
@@ -80,10 +79,9 @@ class PONDS:
 
     def add_shift(
         self,
-        shape_method: BlobsMethod,  # currently only gauss is implemented
         shift_method: ShiftsMethod,  # currently only sigmoid is implemented
+        shape_method: BlobsMethod = None,
         random_seed: int = None,
-        kwargs: dict = dict(),
     ):
         """
         Adds a shift to the time series data.
@@ -102,13 +100,29 @@ class PONDS:
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
+
         if random_seed is not None:
             np.random.seed(random_seed)
         self.n_shifts += 1
 
         # 1) generate blob mask
-        blob_generator = shape_method(self, random_seed=random_seed)
-        blob_mask = blob_generator.make_blob()
+        if shape_method is None:
+            if self.lat_size != 1 or self.lon_size != 1:
+                warnings.warn(
+                    "No shape method provided for a non-single ponds grid."
+                    "Shift method is applied to all cells."
+                )
+            blob_mask = np.ones((self.lat_size, self.lon_size), dtype=bool)
+        else:
+            if self.lat_size == 1 and self.lon_size == 1:
+                warnings.warn(
+                    "Shape method specified for a (1x1) grid. PONDS is in single-mode."
+                    "Chosen shape method is likely to fail."
+                )
+            blob_mask = shape_method.make_blob(
+                lats=self.lats,
+                lons=self.lons,
+            )
 
         # 2) generate shift data
         # - choose random time step
@@ -117,27 +131,30 @@ class PONDS:
             time_buffer, self.time_size - time_buffer, 1
         ).astype(int)[0]
 
-        # - generate shift data and add to time series
-        shift_generator = shift_method(
-            self,
-            mask=blob_mask,
-            shift_time=shift_time,
-            random_seed=random_seed,
-        )
-        mask3d, param_dict = shift_generator.make_shift(**kwargs)
+        # - generate shift data and add to time serie
+        mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
+        for i in range(self.lat_size):
+            for j in range(self.lon_size):
+                if blob_mask[i, j]:
+                    shift_effect, t_shift = shift_method.make_shift(
+                        self.time, shift_time
+                    )
+
+                    # add shift effect to the data in single grid cell, all time steps at once
+                    self.data.ts.values[:, i, j] += shift_effect
+                    # update mask3d to indicate where the shift was applied
+                    mask3d[t_shift, i, j] = True
 
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=param_dict,
-            cluster_key=self.cluster_key,
+            param_dict=shift_method.param_dict,
         )
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
         param_dict: dict,
-        cluster_key: str = "c",
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -159,11 +176,11 @@ class PONDS:
         variable_names = list(self.data.data_vars.keys())
         # print(f"Current variable names: {variable_names}")
         variable_names = [
-            name for name in variable_names if name.startswith(cluster_key)
+            name for name in variable_names if name.startswith(self.cluster_key)
         ]
         # print(f"Variable names: {variable_names}")
         last_variable_index = int(len(variable_names))
-        new_variable_name = f"{cluster_key}{last_variable_index + 1}"
+        new_variable_name = f"{self.cluster_key}{last_variable_index + 1}"
 
         # Create a new DataArray with the same shape as the mask
         new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)

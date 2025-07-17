@@ -152,7 +152,10 @@ def test_add_shift_shape_unaltered(mock_blob, mock_shift):
     ponds = PONDS(lat_size=lat_size, lon_size=lon_size, time_size=time_size)
 
     # 2) call function
-    ponds.add_shift(mock_blob, mock_shift)
+    ponds.add_shift(
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
+    )
 
     # 3) check results
     assert ponds.data.ts.shape == original_shape
@@ -174,12 +177,12 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
 
     # 2) call function
     ponds.add_shift(
-        mock_blob,
-        mock_shift,
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
     )
     ponds.add_shift(
-        mock_blob,
-        mock_shift,
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
     )
 
     # 3) check results
