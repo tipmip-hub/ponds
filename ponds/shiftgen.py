@@ -13,9 +13,11 @@ class ShiftsMethod(ABC):
     ) -> tuple[np.ndarray, dict]:
         pass
 
+
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
+
 
 class SIGMOID(ShiftsMethod):
     def __init__(
@@ -25,10 +27,9 @@ class SIGMOID(ShiftsMethod):
         shift_steepness: float = None,
         shift_magnitude: float = None,
     ):
-
         if random_seed is not None:
             np.random.seed(random_seed)
-        
+
         if shift_steepness is None:
             shift_steepness = np.random.uniform(1.5, 3.0, size=1)
         if shift_magnitude is None:
@@ -82,9 +83,11 @@ class SIGMOID(ShiftsMethod):
 
         return shift_effect, t_shift
 
+
 ###################################################################################################
 ################################### Helper Functions ##############################################
 ###################################################################################################
+
 
 def sigmoid(t, t0, k: float = 1.0) -> np.ndarray:
     """

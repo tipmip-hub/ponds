@@ -153,8 +153,8 @@ def test_add_shift_shape_unaltered(mock_blob, mock_shift):
 
     # 2) call function
     ponds.add_shift(
-        shift_method = mock_shift(),
-        shape_method = mock_blob(),
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
     )
 
     # 3) check results
@@ -177,12 +177,12 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
 
     # 2) call function
     ponds.add_shift(
-        shift_method = mock_shift(),
-        shape_method = mock_blob(),
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
     )
     ponds.add_shift(
-        shift_method = mock_shift(),
-        shape_method = mock_blob(),
+        shift_method=mock_shift(),
+        shape_method=mock_blob(),
     )
 
     # 3) check results

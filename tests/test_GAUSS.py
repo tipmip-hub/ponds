@@ -38,8 +38,7 @@ def test_gauss_blob_output():
     ponds_small = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
     gauss_small = GAUSS()
-    blob_small = gauss_small.make_blob(lats=ponds_small.lats,
-                                       lons=ponds_small.lons)
+    blob_small = gauss_small.make_blob(lats=ponds_small.lats, lons=ponds_small.lons)
     # 3) check results
     assert isinstance(blob_small, np.ndarray), "Blob must be a numpy array."
     assert blob_small.dtype == bool, "Blob must be a boolean array."
@@ -52,8 +51,7 @@ def test_gauss_blob_output():
     ponds_large = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
     gauss_large = GAUSS()
-    blob_large = gauss_large.make_blob(lats=ponds_large.lats,
-                                       lons=ponds_large.lons)
+    blob_large = gauss_large.make_blob(lats=ponds_large.lats, lons=ponds_large.lons)
     # 3) check results
     assert isinstance(blob_large, np.ndarray), "Blob must be a numpy array."
     assert blob_large.dtype == bool, "Blob must be a boolean array."
@@ -78,11 +76,9 @@ def test_gauss_same_seed_produces_same_blob_mask(R=5):
 
         # 2) call function
         gauss1 = GAUSS(random_seed=seed_blob)
-        blob1 = gauss1.make_blob(lats=ponds1.lats,
-                                 lons=ponds1.lons)
+        blob1 = gauss1.make_blob(lats=ponds1.lats, lons=ponds1.lons)
         gauss2 = GAUSS(random_seed=seed_blob)
-        blob2 = gauss2.make_blob(lats=ponds2.lats,
-                                 lons=ponds2.lons)
+        blob2 = gauss2.make_blob(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results
         assert np.array_equal(blob1, blob2), "Blobs with same seed should be identical."
@@ -95,13 +91,10 @@ def test_gauss_blob_add_shift_integration(mock_shift):
     """
 
     # 1) setup variables
-    ponds = PONDS(lat_size=10,
-                  lon_size=20,
-                  time_size=30)
+    ponds = PONDS(lat_size=10, lon_size=20, time_size=30)
 
     # 2) call function
-    ponds.add_shift(shape_method=GAUSS(),
-                    shift_method=mock_shift())
+    ponds.add_shift(shape_method=GAUSS(), shift_method=mock_shift())
 
     # 3) check results
     # - Check if cluster mask is True at least somewhere

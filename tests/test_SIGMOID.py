@@ -25,6 +25,7 @@ Legend:
 ########################################## General ################################################
 ###################################################################################################
 
+
 def test_sigmoid_shift_time_used():
     # 1) setup variables
     time_size = 100
@@ -39,12 +40,9 @@ def test_sigmoid_shift_time_used():
 
     # 2) call function
     # - fix sigmoid parameters, otherwise they would be random
-    shift_dict = {"sigma_time": 0,
-                  "shift_steepness": 1,
-                  "shift_magnitude": 1}
+    shift_dict = {"sigma_time": 0, "shift_steepness": 1, "shift_magnitude": 1}
     sigmoid_shift = SIGMOID(**shift_dict)
-    _, shift_time_out = sigmoid_shift.make_shift(ponds.time,
-                                                 shift_time_in)
+    _, shift_time_out = sigmoid_shift.make_shift(ponds.time, shift_time_in)
 
     # 3) check results
     assert abs(shift_time_out - shift_time_in) == 0, (
@@ -73,10 +71,14 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
 
         # 2) call function
         sigmoid1 = SIGMOID(random_seed=random_seed)  # <- testing this
-        shift_effect1, _ = sigmoid1.make_shift(time, shift_time)  # <- testing this: no shift parameters provided, so random values are used
+        shift_effect1, _ = sigmoid1.make_shift(
+            time, shift_time
+        )  # <- testing this: no shift parameters provided, so random values are used
 
         sigmoid2 = SIGMOID(random_seed=random_seed)  # <- testing this
-        shift_effect2, _ = sigmoid2.make_shift(time, shift_time)   # <- testing this: no shift parameters provided, so random values are used
+        shift_effect2, _ = sigmoid2.make_shift(
+            time, shift_time
+        )  # <- testing this: no shift parameters provided, so random values are used
 
         # 3) check results
         assert np.array_equal(shift_effect1, shift_effect2), (
@@ -100,14 +102,14 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     lat_size = 100
     lon_size = 100
     time = np.arange(0, 20, 1)  # Example time array
-    #time_size = 10
-    #ponds = PONDS(
+    # time_size = 10
+    # ponds = PONDS(
     #    lat_size=lat_size,
     #    lon_size=lon_size,
     #    time_size=time_size,
     #    background_trend=0,
     #    background_noise=0,
-    #)
+    # )
     shift_time = 5
 
     custom_sigma_time = 3.0
@@ -115,15 +117,15 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     custom_magnitude = 2.0
 
     # 2) call function
-    t_shifts = np.zeros((lat_size,lon_size))
-    sigmoid_shift = SIGMOID(sigma_time=custom_sigma_time,
-                            shift_steepness=custom_steepness,
-                            shift_magnitude=custom_magnitude,
-                            )
+    t_shifts = np.zeros((lat_size, lon_size))
+    sigmoid_shift = SIGMOID(
+        sigma_time=custom_sigma_time,
+        shift_steepness=custom_steepness,
+        shift_magnitude=custom_magnitude,
+    )
     for i in range(lat_size):
         for j in range(lon_size):
-            _, t_shifts[i, j] = sigmoid_shift.make_shift(time,
-                                                         shift_time)
+            _, t_shifts[i, j] = sigmoid_shift.make_shift(time, shift_time)
 
     # 3) check results
     # - extract the shift parameters from the generated data
@@ -135,9 +137,9 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     assert np.isclose(t0_std, t0_std_expected, atol=err_tol), (
         f"Expected standard deviation {t0_std_expected} not used, got {t0_std}."
     )
-    #assert np.abs(t0_std - custom_sigma_time) > 0, (
+    # assert np.abs(t0_std - custom_sigma_time) > 0, (
     #    f"Custom sigma_time {custom_sigma_time} not used, got {t0_std}."
-    #)
+    # )
 
     # -- shift_steepness
 

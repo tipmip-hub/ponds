@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import xarray as xr
-import warnings
 
 # for gauss
 from scipy.stats import multivariate_normal
@@ -50,14 +48,10 @@ class GAUSS(BlobsMethod):
         sigma_lon = np.random.uniform(15, 40)
 
         # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
-        extended_lons = np.concatenate(
-            [lons - 360, lons, lons + 360]
-        )
+        extended_lons = np.concatenate([lons - 360, lons, lons + 360])
 
         # Create grids
-        lat_grid, extended_lon_grid = np.meshgrid(
-            lats, extended_lons, indexing="ij"
-        )
+        lat_grid, extended_lon_grid = np.meshgrid(lats, extended_lons, indexing="ij")
         pos_extended = np.dstack((lat_grid, extended_lon_grid))
 
         # Calculate Gaussian blob
@@ -70,9 +64,7 @@ class GAUSS(BlobsMethod):
 
         # add up contributions from periodic longitudes, blob_contribution is of shape (lat_size, lon_size)
         blob_contribution = np.sum(
-            blob_normalized.reshape(
-                len(lats), 3, len(lons)
-            ).transpose(1, 0, 2),
+            blob_normalized.reshape(len(lats), 3, len(lons)).transpose(1, 0, 2),
             axis=0,
         ).reshape(len(lats), len(lons))
         # create mask where blob_contribution is above 0.5

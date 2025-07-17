@@ -31,7 +31,6 @@ class PONDS:
                            (e.g. "c" for "c1", "c2", ...).
     """
 
-
     def __init__(
         self,
         lat_size: int = 1,
@@ -80,7 +79,7 @@ class PONDS:
 
     def add_shift(
         self,
-        shift_method: ShiftsMethod,         # currently only sigmoid is implemented
+        shift_method: ShiftsMethod,  # currently only sigmoid is implemented
         shape_method: BlobsMethod = None,
         random_seed: int = None,
     ):
@@ -113,15 +112,17 @@ class PONDS:
                     "No shape method provided for a non-single ponds grid."
                     "Shift method is applied to all cells."
                 )
-            blob_mask = np.ones((self.lat_size,self.lon_size),dtype=bool)
+            blob_mask = np.ones((self.lat_size, self.lon_size), dtype=bool)
         else:
             if self.lat_size == 1 and self.lon_size == 1:
                 warnings.warn(
                     "Shape method specified for a (1x1) grid. PONDS is in single-mode."
                     "Chosen shape method is likely to fail."
                 )
-            blob_mask = shape_method.make_blob(lats=self.lats,
-                                               lons=self.lons,)
+            blob_mask = shape_method.make_blob(
+                lats=self.lats,
+                lons=self.lons,
+            )
 
         # 2) generate shift data
         # - choose random time step
@@ -135,9 +136,10 @@ class PONDS:
         for i in range(self.lat_size):
             for j in range(self.lon_size):
                 if blob_mask[i, j]:
-                    shift_effect, t_shift = shift_method.make_shift(self.time,
-                                                                    shift_time)
-                    
+                    shift_effect, t_shift = shift_method.make_shift(
+                        self.time, shift_time
+                    )
+
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.ts.values[:, i, j] += shift_effect
                     # update mask3d to indicate where the shift was applied
