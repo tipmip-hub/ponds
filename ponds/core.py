@@ -88,7 +88,6 @@ class PONDS:
 
         Shape Methods:
             - "GAUSS": Adds a shift in the shape of a Gaussian blob.
-            - "SINGLE": Return a single time series.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
