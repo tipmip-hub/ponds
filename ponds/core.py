@@ -69,12 +69,32 @@ class PONDS:
                     + background_noise * np.random.randn(self.time_size)
                 )
 
-        # - Create xarray Dataset, init with background time series data
+        # - Create xarray DataArray, init with background time series data
+        dims = ("time", "lat", "lon")
+        da_ts = xr.DataArray(
+            data_ts,
+            dims=dims,
+            coords={
+                "time": self.time,
+                "lat": self.lats,
+                "lon": self.lons,
+            },
+            attrs={
+                "background_trend": background_trend,
+                "background_noise": background_noise,
+            },
+        )
+        # - Create xarray Dataset to hold the time series data
         self.data = xr.Dataset(
             {
-                "ts": (["time", "lat", "lon"], data_ts),
+                "ts": da_ts,
             },
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
+            attrs= {
+                "background_trend": background_trend,
+                "background_noise": background_noise,
+                "num_clusters": 0,  # will be updated when shifts are added
+            }
         )
 
     def add_shift(
@@ -112,6 +132,9 @@ class PONDS:
                     "Shift method is applied to all cells."
                 )
             blob_mask = np.ones((self.lat_size, self.lon_size), dtype=bool)
+            blob_dict = {
+                "type": "SINGLE"
+            }
         else:
             if self.lat_size == 1 and self.lon_size == 1:
                 warnings.warn(
@@ -122,6 +145,7 @@ class PONDS:
                 lats=self.lats,
                 lons=self.lons,
             )
+            blob_dict = shape_method.param_dict
 
         # 2) generate shift data
         # - choose random time step
@@ -144,16 +168,38 @@ class PONDS:
                     # update mask3d to indicate where the shift was applied
                     mask3d[t_shift, i, j] = True
 
+        
+        # - update Dataset attributes
+        self.data.attrs["num_clusters"] = self.n_shifts
+        new_cluster_name = self._get_new_cluster_key()
+        self.data.attrs[new_cluster_name] = shift_method.param_dict.get(
+            "type", "UNKNOWN"
+        )
+
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=shift_method.param_dict,
+            shift_dict=shift_method.param_dict,
+            blob_dict=blob_dict,
         )
+
+    def _get_new_cluster_key(self):
+        """
+        Generate a new cluster key based on the current number of shifts.
+        The cluster key is used to name the variables in the Dataset.
+        """
+        variable_names = list(self.data.data_vars.keys())
+        variable_names = [
+            name for name in variable_names if name.startswith(self.cluster_key)
+        ]
+        last_variable_index = int(len(variable_names))
+        return f"{self.cluster_key}{last_variable_index + 1}"
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
-        param_dict: dict,
+        shift_dict: dict,
+        blob_dict: dict,
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -172,28 +218,32 @@ class PONDS:
         """
 
         # get variable name for new cluster
-        variable_names = list(self.data.data_vars.keys())
-        # print(f"Current variable names: {variable_names}")
-        variable_names = [
-            name for name in variable_names if name.startswith(self.cluster_key)
-        ]
-        # print(f"Variable names: {variable_names}")
-        last_variable_index = int(len(variable_names))
-        new_variable_name = f"{self.cluster_key}{last_variable_index + 1}"
+        new_cluster_name = self._get_new_cluster_key()
 
         # Create a new DataArray with the same shape as the mask
         new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)
-        new_da.attrs["type"] = param_dict.get(
+        # Add attributes to the DataArray
+        # - add shift attributes
+        new_da.attrs["shift_type"] = shift_dict.get(
             "type", "UNKNOWN"
         )  # set type to "UNKNOWN" if not specified
-        new_da.attrs["generation_params"] = {
+        new_da.attrs["shift_params"] = {
             k: v
-            for k, v in param_dict.items()  # exclude "type" from generation_params
+            for k, v in shift_dict.items()  # exclude "type" from generation_params
+            if k != "type"
+        }
+        # - add blob attributes
+        new_da.attrs["blob_type"] = blob_dict.get(
+            "type", "UNKNOWN"
+        )  # set type to "UNKNOWN" if not specified
+        new_da.attrs["blob_params"] = {
+            k: v
+            for k, v in blob_dict.items()  # exclude "type" from generation_params
             if k != "type"
         }
 
         # Append the new DataArray to the Dataset
-        self.data[new_variable_name] = new_da
+        self.data[new_cluster_name] = new_da
 
     def get_ts(
         self,

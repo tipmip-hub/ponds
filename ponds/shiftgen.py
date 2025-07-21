@@ -31,11 +31,11 @@ class SIGMOID(ShiftsMethod):
             np.random.seed(random_seed)
 
         if shift_steepness is None:
-            shift_steepness = np.random.uniform(1.5, 3.0, size=1)
+            shift_steepness = np.random.uniform(1.5, 3.0)
         if shift_magnitude is None:
-            shift_magnitude = np.random.uniform(0.95, 1.05, size=1)
+            shift_magnitude = np.random.uniform(0.95, 1.05)
         if sigma_time is None:
-            sigma_time = np.ones(1)  # Sharp shift
+            sigma_time = 1.0  # Sharp shift
 
         self.sigma_time = sigma_time
         self.shift_steepness = shift_steepness

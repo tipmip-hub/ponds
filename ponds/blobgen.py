@@ -24,8 +24,35 @@ class GAUSS(BlobsMethod):
     def __init__(
         self,
         random_seed=None,  # random seed for reproducibility
+        center_lat=None,  # center latitude of the blob
+        center_lon=None,  # center longitude of the blob
+        sigma_lat=None,  # standard deviation in latitude
+        sigma_lon=None,  # standard deviation in longitude
     ):
-        self.random_seed = random_seed
+        if random_seed is not None:
+            np.random.seed(random_seed)
+
+        if center_lat is None:
+            center_lat = np.random.uniform(-80, 80)
+        if center_lon is None:
+            center_lon = np.random.uniform(-180, 180)
+        if sigma_lat is None:
+            sigma_lat = np.random.uniform(10, 20)
+        if sigma_lon is None:
+            sigma_lon = np.random.uniform(15, 40)
+        
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+        self.sigma_lat = sigma_lat
+        self.sigma_lon = sigma_lon
+
+        self.param_dict = {
+            "type": "GAUSS",
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "sigma_lat": sigma_lat,
+            "sigma_lon": sigma_lon,
+        }
 
     def make_blob(
         self,
@@ -40,12 +67,12 @@ class GAUSS(BlobsMethod):
         Returns:
             blob_mask (np.ndarray): A 2D array of shape (lat_size, lon_size).
         """
-        if self.random_seed is not None:
-            np.random.seed(self.random_seed)  # set random seed for reproducibility
-        center_lat = np.random.uniform(-80, 80)
-        center_lon = np.random.uniform(-180, 180)
-        sigma_lat = np.random.uniform(10, 20)
-        sigma_lon = np.random.uniform(15, 40)
+        #if self.random_seed is not None:
+        #    np.random.seed(self.random_seed)  # set random seed for reproducibility
+        #center_lat = np.random.uniform(-80, 80)
+        #center_lon = np.random.uniform(-180, 180)
+        #sigma_lat = np.random.uniform(10, 20)
+        #sigma_lon = np.random.uniform(15, 40)
 
         # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
         extended_lons = np.concatenate([lons - 360, lons, lons + 360])
@@ -55,9 +82,9 @@ class GAUSS(BlobsMethod):
         pos_extended = np.dstack((lat_grid, extended_lon_grid))
 
         # Calculate Gaussian blob
-        cov = np.array([[sigma_lat**2, 0], [0, sigma_lon**2]])
+        cov = np.array([[self.sigma_lat**2, 0], [0, self.sigma_lon**2]])
         # - create multivariate normal distribution
-        rv = multivariate_normal(mean=[center_lat, center_lon], cov=cov)
+        rv = multivariate_normal(mean=[self.center_lat, self.center_lon], cov=cov)
         # - compute probability density function (PDF) over the extended grid
         extended_blob = rv.pdf(pos_extended)
         blob_normalized = extended_blob / np.max(extended_blob)
