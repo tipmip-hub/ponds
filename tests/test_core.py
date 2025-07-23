@@ -223,11 +223,13 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     assert ponds.data.custom_key1.attrs["shape_type"] == "MOCKBLOB"
     assert ponds.data.custom_key2.attrs["shape_type"] == "MOCKBLOB"
 
+
 ###################################################################################################
 ####################################### Reproducibility ###########################################
 ###################################################################################################
 
 # use SIGMOID and GAUSS to benchmark reproducibility
+
 
 def test_reproducibility(R=10):
     """
@@ -241,7 +243,7 @@ def test_reproducibility(R=10):
                 - add a shift using SIGMOID and GAUSS, each with the stored parameters (not the seed)
               - check if the time series and masks are equal
     """
-    
+
     # 1) setup variables
     # - basic parameters
     lat_size = 100
@@ -254,37 +256,41 @@ def test_reproducibility(R=10):
         rs1 = np.random.randint(0, 100)
         rs2 = np.random.randint(100, 200)
         rs3 = np.random.randint(200, 300)
-        
+
         # - create PONDS object
-        ponds = PONDS(lat_size=lat_size,
-                    lon_size=lon_size,
-                    time_size=time_size,
-                    background_noise=noise,
-                    background_trend=trend,
-                    random_seed=rs1)
+        ponds = PONDS(
+            lat_size=lat_size,
+            lon_size=lon_size,
+            time_size=time_size,
+            background_noise=noise,
+            background_trend=trend,
+            random_seed=rs1,
+        )
         # - add a shift using SIGMOID and GAUSS
-        ponds.add_shift(shape_method=GAUSS(random_seed=rs2),
-                        shift_method=SIGMOID(random_seed=rs3))
+        ponds.add_shift(
+            shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+        )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.data.attrs["ponds_params"]
         shape_dict_ex = ponds.data.c1.attrs["shape_params"]
         shift_dict_ex = ponds.data.c1.attrs["shift_params"]
         # - reproduce the shift using the stored parameters
-        
+
         # 2) call function
         # - reproduce the ponds object with extracted parameters
         ponds_rep = PONDS(**ponds_dict_ex)
-        ponds_rep.add_shift(shape_method=GAUSS(**shape_dict_ex),
-                            shift_method=SIGMOID(**shift_dict_ex))
+        ponds_rep.add_shift(
+            shape_method=GAUSS(**shape_dict_ex), shift_method=SIGMOID(**shift_dict_ex)
+        )
 
         # 3) check results
         # - check if attributes are equal
-        assert ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"], (
-            "PONDS parameters do not match."
-        )
-        assert ponds.data.attrs["num_clusters"] == ponds_rep.data.attrs["num_clusters"], (
-            "Number of clusters does not match."
-        )
+        assert (
+            ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
+        ), "PONDS parameters do not match."
+        assert (
+            ponds.data.attrs["num_clusters"] == ponds_rep.data.attrs["num_clusters"]
+        ), "Number of clusters does not match."
 
         # - check if time series are equal
         assert np.array_equal(ponds.data.ts.values, ponds_rep.data.ts.values), (

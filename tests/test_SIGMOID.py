@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, SIGMOID
+from ponds import SIGMOID
 
 """
 Things to Test:
@@ -24,8 +24,6 @@ Legend:
 ###################################################################################################
 
 
-
-
 ###################################################################################################
 ####################################### Random Shift ##############################################
 ###################################################################################################
@@ -45,12 +43,16 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
         random_seed = np.random.randint(0, 1000)
 
         # 2) call function
-        sigmoid1 = SIGMOID(random_seed=random_seed)  # <- testing this: no shift parameters provided, so random values are used
+        sigmoid1 = SIGMOID(
+            random_seed=random_seed
+        )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect1, _ = sigmoid1.make_shift(
             time,
         )
 
-        sigmoid2 = SIGMOID(random_seed=random_seed)  # <- testing this: no shift parameters provided, so random values are used
+        sigmoid2 = SIGMOID(
+            random_seed=random_seed
+        )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect2, _ = sigmoid2.make_shift(
             time,
         )
@@ -78,7 +80,7 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     lat_size = 100
     lon_size = 100
     time = np.arange(0, 20, 1)  # Example time array
-    
+
     central_time = 5
     custom_sigma_time = 3.0
     custom_steepness = 5.0

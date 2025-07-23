@@ -36,7 +36,7 @@ class MockShift:
     def make_shift(
         self,
         time,
-        #shift_time,
+        # shift_time,
     ):
         t_shift = len(time) // 2
         shift_effect = np.zeros_like(time, dtype=float)

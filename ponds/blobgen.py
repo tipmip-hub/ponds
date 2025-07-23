@@ -40,7 +40,7 @@ class GAUSS(BlobsMethod):
             sigma_lat = np.random.uniform(10, 20)
         if sigma_lon is None:
             sigma_lon = np.random.uniform(15, 40)
-        
+
         self.center_lat = center_lat
         self.center_lon = center_lon
         self.sigma_lat = sigma_lat

@@ -109,13 +109,13 @@ def test_gauss_blob_add_shift_integration(mock_shift):
 ####################################### Custom Gauss ##############################################
 ###################################################################################################
 
+
 def test_gauss_custom_parametet_storage():
     """
     - check if the custom parameters are stored correctly in the GAUSS class
     - expected behavior:
         - center_lat, center_lon, sigma_lat, sigma_lon should be stored as attributes
     """
-
 
     # 1) setup variables
     custom_center_lat = 42.0
@@ -147,7 +147,8 @@ def test_gauss_custom_parametet_storage():
         f"Expected sigma_lon: {custom_sigma_lon}, got: {shape_dict['sigma_lon']}"
     )
 
-def test_gauss_custom_parameters_center(err = 3):
+
+def test_gauss_custom_parameters_center(err=3):
     """
     - Test if custom parameters for the central lat and lon for the Gauss blob are used correctly.
     - expected behavior:
@@ -164,16 +165,8 @@ def test_gauss_custom_parameters_center(err = 3):
     lat_size = 180
     lon_size = 360
 
-    custom_center_lat = [-90,
-                         -88,
-                         0,
-                         42,
-                         90]       # needs to be in range [-90, 90]
-    custom_center_lon = [-179,
-                         -110,
-                         0,
-                         63,
-                         179]    # needs to be in range [-180, 180]
+    custom_center_lat = [-90, -88, 0, 42, 90]  # needs to be in range [-90, 90]
+    custom_center_lon = [-179, -110, 0, 63, 179]  # needs to be in range [-180, 180]
     custom_sigma_lat = 0.1  # small sigma for a sharp blob (only one cell)
     custom_sigma_lon = 0.05  # small sigma for a sharp blob (only one cell)
 
@@ -199,7 +192,7 @@ def test_gauss_custom_parameters_center(err = 3):
             assert np.isclose(ix_lat_mean, center_lat_exp, atol=err), (
                 f"Expected center_lat: {center_lat_exp}, got: {ix_lat_mean}"
             )
-            # - center_lon  
+            # - center_lon
             # -> ix of center_lon is 180 + custom_center_lon
             center_lon_exp = 180 + center_lon
             ix_lon_mean = np.mean(np.where(mask_custom.any(axis=0))[0])
