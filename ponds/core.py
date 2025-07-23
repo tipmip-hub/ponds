@@ -91,8 +91,8 @@ class PONDS:
                 "ts": da_ts,
             },
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
-            attrs= {
-                "ponds_params":{
+            attrs={
+                "ponds_params": {
                     "lat_size": lat_size,
                     "lon_size": lon_size,
                     "time_size": time_size,
@@ -102,7 +102,7 @@ class PONDS:
                     "cluster_key": cluster_key,
                 },
                 "num_clusters": 0,  # will be updated when shifts are added
-            }
+            },
         )
 
     def add_shift(
@@ -143,9 +143,7 @@ class PONDS:
                     "Shift method is applied to all cells."
                 )
             blob_mask = np.ones((self.lat_size, self.lon_size), dtype=bool)
-            blob_dict = {
-                "type": "SINGLE"
-            }
+            blob_dict = {"type": "SINGLE"}
         else:
             if self.lat_size == 1 and self.lon_size == 1:
                 warnings.warn(
@@ -173,7 +171,6 @@ class PONDS:
                     # update mask3d to indicate where the shift was applied
                     mask3d[t_shift, i, j] = True
 
-        
         # - update Dataset attributes
         self.data.attrs["num_clusters"] = self.n_shifts
         new_cluster_name = self._get_new_cluster_key()
