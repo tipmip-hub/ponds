@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS
+from ponds import PONDS, GAUSS, SIGMOID
 
 """
 Testing the PONDS core class and its methods.
@@ -9,10 +9,14 @@ Things to Test:
         x does the ts data grid exist and have the right shape (space & time)
         x is a background trend added correctly (check slope)
         x is a background noise added correctly (check variance)
-        x does the same seed produce the same data
+        x do the same custom parameters produce the same data
     x Adding shifts -> use mock methods for shape and shift
         x is the shape of the grid unaltered
-        x is the shift type stored as an attribute
+        x is the shift-type stored as an attribute on Dataset Level
+        x is the shift- and shape-type stored as an attribute on DataArray Level
+    x Reproducibility using stored attributes -> use SIGMOID and GAUSS to benchmark
+        x can I reproduce a shift using the stored attributes?
+
 
 Legend:
     - : to do
@@ -101,10 +105,10 @@ def test_ponds_background_noise_variance(err_tol=1e-4):
     assert np.isclose(np.std(ts4), noise, atol=err_tol)
 
 
-def test_ponds_same_seed_reproducibility(R=5):
+def test_ponds_reproducibility(R=5):
     """
-    Check if same random seed produces the same data. Also check that different
-    seeds produce different data.
+    - check if same input parameters produces the same data
+    - check that different seeds produce different data, even though rest of the parameters are the same
     R: int
         Number of random seeds to test.
     """
@@ -163,31 +167,136 @@ def test_add_shift_shape_unaltered(mock_blob, mock_shift):
 
 def test_add_shift_parameter_storage(mock_blob, mock_shift):
     """
-    - check if the shift type is stored as an attribute in the xarray DataArray
+    - check if the shift- and shape type is stored as an attribute in the xarray DataArray
     - check if PONDS takes a custom cluster_key for the variable name
     """
 
     # 1) setup variables
+    lat_size = 2
+    lon_size = 2
+    time_size = 10
+    background_noise = 0.01
+    background_trend = 0.005
+    num_shifts = 2
+    cluster_key = "custom_key"
+    random_seed = 2
     ponds = PONDS(
-        lat_size=2,
-        lon_size=2,
-        time_size=10,
-        cluster_key="custom_key",
+        lat_size=lat_size,
+        lon_size=lon_size,
+        time_size=time_size,
+        random_seed=random_seed,
+        background_noise=background_noise,
+        background_trend=background_trend,
+        cluster_key=cluster_key,
     )
 
     # 2) call function
-    ponds.add_shift(
-        shift_method=mock_shift(),
-        shape_method=mock_blob(),
-    )
-    ponds.add_shift(
-        shift_method=mock_shift(),
-        shape_method=mock_blob(),
-    )
+    for _ in range(num_shifts):
+        ponds.add_shift(
+            shift_method=mock_shift(),
+            shape_method=mock_blob(),
+        )
 
     # 3) check results
-    stored_type = ponds.data.custom_key1.attrs["type"]
-    assert stored_type == "MOCK"
+    # - check Dataset attributes
+    ponds_dict = ponds.data.attrs["ponds_params"]
+    assert ponds_dict["lat_size"] == lat_size
+    assert ponds_dict["lon_size"] == lon_size
+    assert ponds_dict["time_size"] == time_size
+    assert ponds_dict["background_trend"] == background_trend
+    assert ponds_dict["background_noise"] == background_noise
+    assert ponds_dict["cluster_key"] == cluster_key
+    assert ponds_dict["random_seed"] == random_seed
 
-    stored_type = ponds.data.custom_key2.attrs["type"]
-    assert stored_type == "MOCK"
+    assert ponds.data.attrs["num_clusters"] == num_shifts
+    assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
+    assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
+
+    # - check DataArray attributes
+    # -- check if noise and trend are stored
+    assert ponds.data.ts.attrs["noise"] == background_noise
+    assert ponds.data.ts.attrs["trend"] == background_trend
+    # -- check if shift_type is stored
+    assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
+    assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
+    # -- check if shape_type is stored
+    assert ponds.data.custom_key1.attrs["shape_type"] == "MOCKBLOB"
+    assert ponds.data.custom_key2.attrs["shape_type"] == "MOCKBLOB"
+
+
+###################################################################################################
+####################################### Reproducibility ###########################################
+###################################################################################################
+
+# use SIGMOID and GAUSS to benchmark reproducibility
+
+
+def test_reproducibility(R=10):
+    """
+    - check if stored attributes can be used to reproduce a shift
+        -> do this using SIGMOID and GAUSS
+
+        Idea: - create a PONDS object using a certain random seed
+                - add a shift using SIGMOID and GAUSS, each with a random seed
+                - extract all parameters from the Dataset
+              - reproduce the ponds object using the same random seed
+                - add a shift using SIGMOID and GAUSS, each with the stored parameters (not the seed)
+              - check if the time series and masks are equal
+    """
+
+    # 1) setup variables
+    # - basic parameters
+    lat_size = 100
+    lon_size = 100
+    time_size = 100
+    noise = 0.01
+    trend = 0.005
+
+    for _ in range(R):
+        rs1 = np.random.randint(0, 100)
+        rs2 = np.random.randint(100, 200)
+        rs3 = np.random.randint(200, 300)
+
+        # - create PONDS object
+        ponds = PONDS(
+            lat_size=lat_size,
+            lon_size=lon_size,
+            time_size=time_size,
+            background_noise=noise,
+            background_trend=trend,
+            random_seed=rs1,
+        )
+        # - add a shift using SIGMOID and GAUSS
+        ponds.add_shift(
+            shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+        )
+        # - extract all parameters from the Dataset
+        ponds_dict_ex = ponds.data.attrs["ponds_params"]
+        shape_dict_ex = ponds.data.c1.attrs["shape_params"]
+        shift_dict_ex = ponds.data.c1.attrs["shift_params"]
+        # - reproduce the shift using the stored parameters
+
+        # 2) call function
+        # - reproduce the ponds object with extracted parameters
+        ponds_rep = PONDS(**ponds_dict_ex)
+        ponds_rep.add_shift(
+            shape_method=GAUSS(**shape_dict_ex), shift_method=SIGMOID(**shift_dict_ex)
+        )
+
+        # 3) check results
+        # - check if attributes are equal
+        assert (
+            ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
+        ), "PONDS parameters do not match."
+        assert (
+            ponds.data.attrs["num_clusters"] == ponds_rep.data.attrs["num_clusters"]
+        ), "Number of clusters does not match."
+
+        # - check if time series are equal
+        assert np.array_equal(ponds.data.ts.values, ponds_rep.data.ts.values), (
+            "Reproduced time series do not match the original time series."
+        )
+        # - check if the masks are equal
+        assert np.array_equal(ponds.data.c1.values, ponds_rep.data.c1.values), (
+            "Reproduced mask for c1 does not match the original mask."
+        )

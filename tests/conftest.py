@@ -13,6 +13,8 @@ class MockBlob:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
+        self.param_dict = {"type": "MOCKBLOB"}
+
     def make_blob(self, lats, lons):
         mask = np.zeros((len(lats), len(lons)), dtype=bool)
         mask[0, 0] = True
@@ -29,14 +31,14 @@ class MockShift:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"type": "MOCK"}
+        self.param_dict = {"type": "MOCKSHIFT"}
 
     def make_shift(
         self,
         time,
-        shift_time,
+        # shift_time,
     ):
-        t_shift = shift_time
+        t_shift = len(time) // 2
         shift_effect = np.zeros_like(time, dtype=float)
 
         return shift_effect, t_shift
