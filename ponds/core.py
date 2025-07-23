@@ -37,9 +37,9 @@ class PONDS:
         lon_size: int = 1,
         time_size: int = 100,
         background_trend: float = 0.0,
-        background_noise: float = 0.005,
-        random_seed: int = 42,
+        background_noise: float = 0.0,
         cluster_key: str = "c",
+        random_seed: int = 1,
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
@@ -51,9 +51,9 @@ class PONDS:
         self.time_size = time_size
         self.background_trend = background_trend
         self.background_noise = background_noise
-        self.random_seed = random_seed
         self.n_shifts = 0
         self.cluster_key = cluster_key
+        self.random_seed = random_seed
 
         # 1) Set up coordinates
         self.lats = np.linspace(-90, 90, self.lat_size)
@@ -69,26 +69,52 @@ class PONDS:
                     + background_noise * np.random.randn(self.time_size)
                 )
 
-        # - Create xarray Dataset, init with background time series data
+        # - Create xarray DataArray, init with background time series data
+        dims = ("time", "lat", "lon")
+        da_ts = xr.DataArray(
+            data_ts,
+            dims=dims,
+            coords={
+                "time": self.time,
+                "lat": self.lats,
+                "lon": self.lons,
+            },
+            attrs={
+                "random_seed": random_seed,
+                "trend": background_trend,
+                "noise": background_noise,
+            },
+        )
+        # - Create xarray Dataset to hold the time series data
         self.data = xr.Dataset(
             {
-                "ts": (["time", "lat", "lon"], data_ts),
+                "ts": da_ts,
             },
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
+            attrs= {
+                "ponds_params":{
+                    "lat_size": lat_size,
+                    "lon_size": lon_size,
+                    "time_size": time_size,
+                    "background_trend": background_trend,
+                    "background_noise": background_noise,
+                    "random_seed": random_seed,
+                    "cluster_key": cluster_key,
+                },
+                "num_clusters": 0,  # will be updated when shifts are added
+            }
         )
 
     def add_shift(
         self,
-        shift_method: ShiftsMethod,  # currently only sigmoid is implemented
+        shift_method: ShiftsMethod,
         shape_method: BlobsMethod = None,
-        random_seed: int = None,
     ):
         """
         Adds a shift to the time series data.
 
         Shape Methods:
             - "GAUSS": Adds a shift in the shape of a Gaussian blob.
-            - "SINGLE": Return a single time series.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
@@ -101,8 +127,12 @@ class PONDS:
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
 
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        if self.random_seed is not None:
+            np.random.seed(self.random_seed)
+        else:
+            warnings.warn(
+                "No random seed set for PONDS. Results will not be reproducible."
+            )
         self.n_shifts += 1
 
         # 1) generate blob mask
@@ -113,6 +143,9 @@ class PONDS:
                     "Shift method is applied to all cells."
                 )
             blob_mask = np.ones((self.lat_size, self.lon_size), dtype=bool)
+            blob_dict = {
+                "type": "SINGLE"
+            }
         else:
             if self.lat_size == 1 and self.lon_size == 1:
                 warnings.warn(
@@ -123,21 +156,16 @@ class PONDS:
                 lats=self.lats,
                 lons=self.lons,
             )
+            blob_dict = shape_method.param_dict
 
         # 2) generate shift data
-        # - choose random time step
-        time_buffer = self.time_size // 10
-        shift_time = np.random.uniform(
-            time_buffer, self.time_size - time_buffer, 1
-        ).astype(int)[0]
-
         # - generate shift data and add to time serie
         mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
         for i in range(self.lat_size):
             for j in range(self.lon_size):
                 if blob_mask[i, j]:
                     shift_effect, t_shift = shift_method.make_shift(
-                        self.time, shift_time
+                        self.time,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -145,16 +173,38 @@ class PONDS:
                     # update mask3d to indicate where the shift was applied
                     mask3d[t_shift, i, j] = True
 
+        
+        # - update Dataset attributes
+        self.data.attrs["num_clusters"] = self.n_shifts
+        new_cluster_name = self._get_new_cluster_key()
+        self.data.attrs[new_cluster_name] = shift_method.param_dict.get(
+            "type", "UNKNOWN"
+        )
+
         # - store shift id
         self._add_shift_to_ds(
             mask=mask3d,
-            param_dict=shift_method.param_dict,
+            shift_dict=shift_method.param_dict,
+            blob_dict=blob_dict,
         )
+
+    def _get_new_cluster_key(self):
+        """
+        Generate a new cluster key based on the current number of shifts.
+        The cluster key is used to name the variables in the Dataset.
+        """
+        variable_names = list(self.data.data_vars.keys())
+        variable_names = [
+            name for name in variable_names if name.startswith(self.cluster_key)
+        ]
+        last_variable_index = int(len(variable_names))
+        return f"{self.cluster_key}{last_variable_index + 1}"
 
     def _add_shift_to_ds(
         self,
         mask: np.ndarray,
-        param_dict: dict,
+        shift_dict: dict,
+        blob_dict: dict,
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -173,28 +223,32 @@ class PONDS:
         """
 
         # get variable name for new cluster
-        variable_names = list(self.data.data_vars.keys())
-        # print(f"Current variable names: {variable_names}")
-        variable_names = [
-            name for name in variable_names if name.startswith(self.cluster_key)
-        ]
-        # print(f"Variable names: {variable_names}")
-        last_variable_index = int(len(variable_names))
-        new_variable_name = f"{self.cluster_key}{last_variable_index + 1}"
+        new_cluster_name = self._get_new_cluster_key()
 
         # Create a new DataArray with the same shape as the mask
         new_da = xr.DataArray(mask, dims=self.data.dims, coords=self.data.coords)
-        new_da.attrs["type"] = param_dict.get(
+        # Add attributes to the DataArray
+        # - add shift attributes
+        new_da.attrs["shift_type"] = shift_dict.get(
             "type", "UNKNOWN"
         )  # set type to "UNKNOWN" if not specified
-        new_da.attrs["generation_params"] = {
+        new_da.attrs["shift_params"] = {
             k: v
-            for k, v in param_dict.items()  # exclude "type" from generation_params
+            for k, v in shift_dict.items()  # exclude "type" from generation_params
+            if k != "type"
+        }
+        # - add blob attributes
+        new_da.attrs["shape_type"] = blob_dict.get(
+            "type", "UNKNOWN"
+        )  # set type to "UNKNOWN" if not specified
+        new_da.attrs["shape_params"] = {
+            k: v
+            for k, v in blob_dict.items()  # exclude "type" from generation_params
             if k != "type"
         }
 
         # Append the new DataArray to the Dataset
-        self.data[new_variable_name] = new_da
+        self.data[new_cluster_name] = new_da
 
     def get_ts(
         self,
