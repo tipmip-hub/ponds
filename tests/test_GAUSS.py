@@ -14,6 +14,7 @@ Things to Test:
     - Custom Gauss blob
         - is the location correct
         - is the shape correct
+        - are the correct shape-params stored as attributes on the DataArray Level
 
 Legend:
     - : to do

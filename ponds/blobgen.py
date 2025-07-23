@@ -23,7 +23,7 @@ class BlobsMethod(ABC):
 class GAUSS(BlobsMethod):
     def __init__(
         self,
-        random_seed=None,  # random seed for reproducibility
+        random_seed=1,  # random seed for reproducibility
         center_lat=None,  # center latitude of the blob
         center_lon=None,  # center longitude of the blob
         sigma_lat=None,  # standard deviation in latitude
@@ -67,12 +67,6 @@ class GAUSS(BlobsMethod):
         Returns:
             blob_mask (np.ndarray): A 2D array of shape (lat_size, lon_size).
         """
-        #if self.random_seed is not None:
-        #    np.random.seed(self.random_seed)  # set random seed for reproducibility
-        #center_lat = np.random.uniform(-80, 80)
-        #center_lon = np.random.uniform(-180, 180)
-        #sigma_lat = np.random.uniform(10, 20)
-        #sigma_lon = np.random.uniform(15, 40)
 
         # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
         extended_lons = np.concatenate([lons - 360, lons, lons + 360])

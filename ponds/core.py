@@ -37,9 +37,9 @@ class PONDS:
         lon_size: int = 1,
         time_size: int = 100,
         background_trend: float = 0.0,
-        background_noise: float = 0.005,
-        random_seed: int = 42,
+        background_noise: float = 0.0,
         cluster_key: str = "c",
+        random_seed: int = 1,
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
@@ -51,9 +51,9 @@ class PONDS:
         self.time_size = time_size
         self.background_trend = background_trend
         self.background_noise = background_noise
-        self.random_seed = random_seed
         self.n_shifts = 0
         self.cluster_key = cluster_key
+        self.random_seed = random_seed
 
         # 1) Set up coordinates
         self.lats = np.linspace(-90, 90, self.lat_size)
@@ -80,8 +80,9 @@ class PONDS:
                 "lon": self.lons,
             },
             attrs={
-                "background_trend": background_trend,
-                "background_noise": background_noise,
+                "random_seed": random_seed,
+                "trend": background_trend,
+                "noise": background_noise,
             },
         )
         # - Create xarray Dataset to hold the time series data
@@ -91,17 +92,23 @@ class PONDS:
             },
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
             attrs= {
-                "background_trend": background_trend,
-                "background_noise": background_noise,
+                "ponds_params":{
+                    "lat_size": lat_size,
+                    "lon_size": lon_size,
+                    "time_size": time_size,
+                    "background_trend": background_trend,
+                    "background_noise": background_noise,
+                    "random_seed": random_seed,
+                    "cluster_key": cluster_key,
+                },
                 "num_clusters": 0,  # will be updated when shifts are added
             }
         )
 
     def add_shift(
         self,
-        shift_method: ShiftsMethod,  # currently only sigmoid is implemented
+        shift_method: ShiftsMethod,
         shape_method: BlobsMethod = None,
-        random_seed: int = None,
     ):
         """
         Adds a shift to the time series data.
@@ -120,8 +127,12 @@ class PONDS:
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
 
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        if self.random_seed is not None:
+            np.random.seed(self.random_seed)
+        else:
+            warnings.warn(
+                "No random seed set for PONDS. Results will not be reproducible."
+            )
         self.n_shifts += 1
 
         # 1) generate blob mask
@@ -148,19 +159,13 @@ class PONDS:
             blob_dict = shape_method.param_dict
 
         # 2) generate shift data
-        # - choose random time step
-        time_buffer = self.time_size // 10
-        shift_time = np.random.uniform(
-            time_buffer, self.time_size - time_buffer, 1
-        ).astype(int)[0]
-
         # - generate shift data and add to time serie
         mask3d = np.zeros((self.time_size, *blob_mask.shape), dtype=bool)
         for i in range(self.lat_size):
             for j in range(self.lon_size):
                 if blob_mask[i, j]:
                     shift_effect, t_shift = shift_method.make_shift(
-                        self.time, shift_time
+                        self.time,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -233,10 +238,10 @@ class PONDS:
             if k != "type"
         }
         # - add blob attributes
-        new_da.attrs["blob_type"] = blob_dict.get(
+        new_da.attrs["shape_type"] = blob_dict.get(
             "type", "UNKNOWN"
         )  # set type to "UNKNOWN" if not specified
-        new_da.attrs["blob_params"] = {
+        new_da.attrs["shape_params"] = {
             k: v
             for k, v in blob_dict.items()  # exclude "type" from generation_params
             if k != "type"
