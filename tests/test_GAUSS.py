@@ -12,7 +12,7 @@ Things to Test:
         x check if in blob mask at least one cell is True
         - do the blobs scale with the grid size
     - Custom Gauss blob
-        - are the correct shape-params stored as attributes on the DataArray Level
+        x are the correct shape-params stored as attributes on the DataArray Level
         x is the location correct
         - is the shape correct
 

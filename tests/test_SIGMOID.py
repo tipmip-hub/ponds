@@ -5,7 +5,6 @@ from ponds import SIGMOID
 Things to Test:
     - Random sigmoid shift
         x do same seed produce same shift
-        - check if random parameters are stored correctly in ts_param
     - Custom sigmoid shift
         - check if custom parameters are used
             x central_time
