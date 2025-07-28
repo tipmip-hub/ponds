@@ -155,7 +155,7 @@ def test_gauss_custom_parameters_center(err=3):
         - center_lat: mean of the latitudes in the blob should be equal to the center_lat parameter
         - center_lon: mean of the longitudes in the blob should be equal to the center_lon parameter
     Arguments:
-        - err: allowed offset for the index of the center lat and lon
+        - err: allowed offset for the index of the center lat and lon (ideal would be err=0, see ToDo)
 
     ToDo:
         - lats work fine, but lons are not exactly correct; I do no know why...

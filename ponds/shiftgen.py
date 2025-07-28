@@ -7,9 +7,7 @@ class ShiftsMethod(ABC):
     @abstractmethod
     def make_shift(
         self,
-        ponds,
-        mask,
-        shift_time,
+        time,
     ) -> tuple[np.ndarray, dict]:
         pass
 
@@ -66,12 +64,8 @@ class SIGMOID(ShiftsMethod):
             time (np.ndarray): Time array.
             shift_time (int): Time step at which the shift occurs.
         Returns:
-            tuple: A tuple containing the modified data array and a dictionary with shift parameters.
-        The dictionary includes:
-            - "shift_id": Identifier for the shift (always 0 for sigmoid).
-            - "shift_steepness": Steepness of the sigmoid function.
-            - "shift_magnitude": Magnitude of the shift.
-            - "sigma_time": Standard deviation for the time shift.
+            tuple: A tuple containing the shift effect (np.ndarray) and the actual
+            shift time (int; central_time +/- perturbation).
         """
         if self.central_time is None:
             # Calculate the actual shift time based on the relative shift time

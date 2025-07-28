@@ -10,7 +10,8 @@ class BlobsMethod(ABC):
     @abstractmethod
     def make_blob(
         self,
-        **kwargs,
+        lats,
+        lons,
     ) -> np.ndarray:
         pass
 
