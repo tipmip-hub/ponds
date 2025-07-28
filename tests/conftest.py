@@ -13,7 +13,7 @@ class MockBlob:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"type": "MOCKBLOB"}
+        self.param_dict = {"shape_type": "MOCKBLOB"}
 
     def make_blob(self, lats, lons):
         mask = np.zeros((len(lats), len(lons)), dtype=bool)
@@ -31,7 +31,7 @@ class MockShift:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"type": "MOCKSHIFT"}
+        self.param_dict = {"shift_type": "MOCKSHIFT"}
 
     def make_shift(
         self,
