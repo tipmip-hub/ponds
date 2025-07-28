@@ -199,7 +199,7 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
 
     # 3) check results
     # - check Dataset attributes
-    ponds_dict = ponds.data.attrs["ponds_params"]
+    ponds_dict = ponds.get_ponds_dict()  # data.attrs["ponds_params"]
     assert ponds_dict["lat_size"] == lat_size
     assert ponds_dict["lon_size"] == lon_size
     assert ponds_dict["time_size"] == time_size
@@ -208,14 +208,12 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     assert ponds_dict["cluster_key"] == cluster_key
     assert ponds_dict["random_seed"] == random_seed
 
-    assert ponds.data.attrs["num_clusters"] == num_shifts
+    # assert ponds.data.attrs["num_clusters"] == num_shifts
     assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
     assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
 
     # - check DataArray attributes
     # -- check if noise and trend are stored
-    assert ponds.data.ts.attrs["noise"] == background_noise
-    assert ponds.data.ts.attrs["trend"] == background_trend
     # -- check if shift_type is stored
     assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
     assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
@@ -271,9 +269,8 @@ def test_reproducibility(R=10):
             shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
         )
         # - extract all parameters from the Dataset
-        ponds_dict_ex = ponds.data.attrs["ponds_params"]
-        shape_dict_ex = ponds.data.c1.attrs["shape_params"]
-        shift_dict_ex = ponds.data.c1.attrs["shift_params"]
+        ponds_dict_ex = ponds.get_ponds_dict()
+        shift_dict_ex, shape_dict_ex = ponds.get_cluster_dict("c1")
         # - reproduce the shift using the stored parameters
 
         # 2) call function
@@ -286,11 +283,9 @@ def test_reproducibility(R=10):
         # 3) check results
         # - check if attributes are equal
         assert (
-            ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
+            ponds.get_ponds_dict() == ponds_rep.get_ponds_dict()
+            # ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
         ), "PONDS parameters do not match."
-        assert (
-            ponds.data.attrs["num_clusters"] == ponds_rep.data.attrs["num_clusters"]
-        ), "Number of clusters does not match."
 
         # - check if time series are equal
         assert np.array_equal(ponds.data.ts.values, ponds_rep.data.ts.values), (

@@ -110,7 +110,7 @@ def test_gauss_blob_add_shift_integration(mock_shift):
 ###################################################################################################
 
 
-def test_gauss_custom_parametet_storage():
+def test_gauss_custom_parameter_storage():
     """
     - check if the custom parameters are stored correctly in the GAUSS class
     - expected behavior:
@@ -133,7 +133,7 @@ def test_gauss_custom_parametet_storage():
 
     # 3) check results
     shape_dict = shape_method.param_dict
-    assert shape_dict["type"] == "GAUSS", "Type should be 'GAUSS'."
+    assert shape_dict["shape_type"] == "GAUSS", "Type should be 'GAUSS'."
     assert shape_dict["center_lat"] == custom_center_lat, (
         f"Expected center_lat: {custom_center_lat}, got: {shape_dict['center_lat']}"
     )
@@ -155,7 +155,7 @@ def test_gauss_custom_parameters_center(err=3):
         - center_lat: mean of the latitudes in the blob should be equal to the center_lat parameter
         - center_lon: mean of the longitudes in the blob should be equal to the center_lon parameter
     Arguments:
-        - err: allowed offset for the index of the center lat and lon
+        - err: allowed offset for the index of the center lat and lon (ideal would be err=0, see ToDo)
 
     ToDo:
         - lats work fine, but lons are not exactly correct; I do no know why...
