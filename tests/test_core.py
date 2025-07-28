@@ -199,7 +199,7 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
 
     # 3) check results
     # - check Dataset attributes
-    ponds_dict = ponds.get_ponds_dict()#data.attrs["ponds_params"]
+    ponds_dict = ponds.get_ponds_dict()  # data.attrs["ponds_params"]
     assert ponds_dict["lat_size"] == lat_size
     assert ponds_dict["lon_size"] == lon_size
     assert ponds_dict["time_size"] == time_size
@@ -208,7 +208,7 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     assert ponds_dict["cluster_key"] == cluster_key
     assert ponds_dict["random_seed"] == random_seed
 
-    #assert ponds.data.attrs["num_clusters"] == num_shifts
+    # assert ponds.data.attrs["num_clusters"] == num_shifts
     assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
     assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
 
@@ -284,7 +284,7 @@ def test_reproducibility(R=10):
         # - check if attributes are equal
         assert (
             ponds.get_ponds_dict() == ponds_rep.get_ponds_dict()
-            #ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
+            # ponds.data.attrs["ponds_params"] == ponds_rep.data.attrs["ponds_params"]
         ), "PONDS parameters do not match."
 
         # - check if time series are equal

@@ -50,7 +50,7 @@ class PONDS:
         # 1) Set up coordinates
         self.lats = np.linspace(-90, 90, lat_size)
         self.lons = np.linspace(-180, 180, lon_size)
-        self.time = np.linspace(0, time_size-1, time_size)
+        self.time = np.linspace(0, time_size - 1, time_size)
 
         # 2) Generate background data with trend and noise
         data_ts = np.zeros((time_size, lat_size, lon_size))
@@ -116,7 +116,7 @@ class PONDS:
             warnings.warn(
                 "No random seed set for PONDS. Results will not be reproducible."
             )
-        #self.n_shifts += 1
+        # self.n_shifts += 1
 
         # 1) generate blob mask
         if shape_method is None:
@@ -125,7 +125,9 @@ class PONDS:
                     "No shape method provided for a non-single ponds grid."
                     "Shift method is applied to all cells."
                 )
-            blob_mask = np.ones((self.data.sizes["lat"], self.data.sizes["lon"]), dtype=bool)
+            blob_mask = np.ones(
+                (self.data.sizes["lat"], self.data.sizes["lon"]), dtype=bool
+            )
             blob_dict = {"shape_type": "SINGLE"}
         else:
             if self.data.sizes["lat"] == 1 and self.data.sizes["lon"] == 1:
@@ -183,7 +185,9 @@ class PONDS:
         """
         variable_names = list(self.data.data_vars.keys())
         variable_names = [
-            name for name in variable_names if name.startswith(self.data.attrs["cluster_key"])
+            name
+            for name in variable_names
+            if name.startswith(self.data.attrs["cluster_key"])
         ]
         last_variable_index = int(len(variable_names))
         return f"{self.data.attrs['cluster_key']}{last_variable_index + 1}"
@@ -226,9 +230,9 @@ class PONDS:
         # Append the new DataArray to the Dataset
         self.data[new_cluster_name] = new_da
 
-###################################################################################################
-######################################### Get Functions ###########################################
-###################################################################################################
+    ###################################################################################################
+    ######################################### Get Functions ###########################################
+    ###################################################################################################
 
     def get_ts(
         self,
@@ -281,12 +285,12 @@ class PONDS:
                 masks.append(da_mask)
 
         return np.array(masks), np.array(shift_ids)
-    
+
     def get_ponds_dict(self):
         """
         Extracts the metadata from the PONDS instance neccessary to initialize
         a PONDS replica and returns it as a dictionary.
-        
+
         Returns:
             dict: Dictionary containing the metadata of the PONDS instance.
         """
@@ -300,12 +304,11 @@ class PONDS:
             "random_seed": self.data.ts.attrs["random_seed"],
         }
         return params
-    
-    def get_cluster_dict(self,
-                         cluster: str):
+
+    def get_cluster_dict(self, cluster: str):
         """
         Extracts the shift and shape metadata from a given cluster mask.
-        
+
         Args:
             ponds (PONDS): The PONDS instance to extract metadata from.
             cluster (str): The cluster to filter the metadata attributes.
@@ -321,8 +324,10 @@ class PONDS:
 
         # split keys into shift and shape dicts
         # - shift dict contains all keys before "shape_type"
-        shift_dict = {k: self.data[cluster].attrs[k] for k in keys[1:shape_type_index] }
+        shift_dict = {k: self.data[cluster].attrs[k] for k in keys[1:shape_type_index]}
         # - shape dict contains all keys after "shape_type"
-        shape_dict = {k: self.data[cluster].attrs[k] for k in keys[shape_type_index+1:] }
+        shape_dict = {
+            k: self.data[cluster].attrs[k] for k in keys[shape_type_index + 1 :]
+        }
 
         return shift_dict, shape_dict
