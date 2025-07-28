@@ -46,7 +46,7 @@ class SIGMOID(ShiftsMethod):
         self.central_time = central_time
 
         self.param_dict = {
-            "type": "SIGMOID",
+            "shift_type": "SIGMOID",
             "central_time": central_time,
             "sigma_time": sigma_time,
             "shift_steepness": shift_steepness,

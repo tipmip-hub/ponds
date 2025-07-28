@@ -48,7 +48,7 @@ class GAUSS(BlobsMethod):
         self.sigma_lon = sigma_lon
 
         self.param_dict = {
-            "type": "GAUSS",
+            "shape_type": "GAUSS",
             "center_lat": center_lat,
             "center_lon": center_lon,
             "sigma_lat": sigma_lat,
