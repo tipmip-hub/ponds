@@ -111,7 +111,10 @@ class CUSTOM(BlobsMethod):
             blob_mask (np.ndarray): A 2D boolean array of shape (lat_size, lon_size) representing
             the blob mask.
         """
-        self.blob_mask = blob_mask
+        self.blob_mask = np.array(blob_mask)
+        self.param_dict = {
+            "shape_type": "CUSTOM",
+        }
 
     def make_blob(
         self,
