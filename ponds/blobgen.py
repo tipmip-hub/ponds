@@ -99,11 +99,9 @@ class GAUSS(BlobsMethod):
 ########################################### CUSTOM ################################################
 ###################################################################################################
 
+
 class CUSTOM(BlobsMethod):
-    def __init__(
-        self,
-        blob_mask: np.ndarray
-    ):
+    def __init__(self, blob_mask: np.ndarray):
         """
         Custom blob method that uses a pre-defined mask.
 
