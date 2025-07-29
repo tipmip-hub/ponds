@@ -7,13 +7,13 @@ from ponds import PONDS
 Testing the PONDS read and write functions.
 
 Things to Test:
-    - take dummy data and write it to a netcdf file
-        - does the file exist under the given name? 
-    - read the file back in
-        - does the read data match the original data?
-            - ts
-            - mask
-            - attributes
+    x take dummy data and write it to a netcdf file
+        x does the file exist under the given name? 
+    x read the file back in
+        x does the read data match the original data?
+            x ts
+            x mask
+            x attributes
 
 Legend:
     - : to do

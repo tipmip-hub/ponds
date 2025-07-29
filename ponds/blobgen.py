@@ -17,7 +17,7 @@ class BlobsMethod(ABC):
 
 
 ###################################################################################################
-###################################################################################################
+############################################ GAUSS ################################################
 ###################################################################################################
 
 
@@ -96,3 +96,44 @@ class GAUSS(BlobsMethod):
 
 
 ###################################################################################################
+########################################### CUSTOM ################################################
+###################################################################################################
+
+class CUSTOM(BlobsMethod):
+    def __init__(
+        self,
+        blob_mask: np.ndarray
+    ):
+        """
+        Custom blob method that uses a pre-defined mask.
+
+        Args:
+            blob_mask (np.ndarray): A 2D boolean array of shape (lat_size, lon_size) representing
+            the blob mask.
+        """
+        self.blob_mask = np.array(blob_mask)
+        self.param_dict = {
+            "shape_type": "CUSTOM",
+        }
+
+    def make_blob(
+        self,
+        lats,
+        lons,
+    ) -> np.ndarray:
+        """
+        Returns the pre-defined blob mask. Checks if the mask is of the correct shape and type.
+
+        Returns:
+            blob_mask (np.ndarray): The pre-defined blob mask.
+        """
+        # check if the blob_mask is of the correct shape
+        if self.blob_mask.shape != (len(lats), len(lons)):
+            raise ValueError(
+                f"Blob mask shape {self.blob_mask.shape} does not match grid shape {(len(lats), len(lons))}."
+            )
+        # check if the blob_mask is a boolean array
+        if not np.issubdtype(self.blob_mask.dtype, np.bool_):
+            raise ValueError("Blob mask must be a boolean array.")
+
+        return self.blob_mask
