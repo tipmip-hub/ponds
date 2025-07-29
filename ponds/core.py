@@ -331,3 +331,37 @@ class PONDS:
         }
 
         return shift_dict, shape_dict
+
+    ###################################################################################################
+    ###################################### Read and Write #############################################
+    ###################################################################################################
+
+    def save(
+        self,
+        filename="ponds_data.nc",
+    ):
+        """
+        Save the ponds data to a NetCDF file.
+
+        Parameters:
+            filename (str): The name of the file to save the data to.
+        """
+        self.data.to_netcdf(filename, engine="netcdf4")
+
+    @staticmethod
+    def load(filename="ponds_data.nc"):
+        """
+        Read the ponds data from a NetCDF file.
+
+        Returns:
+            pd (PONDS): An instance of the PONDS class with the data loaded.
+        """
+        with xr.open_dataset(filename, engine="netcdf4") as ds:
+            data = ds.load()  # Detach from file completely
+
+        pd = PONDS.__new__(PONDS)
+        pd.data = data
+        pd.lats = data.coords["lat"].values
+        pd.lons = data.coords["lon"].values
+        pd.time = data.coords["time"].values
+        return pd

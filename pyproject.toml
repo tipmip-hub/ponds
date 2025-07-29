@@ -33,10 +33,11 @@ classifiers = [
 ]
 
 dependencies = [
-        "numpy",
+        "numpy<=2.1.0",
         "scipy",
         "xarray",
         "matplotlib",
+        "netCDF4"
 ]
 
 [project.optional-dependencies]
