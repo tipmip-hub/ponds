@@ -4,3 +4,4 @@ ponds.egg*
 build/
 .coverage
 .pytest_cache
+*dummy.nc
