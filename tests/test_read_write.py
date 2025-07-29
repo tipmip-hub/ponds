@@ -34,7 +34,7 @@ def test_save_and_load(mock_blob, mock_shift):
         background_trend=1.0,
         background_noise=0.5,
         cluster_key="custom_key",
-        random_seed=5
+        random_seed=5,
     )
 
     # Add fake shift for extra test coverage
@@ -60,7 +60,7 @@ def test_save_and_load(mock_blob, mock_shift):
         np.testing.assert_array_equal(
             loaded.data.ts.values,
             ponds.data.ts.values,
-            err_msg="Time series data does not match after load."
+            err_msg="Time series data does not match after load.",
         )
 
         # 2b. All cluster masks match
@@ -69,16 +69,20 @@ def test_save_and_load(mock_blob, mock_shift):
                 np.testing.assert_array_equal(
                     loaded.data[var].values,
                     ponds.data[var].values,
-                    err_msg=f"Mask data for cluster {var} does not match."
+                    err_msg=f"Mask data for cluster {var} does not match.",
                 )
 
         # 2c. Attributes match (dataset-level)
         assert loaded.data.attrs == ponds.data.attrs, "Dataset attributes do not match."
 
         # 2d. Attributes match (ts-level)
-        assert loaded.data.ts.attrs == ponds.data.ts.attrs, "Time series attributes do not match."
+        assert loaded.data.ts.attrs == ponds.data.ts.attrs, (
+            "Time series attributes do not match."
+        )
 
         # 2e. Attributes match (mask-level)
         for var in ponds.data.data_vars:
             if var != "ts":
-                assert loaded.data[var].attrs == ponds.data[var].attrs, f"Attributes for {var} do not match."
+                assert loaded.data[var].attrs == ponds.data[var].attrs, (
+                    f"Attributes for {var} do not match."
+                )

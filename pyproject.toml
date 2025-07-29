@@ -37,6 +37,7 @@ dependencies = [
         "scipy",
         "xarray",
         "matplotlib",
+        "netCDF4"
 ]
 
 [project.optional-dependencies]
