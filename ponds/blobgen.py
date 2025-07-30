@@ -61,7 +61,7 @@ class GAUSS(BlobsMethod):
         lons,
     ) -> np.ndarray:
         """
-        Generate a spatial blob of parameters on the grid in shape of a 2D Gauss, given positional and
+        Generates a spatial blob of parameters on the grid in shape of a 2D Gauss, given positional and
         spatial shape parameters. Returns a mask of the same shape as the grid, where values above 0.5
         indicate presence of the blob.
 
