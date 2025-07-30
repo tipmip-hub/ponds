@@ -3,6 +3,7 @@ import xarray as xr
 import warnings
 from ponds.blobgen import BlobsMethod
 from ponds.shiftgen import ShiftsMethod
+from ponds.perturbationgen import PerturbationMethod
 
 
 class PONDS:
@@ -36,16 +37,16 @@ class PONDS:
         lat_size: int = 1,
         lon_size: int = 1,
         time_size: int = 100,
-        background_trend: float = 0.0,
-        background_noise: float = 0.0,
+        #background_trend: float = 0.0,
+        #background_noise: float = 0.0,
         cluster_key: str = "c",
-        random_seed: int = 1,
+        #random_seed: int = 1,
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
         """
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        #if random_seed is not None:
+        #    np.random.seed(random_seed)
 
         # 1) Set up coordinates
         self.lats = np.linspace(-90, 90, lat_size)
@@ -54,12 +55,12 @@ class PONDS:
 
         # 2) Generate background data with trend and noise
         data_ts = np.zeros((time_size, lat_size, lon_size))
-        for i in range(lat_size):
-            for j in range(lon_size):
-                data_ts[:, i, j] = (
-                    background_trend * self.time
-                    + background_noise * np.random.randn(time_size)
-                )
+        #for i in range(lat_size):
+        #    for j in range(lon_size):
+        #        data_ts[:, i, j] = (
+        #            background_trend * self.time
+        #            + background_noise * np.random.randn(time_size)
+        #        )
 
         # - Create xarray DataArray, init with background time series data
         dims = ("time", "lat", "lon")
@@ -71,11 +72,11 @@ class PONDS:
                 "lat": self.lats,
                 "lon": self.lons,
             },
-            attrs={
-                "random_seed": random_seed,
-                "background_trend": background_trend,
-                "background_noise": background_noise,
-            },
+            #attrs={
+            #    "random_seed": random_seed,
+            #    "background_trend": background_trend,
+            #    "background_noise": background_noise,
+            #},
         )
         # - Create xarray Dataset to hold the time series data
         self.data = xr.Dataset(
@@ -87,6 +88,56 @@ class PONDS:
                 "cluster_key": cluster_key,
             },
         )
+
+    def add_perturbation(
+        self,
+        perturbation_method: PerturbationMethod,
+        shape_method: BlobsMethod = None,
+    ):
+        """
+        Adds a perturbation to the time series data.
+
+        Perturbation Methods:
+            - "WhiteNoise": Adds white noise perturbation to the time series.
+
+        Args:
+            perturbation_method (PerturbationMethod): Method to generate the perturbation.
+        """
+
+        #if perturbation_method.random_seed is not None:
+        #    np.random.seed(perturbation_method.random_seed)
+
+        # 1) Generate blob mask if shape_method is provided
+        if shape_method is None:    # -> no shape method provided
+            if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
+                warnings.warn(
+                    "No shape method provided for a non-single ponds grid."
+                    "Shift method is applied to all cells."
+                )
+            blob_mask = np.ones(
+                (self.data.sizes["lat"], self.data.sizes["lon"]), dtype=bool
+            )
+            blob_dict = {"shape_type": "SINGLE"}
+        else:                       # -> shape method provided
+            if self.data.sizes["lat"] == 1 and self.data.sizes["lon"] == 1:
+                warnings.warn(
+                    "Shape method specified for a (1x1) grid. PONDS is in single-mode."
+                    "Chosen shape method is likely to fail."
+                )
+            blob_mask = shape_method.make_blob(
+                lats=self.lats,
+                lons=self.lons,
+            )
+            blob_dict = shape_method.param_dict
+
+        # 2) Generate perturbation data and add to time series
+        for i in range(self.data.sizes["lat"]):
+            for j in range(self.data.sizes["lon"]):
+                if blob_mask[i, j]:
+                    perturbation_effect = perturbation_method.make_perturbation(time_size=len(self.time))
+
+                    # add shift effect to the data in single grid cell, all time steps at once
+                    self.data.ts.values[:, i, j] += perturbation_effect
 
     def add_shift(
         self,
@@ -110,12 +161,12 @@ class PONDS:
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
 
-        if self.data.ts.attrs["random_seed"] is not None:
-            np.random.seed(self.data.ts.attrs["random_seed"])
-        else:
-            warnings.warn(
-                "No random seed set for PONDS. Results will not be reproducible."
-            )
+        #if self.data.ts.attrs["random_seed"] is not None:
+        #    np.random.seed(self.data.ts.attrs["random_seed"])
+        #else:
+        #    warnings.warn(
+        #        "No random seed set for PONDS. Results will not be reproducible."
+        #    )
         # self.n_shifts += 1
 
         # 1) generate blob mask
@@ -298,10 +349,10 @@ class PONDS:
             "lat_size": self.data.sizes["lat"],
             "lon_size": self.data.sizes["lon"],
             "time_size": self.data.sizes["time"],
-            "background_trend": self.data.ts.attrs["background_trend"],
-            "background_noise": self.data.ts.attrs["background_noise"],
+            #"background_trend": self.data.ts.attrs["background_trend"],
+            #"background_noise": self.data.ts.attrs["background_noise"],
             "cluster_key": self.data.attrs["cluster_key"],
-            "random_seed": self.data.ts.attrs["random_seed"],
+            #"random_seed": self.data.ts.attrs["random_seed"],
         }
         return params
 

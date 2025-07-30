@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 
-# Abstract class for shifts detection methods
+# Abstract class
 class BlobsMethod(ABC):
     @abstractmethod
     def make_blob(

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-# Abstract class for shifts detection methods
+# Abstract class
 class ShiftsMethod(ABC):
     @abstractmethod
     def make_shift(
