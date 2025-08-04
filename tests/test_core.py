@@ -64,14 +64,13 @@ def test_ponds_reproducibility(R=5):
         time_size1 = np.random.randint(1, 100)
         lat_size2 = np.random.randint(1, 100)
         if lat_size2 == lat_size1:
-            lon_size2 += 1
+            lat_size2 += 1
         lon_size2 = np.random.randint(1, 100)
         if lon_size2 == lon_size1:
-            time_size2 += 1
+            lon_size2 += 1
         time_size2 = np.random.randint(1, 100)
         if time_size2 == time_size1:
-            lat_size2 += 1
-        
+            time_size2 += 1
 
         # 2) call function
         ponds1 = PONDS(

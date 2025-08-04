@@ -109,8 +109,9 @@ class PONDS:
         # set seed for reproducibility in case perturbation_method uses a random process
         try:
             np.random.seed(perturbation_method.random_seed)
-        except:
-            pass
+        except AttributeError:
+            print("Warning: perturbation_method has no 'random_seed' attribute; using global RNG state.")
+
 
         # 1) Generate blob mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
@@ -173,8 +174,9 @@ class PONDS:
         # set seed for reproducibility in case shift_method has a random process
         try:
             np.random.seed(shift_method.random_seed)
-        except:
-            pass
+        except AttributeError:
+            print("Warning: shift_method has no 'random_seed' attribute; using global RNG state.")
+
 
         # 1) generate blob mask
         if shape_method is SINGLE():
@@ -437,8 +439,9 @@ class PONDS:
             # save the parameters in the dictionary
             try:
                 s_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
-            except:
-                pass
+            except AttributeError:
+                print(f"Warning: Key 'params' not found in shape attributes of {perturbation_key}.")
+
         s_instance = s_specs["class"](**s_specs["params"])
 
         return p_instance, s_instance
