@@ -13,13 +13,29 @@ class MockBlob:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"shape_type": "MOCKBLOB"}
+        self.param_dict = {"shape_type": MockBlob}
 
     def make_blob(self, lats, lons):
         mask = np.zeros((len(lats), len(lons)), dtype=bool)
         mask[0, 0] = True
         return mask
 
+
+class MockPerturbation:
+    """
+    Always returns a perturbation array with a fixed value of 1.0.
+    This is a mock implementation for testing purposes.
+    It simulates the behavior of a perturbation generator that creates
+    a perturbation for a pond.
+    """
+
+    def __init__(self, random_seed=None):
+        self.random_seed = random_seed
+
+        self.param_dict = {"perturbation_type": MockPerturbation}
+
+    def make_perturbation(self, time_size):
+        return np.zeros(time_size)  # Fixed perturbation value
 
 class MockShift:
     """
@@ -31,7 +47,7 @@ class MockShift:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"shift_type": "MOCKSHIFT"}
+        self.param_dict = {"shift_type": MockShift}
 
     def make_shift(
         self,
@@ -43,11 +59,13 @@ class MockShift:
 
         return shift_effect, t_shift
 
-
 @pytest.fixture
 def mock_blob():
     return MockBlob
 
+@pytest.fixture
+def mock_perturbation():
+    return MockPerturbation
 
 @pytest.fixture
 def mock_shift():

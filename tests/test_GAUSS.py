@@ -70,15 +70,20 @@ def test_gauss_same_seed_produces_same_blob_mask(R=5):
 
     for _ in range(R):
         # 1.2) setup variables
-        seed_pond = np.random.randint(0, 1000)
         seed_blob = np.random.randint(0, 1000)
-        ponds1 = PONDS(lat_size=lat_size, lon_size=lon_size, random_seed=seed_pond)
-        ponds2 = PONDS(lat_size=lat_size, lon_size=lon_size, random_seed=seed_pond)
+        ponds1 = PONDS(
+            lat_size=lat_size,
+            lon_size=lon_size,
+            )
+        ponds2 = PONDS(
+            lat_size=lat_size,
+            lon_size=lon_size,
+            )
 
         # 2) call function
-        gauss1 = GAUSS(random_seed=seed_blob)
+        gauss1 = GAUSS(random_seed=seed_blob)   # <- testing this
         blob1 = gauss1.make_blob(lats=ponds1.lats, lons=ponds1.lons)
-        gauss2 = GAUSS(random_seed=seed_blob)
+        gauss2 = GAUSS(random_seed=seed_blob)   # <- testing this
         blob2 = gauss2.make_blob(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results
@@ -133,7 +138,7 @@ def test_gauss_custom_parameter_storage():
 
     # 3) check results
     shape_dict = shape_method.param_dict
-    assert shape_dict["shape_type"] == "GAUSS", "Type should be 'GAUSS'."
+    assert shape_dict["shape_type"] == GAUSS, "Type should be 'GAUSS'."
     assert shape_dict["center_lat"] == custom_center_lat, (
         f"Expected center_lat: {custom_center_lat}, got: {shape_dict['center_lat']}"
     )
