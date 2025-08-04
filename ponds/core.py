@@ -1,11 +1,11 @@
 import numpy as np
 import xarray as xr
 import warnings
-from ponds.blobgen import BlobsMethod
+from ponds.blobgen import BlobsMethod, SINGLE
 from ponds.shiftgen import ShiftsMethod
 from ponds.perturbationgen import PerturbationMethod
 
-
+    
 class PONDS:
     """
     Main class for PONDS dataset generation.
@@ -40,6 +40,7 @@ class PONDS:
         #background_trend: float = 0.0,
         #background_noise: float = 0.0,
         cluster_key: str = "c",
+        perturbation_key: str = "p",
         #random_seed: int = 1,
     ):
         """
@@ -86,49 +87,52 @@ class PONDS:
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
             attrs={
                 "cluster_key": cluster_key,
+                "perturbation_key": perturbation_key,
             },
         )
 
     def add_perturbation(
         self,
         perturbation_method: PerturbationMethod,
-        shape_method: BlobsMethod = None,
+        shape_method: BlobsMethod = SINGLE(),
     ):
         """
         Adds a perturbation to the time series data.
 
         Perturbation Methods:
             - "WhiteNoise": Adds white noise perturbation to the time series.
+            - "Trend": Adds a linear trend to the time series.
 
         Args:
             perturbation_method (PerturbationMethod): Method to generate the perturbation.
         """
-
-        #if perturbation_method.random_seed is not None:
-        #    np.random.seed(perturbation_method.random_seed)
+        # set seed for reproducibility in case perturbation_method uses a random process
+        try:
+            np.random.seed(perturbation_method.random_seed)
+        except:
+            pass
 
         # 1) Generate blob mask if shape_method is provided
-        if shape_method is None:    # -> no shape method provided
+        # - warn users to make sure that shape is handled correctly
+        if shape_method is SINGLE():
             if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
                 warnings.warn(
-                    "No shape method provided for a non-single ponds grid."
+                    "No shape method provided for a non-single ponds grid. "
                     "Shift method is applied to all cells."
                 )
-            blob_mask = np.ones(
-                (self.data.sizes["lat"], self.data.sizes["lon"]), dtype=bool
-            )
-            blob_dict = {"shape_type": "SINGLE"}
-        else:                       # -> shape method provided
+        else:
             if self.data.sizes["lat"] == 1 and self.data.sizes["lon"] == 1:
                 warnings.warn(
-                    "Shape method specified for a (1x1) grid. PONDS is in single-mode."
-                    "Chosen shape method is likely to fail."
+                    "Shape method specified for a (1x1) grid. PONDS is in single-mode. "
+                    "If chosen shape method is not SINGLE it is likely to fail."
                 )
-            blob_mask = shape_method.make_blob(
-                lats=self.lats,
-                lons=self.lons,
-            )
-            blob_dict = shape_method.param_dict
+
+        # - generate blob mask
+        blob_mask = shape_method.make_blob(
+            lats=self.lats,
+            lons=self.lons,
+        )
+        blob_dict = shape_method.param_dict
 
         # 2) Generate perturbation data and add to time series
         for i in range(self.data.sizes["lat"]):
@@ -138,11 +142,17 @@ class PONDS:
 
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.ts.values[:, i, j] += perturbation_effect
+        
+        # 3) store perturbation metadata
+        self._add_perturbation_to_ds(
+            perturbation_dict=perturbation_method.param_dict,
+            shape_dict=blob_dict,
+        )
 
     def add_shift(
         self,
         shift_method: ShiftsMethod,
-        shape_method: BlobsMethod = None,
+        shape_method: BlobsMethod = SINGLE(),
     ):
         """
         Adds a shift to the time series data.
@@ -160,37 +170,30 @@ class PONDS:
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
-
-        #if self.data.ts.attrs["random_seed"] is not None:
-        #    np.random.seed(self.data.ts.attrs["random_seed"])
-        #else:
-        #    warnings.warn(
-        #        "No random seed set for PONDS. Results will not be reproducible."
-        #    )
-        # self.n_shifts += 1
+        # set seed for reproducibility in case shift_method has a random process
+        try:
+            np.random.seed(shift_method.random_seed)
+        except:
+            pass
 
         # 1) generate blob mask
-        if shape_method is None:
+        if shape_method is SINGLE():
             if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
                 warnings.warn(
-                    "No shape method provided for a non-single ponds grid."
+                    "No shape method provided for a non-single ponds grid. "
                     "Shift method is applied to all cells."
                 )
-            blob_mask = np.ones(
-                (self.data.sizes["lat"], self.data.sizes["lon"]), dtype=bool
-            )
-            blob_dict = {"shape_type": "SINGLE"}
         else:
             if self.data.sizes["lat"] == 1 and self.data.sizes["lon"] == 1:
                 warnings.warn(
-                    "Shape method specified for a (1x1) grid. PONDS is in single-mode."
-                    "Chosen shape method is likely to fail."
+                    "Shape method specified for a (1x1) grid. PONDS is in single-mode. "
+                    "If chosen shape method is not SINGLE it is likely to fail."
                 )
-            blob_mask = shape_method.make_blob(
-                lats=self.lats,
-                lons=self.lons,
-            )
-            blob_dict = shape_method.param_dict
+        blob_mask = shape_method.make_blob(
+            lats=self.lats,
+            lons=self.lons,
+        )
+        blob_dict = shape_method.param_dict
 
         # 2) generate shift data
         # - generate shift data and add to time serie
@@ -229,6 +232,23 @@ class PONDS:
             blob_dict=blob_dict,
         )
 
+    def _get_new_perturbation_key(self):
+        """
+        Generate a new perturbation key based on the current number of perturbations.
+        """
+        
+        # get all the attribute keys in the ts DataArray
+        variable_names = list(self.data.ts.attrs.keys())
+        # filter the keys that start with the perturbation_key
+        variable_names = [
+            name for name in variable_names
+            if self.data.ts.attrs[name] == "### HEADER ###"
+        ]
+        # get the last variable index
+        last_variable_index = int(len(variable_names))
+        # return the new perturbation key
+        return f"{self.data.attrs['perturbation_key']}{last_variable_index + 1}"
+
     def _get_new_cluster_key(self):
         """
         Generate a new cluster key based on the current number of shifts.
@@ -242,6 +262,29 @@ class PONDS:
         ]
         last_variable_index = int(len(variable_names))
         return f"{self.data.attrs['cluster_key']}{last_variable_index + 1}"
+    
+    def _add_perturbation_to_ds(
+        self,
+        perturbation_dict: dict,
+        shape_dict: dict,
+    ):
+        """
+        Appends metadata to the attributes of the time series DataArray.
+        
+        Args:
+            perturbation_dict (dict): Dictionary containing parameters used to generate the perturbation.
+            shape_dict (dict): Dictionary containing parameters used to generate the shape of the perturbation.
+        """
+        # get variable name for new perturbation
+        new_perturbation_name = self._get_new_perturbation_key()
+        # add perturbation attributes to the ts DataArray
+        self.data.ts.attrs[new_perturbation_name] = "### HEADER ###"
+        # - add perturbation attributes
+        for k, v in perturbation_dict.items():
+            self.data.ts.attrs[f"{new_perturbation_name}_{k}"] = v
+        # - add shape attributes
+        for k, v in shape_dict.items():
+            self.data.ts.attrs[f"{new_perturbation_name}_{k}"] = v
 
     def _add_shift_to_ds(
         self,
@@ -355,8 +398,53 @@ class PONDS:
             #"random_seed": self.data.ts.attrs["random_seed"],
         }
         return params
+    
+    def get_perturbation_instance(
+            self,
+            perturbation_key: str):
+        """
+        Extracts the perturbation parameters from the ponds object ts DataArray.
+        Args:
+            ponds (PONDS): The ponds object containing the perturbation data.
+            perturbation_key (str): The key for the perturbation in the ponds data.
 
-    def get_cluster_dict(self, cluster: str):
+        Returns:
+            instance1: The perturbation instance with its parameters.
+            instance2: The shape instance with its parameters.
+        """
+        # get list of keys in order of appearance
+        keys = list(self.data.ts.attrs.keys())
+        # filter keys that start with the perturbation_key
+        #keys = [key for key in keys if key.startswith(perturbation_key)]
+        # get index of "perturbation_type" and "shape_type"
+        p_index = keys.index(perturbation_key+ "_perturbation_type")
+        s_index = keys.index(perturbation_key+ "_shape_type")
+
+        p_specs  ={"class": self.data.ts.attrs[keys[p_index]],
+                "params": {}}
+        for key in keys[p_index+1:s_index]:
+            # remove prefix from key
+            key_parts = key.split(perturbation_key + "_")
+            # save the parameters in the dictionary
+            p_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
+        p_instance = p_specs["class"](**p_specs["params"])
+        
+        s_specs = {"class": self.data.ts.attrs[keys[s_index]],
+                "params": {}}
+        for key in keys[s_index+1:]:
+            # remove prefix from key
+            key_parts = key.split(perturbation_key + "_")
+            # save the parameters in the dictionary
+            try:
+                s_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
+            except:
+                pass
+        s_instance = s_specs["class"](**s_specs["params"])
+
+        return p_instance, s_instance
+
+
+    def get_cluster_instance(self, cluster: str):
         """
         Extracts the shift and shape metadata from a given cluster mask.
 
@@ -375,13 +463,21 @@ class PONDS:
 
         # split keys into shift and shape dicts
         # - shift dict contains all keys before "shape_type"
-        shift_dict = {k: self.data[cluster].attrs[k] for k in keys[1:shape_type_index]}
+        shift_dict = {"class": self.data[cluster].attrs["shift_type"],
+                      "params": {}}
+        for key in keys[1:shape_type_index]:
+            shift_dict["params"][key] = self.data[cluster].attrs[key]
+        # - create shift instance
+        shift_instance = shift_dict["class"](**shift_dict["params"])
         # - shape dict contains all keys after "shape_type"
-        shape_dict = {
-            k: self.data[cluster].attrs[k] for k in keys[shape_type_index + 1 :]
-        }
+        shape_dict = {"class": self.data[cluster].attrs["shape_type"],
+                      "params": {}}
+        for key in keys[shape_type_index + 1:]:
+            shape_dict["params"][key] = self.data[cluster].attrs[key]
+        # - create shape instance
+        shape_instance = shape_dict["class"](**shape_dict["params"])
 
-        return shift_dict, shape_dict
+        return shift_instance, shape_instance
 
     ###################################################################################################
     ###################################### Read and Write #############################################
@@ -397,18 +493,63 @@ class PONDS:
         Parameters:
             filename (str): The name of the file to save the data to.
         """
-        self.data.to_netcdf(filename, engine="netcdf4")
+        # make a copy of the data which can be altered for saving
+        data_copy = self.data.copy(deep=True)
+        # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
+        for var in data_copy.data_vars:
+            keys = [key for key in data_copy[var].attrs.keys()
+                         if "shape_type" in key
+                         or "perturbation_type" in key
+                         or "shift_type" in key]
+            # for these keys, set the value to string type (netCDF4 does not support class instances)
+            for key in keys:
+                data_copy[var].attrs[key] = str(data_copy[var].attrs[key])
+
+        # locate all the None entries and replace them with "None"
+        for var in data_copy.data_vars:
+            for key in data_copy[var].attrs.keys():
+                if data_copy[var].attrs[key] is None:
+                    data_copy[var].attrs[key] = "None"
+
+        data_copy.to_netcdf(filename,
+                            engine="netcdf4",
+                            )
 
     @staticmethod
-    def load(filename="ponds_data.nc"):
+    def load(
+        filename="ponds_data.nc",
+        type_dict=None,
+    ):
         """
         Read the ponds data from a NetCDF file.
 
         Returns:
             pd (PONDS): An instance of the PONDS class with the data loaded.
         """
+        if type_dict is None:
+            # if type_dict is not set, use the default type_dict from ponds/__init__.py
+            from ponds import type_dict
+        #from ponds import type_dict
+
         with xr.open_dataset(filename, engine="netcdf4") as ds:
             data = ds.load()  # Detach from file completely
+
+        # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
+        for var in data.data_vars:
+            keys = [key for key in data[var].attrs.keys()
+                            if "shape_type" in key 
+                            or "perturbation_type" in key
+                            or "shift_type" in key]
+            # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
+            for key in keys:
+                type_str = data[var].attrs[key]
+                data[var].attrs[key] = type_dict[type_str.split(".")[-1][:-2]]
+
+        # locate all the 'None' entries and replace them with None
+        for var in data.data_vars:
+            for key in data[var].attrs.keys():
+                if data[var].attrs[key] == "None":
+                    data[var].attrs[key] = None
 
         pd = PONDS.__new__(PONDS)
         pd.data = data

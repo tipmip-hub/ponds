@@ -53,7 +53,7 @@ class WhiteNoise(PerturbationMethod):
         self.perturbation_time = perturbation_time
 
         self.param_dict = {
-            "perturbation_type": "WhiteNoise",
+            "perturbation_type": WhiteNoise,
             "magnitude": magnitude,
             "random_seed": random_seed,
             "perturbation_time": perturbation_time,
@@ -96,10 +96,13 @@ class Trend(PerturbationMethod):
 
         self.slope = slope
         self.intercept = intercept
-        self.perturbation_time = perturbation_time
+        if perturbation_time is not None:
+            self.perturbation_time = np.array(perturbation_time)
+        else:
+            self.perturbation_time = None
 
         self.param_dict = {
-            "perturbation_type": "Trend",
+            "perturbation_type": Trend,
             "slope": slope,
             "perturbation_time": perturbation_time,
         }

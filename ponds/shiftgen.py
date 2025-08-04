@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import warnings
 
 
 # Abstract class
@@ -20,14 +21,19 @@ class ShiftsMethod(ABC):
 class SIGMOID(ShiftsMethod):
     def __init__(
         self,
-        random_seed: int = 1,
         central_time: int = None,
         sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
+        random_seed: int = 1,
     ):
         if random_seed is not None:
             np.random.seed(random_seed)
+        else:
+            warnings.warn(
+                "No random seed set for PONDS. Results will not be reproducible."
+            )
+
 
         if shift_steepness is None:
             shift_steepness = np.random.uniform(1.5, 3.0)
@@ -44,13 +50,15 @@ class SIGMOID(ShiftsMethod):
         self.shift_magnitude = shift_magnitude
         self.random_seed = random_seed
         self.central_time = central_time
+        self.random_seed = random_seed
 
         self.param_dict = {
-            "shift_type": "SIGMOID",
+            "shift_type": SIGMOID,
             "central_time": central_time,
             "sigma_time": sigma_time,
             "shift_steepness": shift_steepness,
             "shift_magnitude": shift_magnitude,
+            "random_seed": random_seed,
         }
 
     def make_shift(
