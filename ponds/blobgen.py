@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 
-# Abstract class for shifts detection methods
+# Abstract class
 class BlobsMethod(ABC):
     @abstractmethod
     def make_blob(
@@ -17,6 +17,30 @@ class BlobsMethod(ABC):
 
 
 ###################################################################################################
+############################################# SINGLE ###############################################
+###################################################################################################
+
+
+class SINGLE(BlobsMethod):
+    def __init__(self):
+        """
+        A placeholder for a single blob method. This is used when no specific blob method is defined.
+        """
+        self.param_dict = {
+            "shape_type": SINGLE,
+        }
+
+    def make_blob(
+        self,
+        lats,
+        lons,
+    ) -> np.ndarray:
+        return np.ones(
+            (len(lats), len(lons)), dtype=bool
+        )  # Single blob covering the entire grid
+
+
+###################################################################################################
 ############################################ GAUSS ################################################
 ###################################################################################################
 
@@ -24,7 +48,7 @@ class BlobsMethod(ABC):
 class GAUSS(BlobsMethod):
     def __init__(
         self,
-        random_seed=1,  # random seed for reproducibility
+        random_seed=1,
         center_lat=None,  # center latitude of the blob
         center_lon=None,  # center longitude of the blob
         sigma_lat=None,  # standard deviation in latitude
@@ -48,7 +72,7 @@ class GAUSS(BlobsMethod):
         self.sigma_lon = sigma_lon
 
         self.param_dict = {
-            "shape_type": "GAUSS",
+            "shape_type": GAUSS,
             "center_lat": center_lat,
             "center_lon": center_lon,
             "sigma_lat": sigma_lat,
@@ -111,7 +135,7 @@ class CUSTOM(BlobsMethod):
         """
         self.blob_mask = np.array(blob_mask)
         self.param_dict = {
-            "shape_type": "CUSTOM",
+            "shape_type": CUSTOM,
         }
 
     def make_blob(
