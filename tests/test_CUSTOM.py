@@ -92,8 +92,6 @@ def test_custom_add_shift():
         lat_size=lat_size,
         lon_size=lon_size,
         time_size=3,
-        background_noise=0.0,
-        background_trend=0.0,
     )
 
     # 2) call function

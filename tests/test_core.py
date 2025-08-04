@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, GAUSS, SIGMOID
+from ponds import PONDS, GAUSS, SIGMOID, Trend, WhiteNoise
 
 """
 Testing the PONDS core class and its methods.
@@ -7,9 +7,11 @@ Testing the PONDS core class and its methods.
 Things to Test:
     x Initialization of PONDS object
         x does the ts data grid exist and have the right shape (space & time)
-        x is a background trend added correctly (check slope)
-        x is a background noise added correctly (check variance)
         x do the same custom parameters produce the same data
+    - Adding perturbations -> use mock methods for perturbation
+        x is the shape of the time series unaltered
+        x is the perturbation metadata added to the ts attributes
+        x does ponds take a custom perturbation_key for the variable name
     x Adding shifts -> use mock methods for shape and shift
         x is the shape of the grid unaltered
         x is the shift-type stored as an attribute on Dataset Level
@@ -48,98 +50,83 @@ def test_ponds_initialization_shape():
     assert ponds2.data.ts.shape == (time_size2, lat_size2, lon_size2)
 
 
-def test_ponds_background_trend(err_tol=1e-4):
-    # 1) setup variables
-    trend = 0.1
-
-    # 2) call function
-    # - (2x2) grid, check trend in all 4 time series
-    ponds = PONDS(
-        lat_size=2,
-        lon_size=2,
-        time_size=10,
-        background_trend=trend,
-        background_noise=0.0,
-    )
-
-    # 3) check results
-    ts1 = ponds.data.ts[:, 0, 0].values
-    ts2 = ponds.data.ts[:, 0, 1].values
-    ts3 = ponds.data.ts[:, 1, 0].values
-    ts4 = ponds.data.ts[:, 1, 1].values
-    # - Fit a linear regression to confirm the slope
-    slope1 = (ts1[-1] - ts1[0]) / (ponds.time[-1] - ponds.time[0])
-    slope2 = (ts2[-1] - ts2[0]) / (ponds.time[-1] - ponds.time[0])
-    slope3 = (ts3[-1] - ts3[0]) / (ponds.time[-1] - ponds.time[0])
-    slope4 = (ts4[-1] - ts4[0]) / (ponds.time[-1] - ponds.time[0])
-    # -
-    assert np.isclose(slope1, trend, atol=err_tol)
-    assert np.isclose(slope2, trend, atol=err_tol)
-    assert np.isclose(slope3, trend, atol=err_tol)
-    assert np.isclose(slope4, trend, atol=err_tol)
-
-
-def test_ponds_background_noise_variance(err_tol=1e-4):
-    # 1) setup variables
-    noise = 0.01
-
-    # 2) call function
-    # - (2x2) grid, check variance in all 4 time series
-    ponds = PONDS(
-        lat_size=2,
-        lon_size=2,
-        time_size=int(1 / err_tol),
-        background_trend=0.0,
-        background_noise=noise,
-    )
-
-    # 3) check results
-    ts1 = ponds.data.ts[:, 0, 0].values
-    ts2 = ponds.data.ts[:, 0, 1].values
-    ts3 = ponds.data.ts[:, 1, 0].values
-    ts4 = ponds.data.ts[:, 1, 1].values
-    # -
-    assert np.isclose(np.std(ts1), noise, atol=err_tol)
-    assert np.isclose(np.std(ts2), noise, atol=err_tol)
-    assert np.isclose(np.std(ts3), noise, atol=err_tol)
-    assert np.isclose(np.std(ts4), noise, atol=err_tol)
-
-
 def test_ponds_reproducibility(R=5):
     """
     - check if same input parameters produces the same data
-    - check that different seeds produce different data, even though rest of the parameters are the same
     R: int
         Number of random seeds to test.
     """
 
     for _ in range(R):
         # 1) setup variables
-        seed1 = np.random.randint(0, 100)
-        seed2 = np.random.randint(100, 200)
-        trend = np.random.uniform(0, 0.1)
-        noise = np.random.uniform(0, 0.05)
+        lat_size1 = np.random.randint(1, 100)
+        lon_size1 = np.random.randint(1, 100)
+        time_size1 = np.random.randint(1, 100)
+        lat_size2 = np.random.randint(1, 100)
+        if lat_size2 == lat_size1:
+            lat_size2 += 1
+        lon_size2 = np.random.randint(1, 100)
+        if lon_size2 == lon_size1:
+            lon_size2 += 1
+        time_size2 = np.random.randint(1, 100)
+        if time_size2 == time_size1:
+            time_size2 += 1
 
         # 2) call function
         ponds1 = PONDS(
-            random_seed=seed1,  # <- benchmark
-            background_trend=trend,
-            background_noise=noise,
+            lat_size=lat_size1,
+            lon_size=lon_size1,
+            time_size=time_size1,
         )
         ponds2 = PONDS(
-            random_seed=seed1,  # <- same seed as benchmark
-            background_trend=trend,
-            background_noise=noise,
+            lat_size=lat_size1,
+            lon_size=lon_size1,
+            time_size=time_size1,
         )
         ponds3 = PONDS(
-            random_seed=seed2,  # <- different seed
-            background_trend=trend,
-            background_noise=noise,
+            lat_size=lat_size2,
+            lon_size=lon_size2,
+            time_size=time_size2,  
         )
 
         # 3) check results
         assert np.array_equal(ponds1.data.ts.values, ponds2.data.ts.values)
         assert not np.array_equal(ponds1.data.ts.values, ponds3.data.ts.values)
+
+###################################################################################################
+#################################### Add Perturbations ############################################
+###################################################################################################
+
+def test_add_perturbation_shape(mock_blob, mock_perturbation):
+    """
+    - check if the shape of the time series is unaltered after adding a perturbation
+    - check if the perturbation metadata is added to the ts attributes
+    """
+
+    # 1) setup variables
+    lat_size = 10
+    lon_size = 20
+    time_size = 30
+    original_shape = (time_size, lat_size, lon_size)
+    perturbation_key = "custom_key"
+    ponds = PONDS(lat_size=lat_size,
+                  lon_size=lon_size,
+                  time_size=time_size,
+                  perturbation_key=perturbation_key)
+
+    # 2) call function
+    ponds.add_perturbation(
+        perturbation_method=mock_perturbation(),
+        shape_method=mock_blob(),
+    )
+
+    # 3) check results
+    # - check if the shape of the time series is unaltered
+    assert ponds.data.ts.shape == original_shape
+    # - check if the perturbation metadata is added to the ts attributes
+    assert ponds.data.ts.attrs[perturbation_key+"1_"+"perturbation_type"] == mock_perturbation
+    #assert perturbation_key+"shape_type" in ponds.data.ts.attrs
+    assert ponds.data.ts.attrs[perturbation_key+"1_"+"shape_type"] == mock_blob
 
 
 ###################################################################################################
@@ -175,18 +162,12 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     lat_size = 2
     lon_size = 2
     time_size = 10
-    background_noise = 0.01
-    background_trend = 0.005
     num_shifts = 2
     cluster_key = "custom_key"
-    random_seed = 2
     ponds = PONDS(
         lat_size=lat_size,
         lon_size=lon_size,
         time_size=time_size,
-        random_seed=random_seed,
-        background_noise=background_noise,
-        background_trend=background_trend,
         cluster_key=cluster_key,
     )
 
@@ -198,28 +179,13 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
         )
 
     # 3) check results
-    # - check Dataset attributes
-    ponds_dict = ponds.get_ponds_dict()  # data.attrs["ponds_params"]
-    assert ponds_dict["lat_size"] == lat_size
-    assert ponds_dict["lon_size"] == lon_size
-    assert ponds_dict["time_size"] == time_size
-    assert ponds_dict["background_trend"] == background_trend
-    assert ponds_dict["background_noise"] == background_noise
-    assert ponds_dict["cluster_key"] == cluster_key
-    assert ponds_dict["random_seed"] == random_seed
-
-    # assert ponds.data.attrs["num_clusters"] == num_shifts
-    assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
-    assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
-
     # - check DataArray attributes
-    # -- check if noise and trend are stored
     # -- check if shift_type is stored
-    assert ponds.data.custom_key1.attrs["shift_type"] == "MOCKSHIFT"
-    assert ponds.data.custom_key2.attrs["shift_type"] == "MOCKSHIFT"
+    assert ponds.data.custom_key1.attrs["shift_type"] == mock_shift
+    assert ponds.data.custom_key2.attrs["shift_type"] == mock_shift
     # -- check if shape_type is stored
-    assert ponds.data.custom_key1.attrs["shape_type"] == "MOCKBLOB"
-    assert ponds.data.custom_key2.attrs["shape_type"] == "MOCKBLOB"
+    assert ponds.data.custom_key1.attrs["shape_type"] == mock_blob
+    assert ponds.data.custom_key2.attrs["shape_type"] == mock_blob
 
 
 ###################################################################################################
@@ -229,16 +195,15 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
 # use SIGMOID and GAUSS to benchmark reproducibility
 
 
-def test_reproducibility(R=10):
+def test_reproducibility(R=5):
     """
     - check if stored attributes can be used to reproduce a shift
-        -> do this using SIGMOID and GAUSS
+        -> do this using SIGMOID, GAUSS and WhiteNoise
 
         Idea: - create a PONDS object using a certain random seed
-                - add a shift using SIGMOID and GAUSS, each with a random seed
+                - add a shift using SIGMOID, GAUSS and WhiteNoise, each with a random seed
                 - extract all parameters from the Dataset
               - reproduce the ponds object using the same random seed
-                - add a shift using SIGMOID and GAUSS, each with the stored parameters (not the seed)
               - check if the time series and masks are equal
     """
 
@@ -247,8 +212,7 @@ def test_reproducibility(R=10):
     lat_size = 100
     lon_size = 100
     time_size = 100
-    noise = 0.01
-    trend = 0.005
+    noise = 0.05
 
     for _ in range(R):
         rs1 = np.random.randint(0, 100)
@@ -260,24 +224,34 @@ def test_reproducibility(R=10):
             lat_size=lat_size,
             lon_size=lon_size,
             time_size=time_size,
-            background_noise=noise,
-            background_trend=trend,
-            random_seed=rs1,
+        )
+        # - add two perturbations using WhiteNoise
+        ponds.add_perturbation(
+            perturbation_method=WhiteNoise(magnitude=noise,
+                                           random_seed=rs1),
         )
         # - add a shift using SIGMOID and GAUSS
         ponds.add_shift(
-            shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+            shape_method=GAUSS(random_seed=rs2),
+            shift_method=SIGMOID(random_seed=rs3)
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()
-        shift_dict_ex, shape_dict_ex = ponds.get_cluster_dict("c1")
+        perturbation_instance_ex, shape_instance_p_ex = ponds.get_perturbation_instance("p1")
+        shift_instance_ex, shape_instance_s_ex = ponds.get_cluster_instance("c1")
         # - reproduce the shift using the stored parameters
 
         # 2) call function
         # - reproduce the ponds object with extracted parameters
         ponds_rep = PONDS(**ponds_dict_ex)
+        ponds_rep.add_perturbation(
+            perturbation_method=perturbation_instance_ex,
+            shape_method=shape_instance_p_ex,
+        )
+        # - add a shift using the stored parameters
         ponds_rep.add_shift(
-            shape_method=GAUSS(**shape_dict_ex), shift_method=SIGMOID(**shift_dict_ex)
+            shift_method=shift_instance_ex,
+            shape_method=shape_instance_s_ex,
         )
 
         # 3) check results

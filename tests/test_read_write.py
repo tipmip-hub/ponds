@@ -25,16 +25,23 @@ Legend:
 ###################################################################################################
 
 
-def test_save_and_load(mock_blob, mock_shift):
+def test_save_and_load(mock_blob, mock_shift, mock_perturbation):
     # Create dummy PONDS instance
     ponds = PONDS(
         lat_size=4,
         lon_size=3,
         time_size=10,
-        background_trend=1.0,
-        background_noise=0.5,
+        #background_trend=1.0,
+        #background_noise=0.5,
         cluster_key="custom_key",
-        random_seed=5,
+        perturbation_key="custom_p_key",
+        #random_seed=5,
+    )
+
+    # Add perturbation
+    ponds.add_perturbation(
+        perturbation_method=mock_perturbation(),
+        shape_method=mock_blob(),
     )
 
     # Add fake shift for extra test coverage
@@ -54,7 +61,12 @@ def test_save_and_load(mock_blob, mock_shift):
         assert os.path.exists(filepath), "Saved file does not exist."
 
         # 2. Load from file
-        loaded = PONDS.load(filepath)
+        loaded = PONDS.load(filepath,
+                            type_dict={
+                                "MockBlob": mock_blob,
+                                "MockPerturbation": mock_perturbation,
+                                "MockShift": mock_shift,
+                            })
 
         # 2a. Time series data matches
         np.testing.assert_array_equal(
