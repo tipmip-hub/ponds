@@ -74,16 +74,16 @@ def test_gauss_same_seed_produces_same_blob_mask(R=5):
         ponds1 = PONDS(
             lat_size=lat_size,
             lon_size=lon_size,
-            )
+        )
         ponds2 = PONDS(
             lat_size=lat_size,
             lon_size=lon_size,
-            )
+        )
 
         # 2) call function
-        gauss1 = GAUSS(random_seed=seed_blob)   # <- testing this
+        gauss1 = GAUSS(random_seed=seed_blob)  # <- testing this
         blob1 = gauss1.make_blob(lats=ponds1.lats, lons=ponds1.lons)
-        gauss2 = GAUSS(random_seed=seed_blob)   # <- testing this
+        gauss2 = GAUSS(random_seed=seed_blob)  # <- testing this
         blob2 = gauss2.make_blob(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results

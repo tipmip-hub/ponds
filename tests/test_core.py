@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, GAUSS, SIGMOID, Trend, WhiteNoise
+from ponds import PONDS, GAUSS, SIGMOID, WhiteNoise
 
 """
 Testing the PONDS core class and its methods.
@@ -86,16 +86,18 @@ def test_ponds_reproducibility(R=5):
         ponds3 = PONDS(
             lat_size=lat_size2,
             lon_size=lon_size2,
-            time_size=time_size2,  
+            time_size=time_size2,
         )
 
         # 3) check results
         assert np.array_equal(ponds1.data.ts.values, ponds2.data.ts.values)
         assert not np.array_equal(ponds1.data.ts.values, ponds3.data.ts.values)
 
+
 ###################################################################################################
 #################################### Add Perturbations ############################################
 ###################################################################################################
+
 
 def test_add_perturbation_shape(mock_blob, mock_perturbation):
     """
@@ -109,10 +111,12 @@ def test_add_perturbation_shape(mock_blob, mock_perturbation):
     time_size = 30
     original_shape = (time_size, lat_size, lon_size)
     perturbation_key = "custom_key"
-    ponds = PONDS(lat_size=lat_size,
-                  lon_size=lon_size,
-                  time_size=time_size,
-                  perturbation_key=perturbation_key)
+    ponds = PONDS(
+        lat_size=lat_size,
+        lon_size=lon_size,
+        time_size=time_size,
+        perturbation_key=perturbation_key,
+    )
 
     # 2) call function
     ponds.add_perturbation(
@@ -124,9 +128,12 @@ def test_add_perturbation_shape(mock_blob, mock_perturbation):
     # - check if the shape of the time series is unaltered
     assert ponds.data.ts.shape == original_shape
     # - check if the perturbation metadata is added to the ts attributes
-    assert ponds.data.ts.attrs[perturbation_key+"1_"+"perturbation_type"] == mock_perturbation
-    #assert perturbation_key+"shape_type" in ponds.data.ts.attrs
-    assert ponds.data.ts.attrs[perturbation_key+"1_"+"shape_type"] == mock_blob
+    assert (
+        ponds.data.ts.attrs[perturbation_key + "1_" + "perturbation_type"]
+        == mock_perturbation
+    )
+    # assert perturbation_key+"shape_type" in ponds.data.ts.attrs
+    assert ponds.data.ts.attrs[perturbation_key + "1_" + "shape_type"] == mock_blob
 
 
 ###################################################################################################
@@ -227,17 +234,17 @@ def test_reproducibility(R=5):
         )
         # - add two perturbations using WhiteNoise
         ponds.add_perturbation(
-            perturbation_method=WhiteNoise(magnitude=noise,
-                                           random_seed=rs1),
+            perturbation_method=WhiteNoise(magnitude=noise, random_seed=rs1),
         )
         # - add a shift using SIGMOID and GAUSS
         ponds.add_shift(
-            shape_method=GAUSS(random_seed=rs2),
-            shift_method=SIGMOID(random_seed=rs3)
+            shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()
-        perturbation_instance_ex, shape_instance_p_ex = ponds.get_perturbation_instance("p1")
+        perturbation_instance_ex, shape_instance_p_ex = ponds.get_perturbation_instance(
+            "p1"
+        )
         shift_instance_ex, shape_instance_s_ex = ponds.get_cluster_instance("c1")
         # - reproduce the shift using the stored parameters
 

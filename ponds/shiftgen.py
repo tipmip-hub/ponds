@@ -34,7 +34,6 @@ class SIGMOID(ShiftsMethod):
                 "No random seed set for PONDS. Results will not be reproducible."
             )
 
-
         if shift_steepness is None:
             shift_steepness = np.random.uniform(1.5, 3.0)
         if shift_magnitude is None:

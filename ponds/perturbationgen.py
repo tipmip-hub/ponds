@@ -15,23 +15,24 @@ class PerturbationMethod(ABC):
 
         Parameters:
             time_size (int): The size of the time dimension for which the perturbation is generated.
-        
+
         Returns:
             np.ndarray: The generated perturbation effect that shall be added to the PONDS ts.
         """
         pass
 
+
 ###################################################################################################
 ############################################# White Noise #########################################
 ###################################################################################################
 
-class WhiteNoise(PerturbationMethod):
 
+class WhiteNoise(PerturbationMethod):
     def __init__(
-            self,
-            magnitude: float = 0.05,  # Magnitude of the white noise
-            random_seed: int = 1,
-            perturbation_time: np.ndarray[int] = None,
+        self,
+        magnitude: float = 0.05,  # Magnitude of the white noise
+        random_seed: int = 1,
+        perturbation_time: np.ndarray[int] = None,
     ):
         """
         Initializes the WhiteNoise perturbation method.
@@ -63,26 +64,26 @@ class WhiteNoise(PerturbationMethod):
         self,
         time_size: int,
     ) -> np.ndarray:
-        
         if self.perturbation_time is None:
             self.perturbation_time = np.arange(time_size)
 
         noise = np.zeros(time_size)
-        noise[self.perturbation_time] = (
-            self.magnitude * np.random.normal(size=len(self.perturbation_time))
+        noise[self.perturbation_time] = self.magnitude * np.random.normal(
+            size=len(self.perturbation_time)
         )
         return noise
-    
+
+
 ####################################################################################################
 ############################################# TREND ################################################
 ####################################################################################################
 
-class Trend(PerturbationMethod):
 
+class Trend(PerturbationMethod):
     def __init__(
         self,
-        slope: float = 0.01,        # Slope of the trend
-        intercept: float = 0.0,     # Intercept of the trend at start (t=0)
+        slope: float = 0.01,  # Slope of the trend
+        intercept: float = 0.0,  # Intercept of the trend at start (t=0)
         perturbation_time: np.ndarray[int] = None,
     ):
         """
@@ -111,7 +112,6 @@ class Trend(PerturbationMethod):
         self,
         time_size: int,
     ) -> np.ndarray:
-        
         if self.perturbation_time is None:
             self.perturbation_time = np.arange(time_size)
 

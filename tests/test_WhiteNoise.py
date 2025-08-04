@@ -15,8 +15,8 @@ Legend:
     x : done
 """
 
-def test_magnitude(err_tol=1e-2):
 
+def test_magnitude(err_tol=1e-2):
     # 1) setup variables
     magnitude = 1
 
@@ -42,6 +42,7 @@ def test_magnitude(err_tol=1e-2):
     assert np.isclose(np.std(ts3), magnitude, atol=err_tol)
     assert np.isclose(np.std(ts4), magnitude, atol=err_tol)
 
+
 def test_random_seed(R=5):
     """
     - check if same input parameters produces the same data
@@ -63,8 +64,8 @@ def test_random_seed(R=5):
         )
         ponds1.add_perturbation(
             perturbation_method=WhiteNoise(
-                random_seed=seed1,    # <- benchmark
-                ),
+                random_seed=seed1,  # <- benchmark
+            ),
         )
 
         ponds2 = PONDS(
@@ -74,8 +75,8 @@ def test_random_seed(R=5):
         )
         ponds2.add_perturbation(
             perturbation_method=WhiteNoise(
-                random_seed=seed1,    # <- same seed as benchmark
-                ),
+                random_seed=seed1,  # <- same seed as benchmark
+            ),
         )
 
         ponds3 = PONDS(
@@ -86,7 +87,7 @@ def test_random_seed(R=5):
         ponds3.add_perturbation(
             perturbation_method=WhiteNoise(
                 random_seed=seed2,  # <- different seed
-                ),
+            ),
         )
 
         # 3) check results
@@ -96,6 +97,7 @@ def test_random_seed(R=5):
         assert not np.array_equal(ponds1.data.ts, ponds3.data.ts), (
             "PONDS data is reproducible with different random seeds."
         )
+
 
 def test_perturbation_time():
     """
@@ -124,12 +126,10 @@ def test_perturbation_time():
 
     # 3) check results
     # - Check that the perturbation is applied only at the specified times
-    assert ~np.array_equal(ponds.data.ts[perturbation_time, 0, 0].values,
-                          np.zeros(len(perturbation_time))), (
-                            "Perturbation values do not match expected values at specified times."
-    )
+    assert ~np.array_equal(
+        ponds.data.ts[perturbation_time, 0, 0].values, np.zeros(len(perturbation_time))
+    ), "Perturbation values do not match expected values at specified times."
     ix = np.setdiff1d(np.arange(time_size), perturbation_time)
-    assert np.array_equal(ponds.data.ts[ix, 0, 0].values,
-                          np.zeros(time_size - len(perturbation_time))), (
-                            "Unexpected perturbation values at non-specified times."
-    )
+    assert np.array_equal(
+        ponds.data.ts[ix, 0, 0].values, np.zeros(time_size - len(perturbation_time))
+    ), "Unexpected perturbation values at non-specified times."

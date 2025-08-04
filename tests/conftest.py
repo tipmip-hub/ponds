@@ -37,6 +37,7 @@ class MockPerturbation:
     def make_perturbation(self, time_size):
         return np.zeros(time_size)  # Fixed perturbation value
 
+
 class MockShift:
     """
     Always returns a shift dictionary with a fixed shift_id of -1.
@@ -59,13 +60,16 @@ class MockShift:
 
         return shift_effect, t_shift
 
+
 @pytest.fixture
 def mock_blob():
     return MockBlob
 
+
 @pytest.fixture
 def mock_perturbation():
     return MockPerturbation
+
 
 @pytest.fixture
 def mock_shift():

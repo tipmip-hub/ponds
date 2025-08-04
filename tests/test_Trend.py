@@ -15,6 +15,7 @@ Legend:
     x : done
 """
 
+
 def test_slope(err_tol=1e-4):
     # 1) setup variables
     trend = 0.1
@@ -27,9 +28,8 @@ def test_slope(err_tol=1e-4):
         time_size=10,
     )
     ponds.add_perturbation(
-        perturbation_method=Trend(slope=trend,
-                                intercept=0.0),
-                                )
+        perturbation_method=Trend(slope=trend, intercept=0.0),
+    )
 
     # 3) check results
     ts1 = ponds.data.ts[:, 0, 0].values
@@ -47,6 +47,7 @@ def test_slope(err_tol=1e-4):
     assert np.isclose(slope3, trend, atol=err_tol)
     assert np.isclose(slope4, trend, atol=err_tol)
 
+
 def test_intercept(err_tol=1e-4):
     # 1) setup variables
     intercept = -5
@@ -59,9 +60,8 @@ def test_intercept(err_tol=1e-4):
         time_size=10,
     )
     ponds.add_perturbation(
-        perturbation_method=Trend(slope=0.0,
-                                intercept=intercept),
-                                )
+        perturbation_method=Trend(slope=0.0, intercept=intercept),
+    )
 
     # 3) check results
     ts1 = ponds.data.ts[:, 0, 0].values
@@ -83,7 +83,7 @@ def test_intercept(err_tol=1e-4):
 def test_perturbation_time():
     # 1) setup variables
     time_size = 10
-    perturbation_time = np.array([3,4,5,6,7])
+    perturbation_time = np.array([3, 4, 5, 6, 7])
     slope = 1
     intercept = 3
 
@@ -95,20 +95,17 @@ def test_perturbation_time():
         time_size=time_size,
     )
     ponds.add_perturbation(
-        perturbation_method=Trend(slope=slope,
-                                intercept=intercept,
-                                perturbation_time=perturbation_time),
-                                )
+        perturbation_method=Trend(
+            slope=slope, intercept=intercept, perturbation_time=perturbation_time
+        ),
+    )
 
     # 3) check results
     # - Check that the perturbation is applied only at the specified times
-    assert np.array_equal(ponds.data.ts[perturbation_time, 0, 0].values,
-                          perturbation_time + intercept), (
-                            "Perturbation values do not match expected values at specified times."
-    )
+    assert np.array_equal(
+        ponds.data.ts[perturbation_time, 0, 0].values, perturbation_time + intercept
+    ), "Perturbation values do not match expected values at specified times."
     ix = np.setdiff1d(np.arange(time_size), perturbation_time)
-    assert np.array_equal(ponds.data.ts[ix, 0, 0].values,
-                          np.zeros(time_size-len(perturbation_time))), (
-                            "Unexpected perturbation values at non-specified times."
-    )
-    
+    assert np.array_equal(
+        ponds.data.ts[ix, 0, 0].values, np.zeros(time_size - len(perturbation_time))
+    ), "Unexpected perturbation values at non-specified times."

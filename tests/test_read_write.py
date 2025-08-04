@@ -31,11 +31,11 @@ def test_save_and_load(mock_blob, mock_shift, mock_perturbation):
         lat_size=4,
         lon_size=3,
         time_size=10,
-        #background_trend=1.0,
-        #background_noise=0.5,
+        # background_trend=1.0,
+        # background_noise=0.5,
         cluster_key="custom_key",
         perturbation_key="custom_p_key",
-        #random_seed=5,
+        # random_seed=5,
     )
 
     # Add perturbation
@@ -61,12 +61,14 @@ def test_save_and_load(mock_blob, mock_shift, mock_perturbation):
         assert os.path.exists(filepath), "Saved file does not exist."
 
         # 2. Load from file
-        loaded = PONDS.load(filepath,
-                            type_dict={
-                                "MockBlob": mock_blob,
-                                "MockPerturbation": mock_perturbation,
-                                "MockShift": mock_shift,
-                            })
+        loaded = PONDS.load(
+            filepath,
+            type_dict={
+                "MockBlob": mock_blob,
+                "MockPerturbation": mock_perturbation,
+                "MockShift": mock_shift,
+            },
+        )
 
         # 2a. Time series data matches
         np.testing.assert_array_equal(

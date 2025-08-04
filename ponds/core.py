@@ -5,7 +5,7 @@ from ponds.blobgen import BlobsMethod, SINGLE
 from ponds.shiftgen import ShiftsMethod
 from ponds.perturbationgen import PerturbationMethod
 
-    
+
 class PONDS:
     """
     Main class for PONDS dataset generation.
@@ -37,16 +37,16 @@ class PONDS:
         lat_size: int = 1,
         lon_size: int = 1,
         time_size: int = 100,
-        #background_trend: float = 0.0,
-        #background_noise: float = 0.0,
+        # background_trend: float = 0.0,
+        # background_noise: float = 0.0,
         cluster_key: str = "c",
         perturbation_key: str = "p",
-        #random_seed: int = 1,
+        # random_seed: int = 1,
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
         """
-        #if random_seed is not None:
+        # if random_seed is not None:
         #    np.random.seed(random_seed)
 
         # 1) Set up coordinates
@@ -56,7 +56,7 @@ class PONDS:
 
         # 2) Generate background data with trend and noise
         data_ts = np.zeros((time_size, lat_size, lon_size))
-        #for i in range(lat_size):
+        # for i in range(lat_size):
         #    for j in range(lon_size):
         #        data_ts[:, i, j] = (
         #            background_trend * self.time
@@ -73,11 +73,11 @@ class PONDS:
                 "lat": self.lats,
                 "lon": self.lons,
             },
-            #attrs={
+            # attrs={
             #    "random_seed": random_seed,
             #    "background_trend": background_trend,
             #    "background_noise": background_noise,
-            #},
+            # },
         )
         # - Create xarray Dataset to hold the time series data
         self.data = xr.Dataset(
@@ -110,8 +110,9 @@ class PONDS:
         try:
             np.random.seed(perturbation_method.random_seed)
         except AttributeError:
-            print("Warning: perturbation_method has no 'random_seed' attribute; using global RNG state.")
-
+            print(
+                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
+            )
 
         # 1) Generate blob mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
@@ -139,11 +140,13 @@ class PONDS:
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if blob_mask[i, j]:
-                    perturbation_effect = perturbation_method.make_perturbation(time_size=len(self.time))
+                    perturbation_effect = perturbation_method.make_perturbation(
+                        time_size=len(self.time)
+                    )
 
                     # add shift effect to the data in single grid cell, all time steps at once
                     self.data.ts.values[:, i, j] += perturbation_effect
-        
+
         # 3) store perturbation metadata
         self._add_perturbation_to_ds(
             perturbation_dict=perturbation_method.param_dict,
@@ -175,8 +178,9 @@ class PONDS:
         try:
             np.random.seed(shift_method.random_seed)
         except AttributeError:
-            print("Warning: shift_method has no 'random_seed' attribute; using global RNG state.")
-
+            print(
+                "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
+            )
 
         # 1) generate blob mask
         if shape_method is SINGLE():
@@ -238,12 +242,13 @@ class PONDS:
         """
         Generate a new perturbation key based on the current number of perturbations.
         """
-        
+
         # get all the attribute keys in the ts DataArray
         variable_names = list(self.data.ts.attrs.keys())
         # filter the keys that start with the perturbation_key
         variable_names = [
-            name for name in variable_names
+            name
+            for name in variable_names
             if self.data.ts.attrs[name] == "### HEADER ###"
         ]
         # get the last variable index
@@ -264,7 +269,7 @@ class PONDS:
         ]
         last_variable_index = int(len(variable_names))
         return f"{self.data.attrs['cluster_key']}{last_variable_index + 1}"
-    
+
     def _add_perturbation_to_ds(
         self,
         perturbation_dict: dict,
@@ -272,7 +277,7 @@ class PONDS:
     ):
         """
         Appends metadata to the attributes of the time series DataArray.
-        
+
         Args:
             perturbation_dict (dict): Dictionary containing parameters used to generate the perturbation.
             shape_dict (dict): Dictionary containing parameters used to generate the shape of the perturbation.
@@ -394,16 +399,14 @@ class PONDS:
             "lat_size": self.data.sizes["lat"],
             "lon_size": self.data.sizes["lon"],
             "time_size": self.data.sizes["time"],
-            #"background_trend": self.data.ts.attrs["background_trend"],
-            #"background_noise": self.data.ts.attrs["background_noise"],
+            # "background_trend": self.data.ts.attrs["background_trend"],
+            # "background_noise": self.data.ts.attrs["background_noise"],
             "cluster_key": self.data.attrs["cluster_key"],
-            #"random_seed": self.data.ts.attrs["random_seed"],
+            # "random_seed": self.data.ts.attrs["random_seed"],
         }
         return params
-    
-    def get_perturbation_instance(
-            self,
-            perturbation_key: str):
+
+    def get_perturbation_instance(self, perturbation_key: str):
         """
         Extracts the perturbation parameters from the ponds object ts DataArray.
         Args:
@@ -417,35 +420,34 @@ class PONDS:
         # get list of keys in order of appearance
         keys = list(self.data.ts.attrs.keys())
         # filter keys that start with the perturbation_key
-        #keys = [key for key in keys if key.startswith(perturbation_key)]
+        # keys = [key for key in keys if key.startswith(perturbation_key)]
         # get index of "perturbation_type" and "shape_type"
-        p_index = keys.index(perturbation_key+ "_perturbation_type")
-        s_index = keys.index(perturbation_key+ "_shape_type")
+        p_index = keys.index(perturbation_key + "_perturbation_type")
+        s_index = keys.index(perturbation_key + "_shape_type")
 
-        p_specs  ={"class": self.data.ts.attrs[keys[p_index]],
-                "params": {}}
-        for key in keys[p_index+1:s_index]:
+        p_specs = {"class": self.data.ts.attrs[keys[p_index]], "params": {}}
+        for key in keys[p_index + 1 : s_index]:
             # remove prefix from key
             key_parts = key.split(perturbation_key + "_")
             # save the parameters in the dictionary
             p_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
         p_instance = p_specs["class"](**p_specs["params"])
-        
-        s_specs = {"class": self.data.ts.attrs[keys[s_index]],
-                "params": {}}
-        for key in keys[s_index+1:]:
+
+        s_specs = {"class": self.data.ts.attrs[keys[s_index]], "params": {}}
+        for key in keys[s_index + 1 :]:
             # remove prefix from key
             key_parts = key.split(perturbation_key + "_")
             # save the parameters in the dictionary
             try:
                 s_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
             except AttributeError:
-                print(f"Warning: Key 'params' not found in shape attributes of {perturbation_key}.")
+                print(
+                    f"Warning: Key 'params' not found in shape attributes of {perturbation_key}."
+                )
 
         s_instance = s_specs["class"](**s_specs["params"])
 
         return p_instance, s_instance
-
 
     def get_cluster_instance(self, cluster: str):
         """
@@ -466,16 +468,14 @@ class PONDS:
 
         # split keys into shift and shape dicts
         # - shift dict contains all keys before "shape_type"
-        shift_dict = {"class": self.data[cluster].attrs["shift_type"],
-                      "params": {}}
+        shift_dict = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
         for key in keys[1:shape_type_index]:
             shift_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
         # - shape dict contains all keys after "shape_type"
-        shape_dict = {"class": self.data[cluster].attrs["shape_type"],
-                      "params": {}}
-        for key in keys[shape_type_index + 1:]:
+        shape_dict = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
+        for key in keys[shape_type_index + 1 :]:
             shape_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shape instance
         shape_instance = shape_dict["class"](**shape_dict["params"])
@@ -500,10 +500,13 @@ class PONDS:
         data_copy = self.data.copy(deep=True)
         # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
         for var in data_copy.data_vars:
-            keys = [key for key in data_copy[var].attrs.keys()
-                         if "shape_type" in key
-                         or "perturbation_type" in key
-                         or "shift_type" in key]
+            keys = [
+                key
+                for key in data_copy[var].attrs.keys()
+                if "shape_type" in key
+                or "perturbation_type" in key
+                or "shift_type" in key
+            ]
             # for these keys, set the value to string type (netCDF4 does not support class instances)
             for key in keys:
                 data_copy[var].attrs[key] = str(data_copy[var].attrs[key])
@@ -514,9 +517,10 @@ class PONDS:
                 if data_copy[var].attrs[key] is None:
                     data_copy[var].attrs[key] = "None"
 
-        data_copy.to_netcdf(filename,
-                            engine="netcdf4",
-                            )
+        data_copy.to_netcdf(
+            filename,
+            engine="netcdf4",
+        )
 
     @staticmethod
     def load(
@@ -532,17 +536,20 @@ class PONDS:
         if type_dict is None:
             # if type_dict is not set, use the default type_dict from ponds/__init__.py
             from ponds import type_dict
-        #from ponds import type_dict
+        # from ponds import type_dict
 
         with xr.open_dataset(filename, engine="netcdf4") as ds:
             data = ds.load()  # Detach from file completely
 
         # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
         for var in data.data_vars:
-            keys = [key for key in data[var].attrs.keys()
-                            if "shape_type" in key 
-                            or "perturbation_type" in key
-                            or "shift_type" in key]
+            keys = [
+                key
+                for key in data[var].attrs.keys()
+                if "shape_type" in key
+                or "perturbation_type" in key
+                or "shift_type" in key
+            ]
             # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
             for key in keys:
                 type_str = data[var].attrs[key]

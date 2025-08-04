@@ -15,9 +15,11 @@ class BlobsMethod(ABC):
     ) -> np.ndarray:
         pass
 
+
 ###################################################################################################
 ############################################# SINGLE ###############################################
 ###################################################################################################
+
 
 class SINGLE(BlobsMethod):
     def __init__(self):
@@ -33,8 +35,9 @@ class SINGLE(BlobsMethod):
         lats,
         lons,
     ) -> np.ndarray:
-        
-        return np.ones((len(lats), len(lons)), dtype=bool)  # Single blob covering the entire grid
+        return np.ones(
+            (len(lats), len(lons)), dtype=bool
+        )  # Single blob covering the entire grid
 
 
 ###################################################################################################
