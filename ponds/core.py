@@ -1,6 +1,10 @@
 import numpy as np
 import xarray as xr
 import warnings
+
+from ponds import (
+    plotter,
+)
 from ponds.blobgen import BlobsMethod, SINGLE
 from ponds.shiftgen import ShiftsMethod
 from ponds.perturbationgen import PerturbationMethod
@@ -567,3 +571,40 @@ class PONDS:
         pd.lons = data.coords["lon"].values
         pd.time = data.coords["time"].values
         return pd
+    
+###################################################################################################
+#################################### Plotting Functions ###########################################
+###################################################################################################
+
+    def worldmap(
+        self,
+        verbose: bool = False,
+        figsize: tuple = (16, 8),
+        borders: bool = True,
+        coastline: bool = True,
+        show_cells: bool = False,
+        shift_type: bool = False,
+        title: str = "Cluster Masks",
+    ):
+        """
+        Plot the cluster masks on a world map using Cartopy.
+
+        Args:
+            verbose (bool): If True, print additional information during processing.
+            figsize (tuple): Size of the figure.
+            borders (bool): If True, draw country borders.
+            coastline (bool): If True, draw coastlines.
+            show_cells (bool): If True, draw grid lines based on xarray resolution.
+            title (str): Title of the plot.
+        """
+
+        plotter.worldmap(
+            ponds=self,
+            verbose=verbose,
+            figsize=figsize,
+            borders=borders,
+            coastline=coastline,
+            show_cells=show_cells,
+            shift_type=shift_type,
+            title=title,
+        )
