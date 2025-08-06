@@ -583,6 +583,7 @@ class PONDS:
         borders: bool = True,
         coastline: bool = True,
         show_cells: bool = False,
+        shift_type: bool = False,
         title: str = "Cluster Masks",
     ):
         """
@@ -604,5 +605,6 @@ class PONDS:
             borders=borders,
             coastline=coastline,
             show_cells=show_cells,
+            shift_type=shift_type,
             title=title,
         )

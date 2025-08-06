@@ -11,6 +11,7 @@ def worldmap(
     coastline: bool = True,
     borders: bool = True,
     show_cells: bool = False,
+    shift_type: bool = False,
     title: str = "Cluster Masks"
 ):
     """Plot the PONDS data on a world map using lat/lon as axis ticks.
@@ -78,8 +79,6 @@ def worldmap(
 
 
     for i, mask in enumerate(cluster_masks):
-        if verbose: print(f"Plotting mask {i+1} with shape {mask.shape}")
-
         collapsed = mask.any(dim='time').astype(int)
 
         # Get lat/lon coordinates safely
@@ -126,6 +125,26 @@ def worldmap(
                     color='black', linewidth=0.5, alpha=0.3,
                     transform=ccrs.PlateCarree(), zorder=10,
                     )
+            
+    # Add optional shift type in the center of the cluster
+    if shift_type:
+        if verbose: print("Adding shift type labels...")
+        for i, mask in enumerate(cluster_masks):
+            # Get the center of the mask
+            center_lat = mask.attrs['center_lat']
+            center_lon = mask.attrs['center_lon']
+            shift_type = str(mask.attrs['shift_type']).split(".")[-1][:-2]
+            if verbose: print(f"Shift type for mask {i+1}: {shift_type}")
+
+            # Add text label at the center with a non-transparent box
+            ax.text(
+                center_lon, center_lat,
+                f"{shift_type}",
+                fontsize=10, color='black',
+                ha='center', va='center',
+                transform=ccrs.PlateCarree(),
+                bbox=dict(facecolor=cblobs[i % len(cblobs)], edgecolor='none', alpha=1.0, boxstyle='round,pad=0.3')
+            )
 
     ax.set_title(title)
     plt.show()
