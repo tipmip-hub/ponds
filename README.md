@@ -1,11 +1,12 @@
 # PONDS
 **P**erturbed **O**bservables in **N**oisy/**N**onlinear **D**ynamics **S**ynthesiser
+___
 
 **Table of Content**
 
-[Installation](#installation)
-[Purpose of PONDS](#purpose-of-ponds)
-[Contribution](#contribution)
+1. [Installation](#installation)
+2. [Purpose of PONDS](#purpose-of-ponds)
+3. [Contribution](#contribution)
 
 
 PONDS is a synthetic data generator build alongside [TOAD](https://toad-docs.pages.dev/). It provides a standardized way in generating and storing synthetic climate data used for benchmarking abrupt shift detection.
@@ -32,7 +33,7 @@ ___
     - provide a climate dataset and test which kind of shifts the detector finds
 
 3. Mimicking real world shift events.
-    - create surrogates for known events and perform ensemble analysis
+    - create surrogates for known events to perform ensemble analysis
 
 ___
 
