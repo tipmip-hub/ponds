@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 
-class MockBlob:
+class MockShape:
     """
     Always returns a mask with a single True value at (0, 0).
     This is a mock implementation for testing purposes.
@@ -13,9 +13,9 @@ class MockBlob:
     def __init__(self, random_seed=None):
         self.random_seed = random_seed
 
-        self.param_dict = {"shape_type": MockBlob}
+        self.param_dict = {"shape_type": MockShape}
 
-    def make_blob(self, lats, lons):
+    def make_shape(self, lats, lons):
         mask = np.zeros((len(lats), len(lons)), dtype=bool)
         mask[0, 0] = True
         return mask
@@ -62,8 +62,8 @@ class MockShift:
 
 
 @pytest.fixture
-def mock_blob():
-    return MockBlob
+def mock_shape():
+    return MockShape
 
 
 @pytest.fixture

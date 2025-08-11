@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, GAUSS, SIGMOID, WhiteNoise
+from ponds import PONDS, BLOB, SIGMOID, WhiteNoise
 
 """
 Testing the PONDS core class and its methods.
@@ -16,7 +16,7 @@ Things to Test:
         x is the shape of the grid unaltered
         x is the shift-type stored as an attribute on Dataset Level
         x is the shift- and shape-type stored as an attribute on DataArray Level
-    x Reproducibility using stored attributes -> use SIGMOID and GAUSS to benchmark
+    x Reproducibility using stored attributes -> use SIGMOID and BLOB to benchmark
         x can I reproduce a shift using the stored attributes?
 
 
@@ -99,7 +99,7 @@ def test_ponds_reproducibility(R=5):
 ###################################################################################################
 
 
-def test_add_perturbation_shape(mock_blob, mock_perturbation):
+def test_add_perturbation_shape(mock_shape, mock_perturbation):
     """
     - check if the shape of the time series is unaltered after adding a perturbation
     - check if the perturbation metadata is added to the ts attributes
@@ -121,7 +121,7 @@ def test_add_perturbation_shape(mock_blob, mock_perturbation):
     # 2) call function
     ponds.add_perturbation(
         perturbation_method=mock_perturbation(),
-        shape_method=mock_blob(),
+        shape_method=mock_shape(),
     )
 
     # 3) check results
@@ -133,7 +133,7 @@ def test_add_perturbation_shape(mock_blob, mock_perturbation):
         == mock_perturbation
     )
     # assert perturbation_key+"shape_type" in ponds.data.ts.attrs
-    assert ponds.data.ts.attrs[perturbation_key + "1_" + "shape_type"] == mock_blob
+    assert ponds.data.ts.attrs[perturbation_key + "1_" + "shape_type"] == mock_shape
 
 
 ###################################################################################################
@@ -141,7 +141,7 @@ def test_add_perturbation_shape(mock_blob, mock_perturbation):
 ###################################################################################################
 
 
-def test_add_shift_shape_unaltered(mock_blob, mock_shift):
+def test_add_shift_shape_unaltered(mock_shape, mock_shift):
     # 1) setup variables
     lat_size = 10
     lon_size = 20
@@ -152,14 +152,14 @@ def test_add_shift_shape_unaltered(mock_blob, mock_shift):
     # 2) call function
     ponds.add_shift(
         shift_method=mock_shift(),
-        shape_method=mock_blob(),
+        shape_method=mock_shape(),
     )
 
     # 3) check results
     assert ponds.data.ts.shape == original_shape
 
 
-def test_add_shift_parameter_storage(mock_blob, mock_shift):
+def test_add_shift_parameter_storage(mock_shape, mock_shift):
     """
     - check if the shift- and shape type is stored as an attribute in the xarray DataArray
     - check if PONDS takes a custom cluster_key for the variable name
@@ -182,7 +182,7 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     for _ in range(num_shifts):
         ponds.add_shift(
             shift_method=mock_shift(),
-            shape_method=mock_blob(),
+            shape_method=mock_shape(),
         )
 
     # 3) check results
@@ -191,24 +191,24 @@ def test_add_shift_parameter_storage(mock_blob, mock_shift):
     assert ponds.data.custom_key1.attrs["shift_type"] == mock_shift
     assert ponds.data.custom_key2.attrs["shift_type"] == mock_shift
     # -- check if shape_type is stored
-    assert ponds.data.custom_key1.attrs["shape_type"] == mock_blob
-    assert ponds.data.custom_key2.attrs["shape_type"] == mock_blob
+    assert ponds.data.custom_key1.attrs["shape_type"] == mock_shape
+    assert ponds.data.custom_key2.attrs["shape_type"] == mock_shape
 
 
 ###################################################################################################
 ####################################### Reproducibility ###########################################
 ###################################################################################################
 
-# use SIGMOID and GAUSS to benchmark reproducibility
+# use SIGMOID and BLOB to benchmark reproducibility
 
 
 def test_reproducibility(R=5):
     """
     - check if stored attributes can be used to reproduce a shift
-        -> do this using SIGMOID, GAUSS and WhiteNoise
+        -> do this using SIGMOID, BLOB and WhiteNoise
 
         Idea: - create a PONDS object using a certain random seed
-                - add a shift using SIGMOID, GAUSS and WhiteNoise, each with a random seed
+                - add a shift using SIGMOID, BLOB and WhiteNoise, each with a random seed
                 - extract all parameters from the Dataset
               - reproduce the ponds object using the same random seed
               - check if the time series and masks are equal
@@ -236,9 +236,9 @@ def test_reproducibility(R=5):
         ponds.add_perturbation(
             perturbation_method=WhiteNoise(magnitude=noise, random_seed=rs1),
         )
-        # - add a shift using SIGMOID and GAUSS
+        # - add a shift using SIGMOID and BLOB
         ponds.add_shift(
-            shape_method=GAUSS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+            shape_method=BLOB(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()

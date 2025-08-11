@@ -25,19 +25,19 @@ def test_custom_input_output_equal():
     # 1) setup variables
     lat_size = np.random.randint(10, 100)
     lon_size = np.random.randint(10, 100)
-    blob_mask = np.random.choice([True, False], size=(lat_size, lon_size))
+    shape_mask = np.random.choice([True, False], size=(lat_size, lon_size))
     lats = np.linspace(-90, 90, lat_size)
     lons = np.linspace(-180, 180, lon_size)
 
     # 2) call function
-    custom = CUSTOM(blob_mask=blob_mask)
-    blob_output = custom.make_blob(lats=lats, lons=lons)
+    custom = CUSTOM(shape_mask=shape_mask)
+    shape_output = custom.make_shape(lats=lats, lons=lons)
 
     # 3) check results
-    assert blob_output.shape == (lat_size, lon_size), (
+    assert shape_output.shape == (lat_size, lon_size), (
         "Output shape does not match input shape."
     )
-    assert np.array_equal(blob_output, blob_mask), (
+    assert np.array_equal(shape_output, shape_mask), (
         "Output mask does not match input mask."
     )
 
@@ -48,14 +48,14 @@ def test_custom_wrong_shape_type_raises_error():
     """
     lat_size = 14
     lon_size = 26
-    blob_mask_wrong_shape1 = np.random.choice(
+    shape_mask_wrong_shape1 = np.random.choice(
         [True, False], size=(lat_size + 1, lon_size)
     )
-    blob_mask_wrong_shape2 = np.random.choice(
+    shape_mask_wrong_shape2 = np.random.choice(
         [True, False], size=(lat_size, lon_size - 1)
     )
-    blob_mask_wrong_type1 = np.random.rand(lat_size, lon_size)  # float array
-    blob_mask_wrong_type2 = np.random.randint(
+    shape_mask_wrong_type1 = np.random.rand(lat_size, lon_size)  # float array
+    shape_mask_wrong_type2 = np.random.randint(
         0, 2, size=(lat_size, lon_size)
     )  # int array
     lats = np.linspace(-90, 90, lat_size)
@@ -63,20 +63,20 @@ def test_custom_wrong_shape_type_raises_error():
 
     # 2) call function + 3) check results (expecting ValueError)
     with pytest.raises(ValueError):
-        custom = CUSTOM(blob_mask=blob_mask_wrong_shape1)
-        _ = custom.make_blob(lats=lats, lons=lons)
+        custom = CUSTOM(shape_mask=shape_mask_wrong_shape1)
+        _ = custom.make_shape(lats=lats, lons=lons)
 
     with pytest.raises(ValueError):
-        custom = CUSTOM(blob_mask=blob_mask_wrong_shape2)
-        _ = custom.make_blob(lats=lats, lons=lons)
+        custom = CUSTOM(shape_mask=shape_mask_wrong_shape2)
+        _ = custom.make_shape(lats=lats, lons=lons)
 
     with pytest.raises(ValueError):
-        custom = CUSTOM(blob_mask=blob_mask_wrong_type1)
-        _ = custom.make_blob(lats=lats, lons=lons)
+        custom = CUSTOM(shape_mask=shape_mask_wrong_type1)
+        _ = custom.make_shape(lats=lats, lons=lons)
 
     with pytest.raises(ValueError):
-        custom = CUSTOM(blob_mask=blob_mask_wrong_type2)
-        _ = custom.make_blob(lats=lats, lons=lons)
+        custom = CUSTOM(shape_mask=shape_mask_wrong_type2)
+        _ = custom.make_shape(lats=lats, lons=lons)
 
 
 def test_custom_add_shift():
@@ -87,7 +87,7 @@ def test_custom_add_shift():
     # 1) setup variables
     lat_size = 2
     lon_size = 2
-    blob_mask = [[True, False], [False, True]]
+    shape_mask = [[True, False], [False, True]]
     pd = PONDS(
         lat_size=lat_size,
         lon_size=lon_size,
@@ -96,7 +96,7 @@ def test_custom_add_shift():
 
     # 2) call function
     pd.add_shift(
-        shape_method=CUSTOM(blob_mask=blob_mask),
+        shape_method=CUSTOM(shape_mask=shape_mask),
         shift_method=SIGMOID(
             central_time=1,
             shift_magnitude=1.0,
