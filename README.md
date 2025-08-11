@@ -1,6 +1,10 @@
 # PONDS
 **P**erturbed **O**bservables in **N**oisy/**N**onlinear **D**ynamics **S**ynthesiser
 
+- [Installation](#installation)
+- [Purpos of PONDS](#purpos-of-ponds)
+- [Contribution](#contribution)
+
 ___
 
 PONDS is a synthetic data generator build alongside [TOAD](https://toad-docs.pages.dev/). Its purpose is to provide a standardized way in generating and storing synthetic climate data used for benchmarking abrupt shift detection.
@@ -13,9 +17,21 @@ Currently, the easiest option to install PONDS on a local machine is by cloning 
 
 ```
 $ git clone https://github.com/tipmip-methods/ponds.git
-$ cd <path>/<to>/<ponds>
+$ cd ponds
 $ pip install .
 ```
+___
+
+## Purpos of PONDS
+
+1. Framework to implement non-linear time series generators into a climate data environment.
+    - to figure out how certain non-linear events can look like in climate data
+
+2. Phenomenological showcasing of abrupt shift detectors (like TOAD).
+    - provide a climate dataset and test which kind of shifts the detector finds
+
+3. Mimicking real world shift events.
+    - create surrogates for known events and perform ensemble analysis
 
 ___
 
@@ -28,17 +44,4 @@ pip install -e .[dev]
 ```
 
 This makes sure, that additional packages are installed, which are helpfull or necessary when working on the project.
-
-___
-
-## Purposes of PONDS
-
-1. Framework to implement non-linear time series generators into a climate data environment.
-    - to figure out how certain non-linear events can look like in climate data
-
-2. Phenomenological showcasing of abrupt shift detectors (like TOAD).
-    - provide a climate dataset and test which kind of shifts the detector finds
-
-3. Mimicking real world shift events.
-    - create surrogates for known events and perform ensemble analysis
 
