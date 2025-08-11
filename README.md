@@ -28,3 +28,17 @@ pip install -e .[dev]
 ```
 
 This makes sure, that additional packages are installed, which are helpfull or necessary when working on the project.
+
+___
+
+## Purposes of PONDS
+
+1. Framework to implement non-linear time series generators into a climate data environment.
+    - to figure out how certain non-linear events can look like in climate data
+
+2. Phenomenological showcasing of abrupt shift detectors (like TOAD).
+    - provide a climate dataset and test which kind of shifts the detector finds
+
+3. Mimicking real world shift events.
+    - create surrogates for known events and perform ensemble analysis
+
