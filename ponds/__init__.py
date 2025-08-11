@@ -1,13 +1,13 @@
 from ponds.core import PONDS
-from ponds.blobgen import BlobsMethod, SINGLE, GAUSS, CUSTOM
+from ponds.shapegen import ShapesMethod, SINGLE, BLOB, CUSTOM
 from ponds.shiftgen import ShiftsMethod, SIGMOID
 from ponds.perturbationgen import PerturbationMethod, WhiteNoise, Trend
 
 __all__ = [
     "PONDS",
-    "BlobsMethod",
+    "ShapesMethod",
     "SINGLE",
-    "GAUSS",
+    "BLOB",
     "CUSTOM",
     "ShiftsMethod",
     "SIGMOID",
@@ -18,7 +18,7 @@ __all__ = [
 
 type_dict = {
     "SINGLE": SINGLE,
-    "GAUSS": GAUSS,
+    "BLOB": BLOB,
     "CUSTOM": CUSTOM,
     "SIGMOID": SIGMOID,
     "WhiteNoise": WhiteNoise,

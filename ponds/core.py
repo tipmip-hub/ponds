@@ -5,7 +5,7 @@ import warnings
 from ponds import (
     plotter,
 )
-from ponds.blobgen import BlobsMethod, SINGLE
+from ponds.shapegen import ShapesMethod, SINGLE
 from ponds.shiftgen import ShiftsMethod
 from ponds.perturbationgen import PerturbationMethod
 
@@ -98,7 +98,7 @@ class PONDS:
     def add_perturbation(
         self,
         perturbation_method: PerturbationMethod,
-        shape_method: BlobsMethod = SINGLE(),
+        shape_method: ShapesMethod = SINGLE(),
     ):
         """
         Adds a perturbation to the time series data.
@@ -118,7 +118,7 @@ class PONDS:
                 "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
             )
 
-        # 1) Generate blob mask if shape_method is provided
+        # 1) Generate shape mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
         if shape_method is SINGLE():
             if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
@@ -133,17 +133,17 @@ class PONDS:
                     "If chosen shape method is not SINGLE it is likely to fail."
                 )
 
-        # - generate blob mask
-        blob_mask = shape_method.make_blob(
+        # - generate shape mask
+        shape_mask = shape_method.make_shape(
             lats=self.lats,
             lons=self.lons,
         )
-        blob_dict = shape_method.param_dict
+        shape_dict = shape_method.param_dict
 
         # 2) Generate perturbation data and add to time series
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
-                if blob_mask[i, j]:
+                if shape_mask[i, j]:
                     perturbation_effect = perturbation_method.make_perturbation(
                         time_size=len(self.time)
                     )
@@ -154,26 +154,26 @@ class PONDS:
         # 3) store perturbation metadata
         self._add_perturbation_to_ds(
             perturbation_dict=perturbation_method.param_dict,
-            shape_dict=blob_dict,
+            shape_dict=shape_dict,
         )
 
     def add_shift(
         self,
         shift_method: ShiftsMethod,
-        shape_method: BlobsMethod = SINGLE(),
+        shape_method: ShapesMethod = SINGLE(),
     ):
         """
         Adds a shift to the time series data.
 
         Shape Methods:
-            - "GAUSS": Adds a shift in the shape of a Gaussian blob.
+            - "BLOB": Adds a shift in the shape of an eliptic blob.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
             - ...
 
         Args:
-            shape_method (BlobsMethod): Method to generate the shape of the shift.
+            shape_method (ShapesMethod): Method to generate the shape of the shift.
             shift_method (ShiftsMethod): Method to generate the shift in the time series.
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
@@ -186,7 +186,7 @@ class PONDS:
                 "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
             )
 
-        # 1) generate blob mask
+        # 1) generate shape mask
         if shape_method is SINGLE():
             if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
                 warnings.warn(
@@ -199,18 +199,18 @@ class PONDS:
                     "Shape method specified for a (1x1) grid. PONDS is in single-mode. "
                     "If chosen shape method is not SINGLE it is likely to fail."
                 )
-        blob_mask = shape_method.make_blob(
+        shape_mask = shape_method.make_shape(
             lats=self.lats,
             lons=self.lons,
         )
-        blob_dict = shape_method.param_dict
+        shape_dict = shape_method.param_dict
 
         # 2) generate shift data
         # - generate shift data and add to time serie
-        mask3d = np.zeros((self.data.sizes["time"], *blob_mask.shape), dtype=bool)
+        mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool)
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
-                if blob_mask[i, j]:
+                if shape_mask[i, j]:
                     shift_effect, t_shift = shift_method.make_shift(
                         self.time,
                     )
@@ -228,18 +228,18 @@ class PONDS:
             )
             shift_method.param_dict["shift_type"] = "UNKNOWN"
         # check if shape_method param_dict contains 'shape_type' key
-        if "shape_type" not in blob_dict:
+        if "shape_type" not in shape_dict:
             warnings.warn(
                 "Shape method param_dict does not contain 'shape_type' key. "
                 "Setting shape_type to 'UNKNOWN'."
             )
-            blob_dict["shape_type"] = "UNKNOWN"
+            shape_dict["shape_type"] = "UNKNOWN"
 
         # - store shift as a DataArray in the Dataset
         self._add_shift_to_ds(
             mask=mask3d,
             shift_dict=shift_method.param_dict,
-            blob_dict=blob_dict,
+            shape_dict=shape_dict,
         )
 
     def _get_new_perturbation_key(self):
@@ -301,7 +301,7 @@ class PONDS:
         self,
         mask: np.ndarray,
         shift_dict: dict,
-        blob_dict: dict,
+        shape_dict: dict,
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -328,8 +328,8 @@ class PONDS:
         # - add shift attributes
         for k, v in shift_dict.items():
             new_da.attrs[k] = v
-        # - add blob attributes
-        for k, v in blob_dict.items():
+        # - add shape attributes
+        for k, v in shape_dict.items():
             new_da.attrs[k] = v
 
         # Append the new DataArray to the Dataset
