@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 # for BLOB
-#from scipy.stats import multivariate_normal
+# from scipy.stats import multivariate_normal
 
 
 # Abstract class
@@ -24,12 +24,12 @@ class ShapesMethod(ABC):
 class SINGLE(ShapesMethod):
     def __init__(self):
         """
-            A placeholder for a single shape method. This is used when no specific shape method is defined.
+        A placeholder for a single shape method. This is used when no specific shape method is defined.
         """
-            
+
         self.param_dict = {
             "shape_type": SINGLE,
-            }
+        }
 
     def make_shape(
         self,
@@ -50,10 +50,10 @@ class BLOB(ShapesMethod):
     def __init__(
         self,
         random_seed=1,
-        center_lat=None,    # center latitude of the blob
-        center_lon=None,    # center longitude of the blob
-        ecc_lat=None,     # standard deviation in latitude
-        ecc_lon=None,     # standard deviation in longitude
+        center_lat=None,  # center latitude of the blob
+        center_lon=None,  # center longitude of the blob
+        ecc_lat=None,  # standard deviation in latitude
+        ecc_lon=None,  # standard deviation in longitude
     ):
         if random_seed is not None:
             np.random.seed(random_seed)
@@ -97,10 +97,12 @@ class BLOB(ShapesMethod):
         # - handle longitude periodicity to ensure continuity at the dateline (global dataset!)
         extended_lons = np.concatenate([lons - 360, lons, lons + 360])
         # - create meshgrid for latitudes and extended longitudes
-        lat_grid, lon_grid = np.meshgrid(lats, extended_lons, indexing='ij')
+        lat_grid, lon_grid = np.meshgrid(lats, extended_lons, indexing="ij")
 
         # Calculate the mask for the elliptic shape on the longitude-extended grid
-        shape_mask = ((lat_grid - self.center_lat) / self.ecc_lat)**2 + ((lon_grid - self.center_lon) / self.ecc_lon)**2 <= 1
+        shape_mask = ((lat_grid - self.center_lat) / self.ecc_lat) ** 2 + (
+            (lon_grid - self.center_lon) / self.ecc_lon
+        ) ** 2 <= 1
 
         # add up contributions from periodic longitudes, shape_contribution is of shape (lat_size, lon_size)
         # - split shape_mask into three parts, one for each longitude section
