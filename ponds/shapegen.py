@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-# for gauss
-from scipy.stats import multivariate_normal
+# for BLOB
+#from scipy.stats import multivariate_normal
 
 
 # Abstract class
@@ -52,8 +52,8 @@ class BLOB(ShapesMethod):
         random_seed=1,
         center_lat=None,    # center latitude of the blob
         center_lon=None,    # center longitude of the blob
-        sigma_lat=None,     # standard deviation in latitude
-        sigma_lon=None,     # standard deviation in longitude
+        ecc_lat=None,     # standard deviation in latitude
+        ecc_lon=None,     # standard deviation in longitude
     ):
         if random_seed is not None:
             np.random.seed(random_seed)
@@ -62,22 +62,22 @@ class BLOB(ShapesMethod):
             center_lat = np.random.uniform(-80, 80)
         if center_lon is None:
             center_lon = np.random.uniform(-180, 180)
-        if sigma_lat is None:
-            sigma_lat = np.random.uniform(10, 20)
-        if sigma_lon is None:
-            sigma_lon = np.random.uniform(15, 40)
+        if ecc_lat is None:
+            ecc_lat = np.random.uniform(10, 20)
+        if ecc_lon is None:
+            ecc_lon = np.random.uniform(15, 40)
 
         self.center_lat = center_lat
         self.center_lon = center_lon
-        self.sigma_lat = sigma_lat
-        self.sigma_lon = sigma_lon
+        self.ecc_lat = ecc_lat
+        self.ecc_lon = ecc_lon
 
         self.param_dict = {
             "shape_type": BLOB,
             "center_lat": center_lat,
             "center_lon": center_lon,
-            "sigma_lat": sigma_lat,
-            "sigma_lon": sigma_lon,
+            "ecc_lat": ecc_lat,
+            "ecc_lon": ecc_lon,
         }
 
     def make_shape(
@@ -86,36 +86,29 @@ class BLOB(ShapesMethod):
         lons,
     ) -> np.ndarray:
         """
-        Generates a spatial blob of parameters on the grid in shape of a 2D Gauss, given positional and
-        spatial shape parameters. Returns a mask of the same shape as the grid, where values above 0.5
-        indicate presence of the blob.
+        Generates a 2D spatial blob of eliptic shape. Given are the central latitude and longitude, as well as the
+        extend of the blob in latitude and longitude. The function returns a mask of the same shape as the grid,
+        where are values that are part of the blob are True, and all other values are False.
 
-        Returns:
-            shape_mask (np.ndarray): A 2D array of shape (lat_size, lon_size).
+        Elliptic Formula:
+        ((lat - center_lat) / sigma_lat)**2 + ((lon - center_lon) / sigma_lon)**2 <= 1
         """
-
-        # Handle longitude periodicity to ensure continuity at the dateline (global dataset!)
+        # Create coordinate combinations of all latitudes and longitudes
+        # - handle longitude periodicity to ensure continuity at the dateline (global dataset!)
         extended_lons = np.concatenate([lons - 360, lons, lons + 360])
+        # - create meshgrid for latitudes and extended longitudes
+        lat_grid, lon_grid = np.meshgrid(lats, extended_lons, indexing='ij')
 
-        # Create grids
-        lat_grid, extended_lon_grid = np.meshgrid(lats, extended_lons, indexing="ij")
-        pos_extended = np.dstack((lat_grid, extended_lon_grid))
-
-        # Calculate Gaussian Shape
-        cov = np.array([[self.sigma_lat**2, 0], [0, self.sigma_lon**2]])
-        # - create multivariate normal distribution
-        rv = multivariate_normal(mean=[self.center_lat, self.center_lon], cov=cov)
-        # - compute probability density function (PDF) over the extended grid
-        extended_shape = rv.pdf(pos_extended)
-        shape_normalized = extended_shape / np.max(extended_shape)
+        # Calculate the mask for the elliptic shape on the longitude-extended grid
+        shape_mask = ((lat_grid - self.center_lat) / self.ecc_lat)**2 + ((lon_grid - self.center_lon) / self.ecc_lon)**2 <= 1
 
         # add up contributions from periodic longitudes, shape_contribution is of shape (lat_size, lon_size)
-        shape_contribution = np.sum(
-            shape_normalized.reshape(len(lats), 3, len(lons)).transpose(1, 0, 2),
-            axis=0,
-        ).reshape(len(lats), len(lons))
-        # create mask where shape_contribution is above 0.5
-        shape_mask = np.where(shape_contribution > 0.5, True, False)
+        # - split shape_mask into three parts, one for each longitude section
+        shape_mask = shape_mask.reshape(len(lats), 3, len(lons))
+        # - transpose to have latitudes as first dimension
+        shape_mask = shape_mask.transpose(1, 0, 2)
+        # - if any of the three sections is True, then the point is part of the shape
+        shape_mask = np.any(shape_mask, axis=0)
 
         return shape_mask
 

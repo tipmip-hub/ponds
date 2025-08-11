@@ -119,21 +119,21 @@ def test_blob_custom_parameter_storage():
     """
     - check if the custom parameters are stored correctly in the GAUSS class
     - expected behavior:
-        - center_lat, center_lon, sigma_lat, sigma_lon should be stored as attributes
+        - center_lat, center_lon, ecc_lat, ecc_lon should be stored as attributes
     """
 
     # 1) setup variables
     custom_center_lat = 42.0
     custom_center_lon = 63.0
-    custom_sigma_lat = 5
-    custom_sigma_lon = 10
+    custom_ecc_lat = 5
+    custom_ecc_lon = 10
 
     # 2) call function
     shape_method = BLOB(
         center_lat=custom_center_lat,
         center_lon=custom_center_lon,
-        sigma_lat=custom_sigma_lat,
-        sigma_lon=custom_sigma_lon,
+        ecc_lat=custom_ecc_lat,
+        ecc_lon=custom_ecc_lon,
     )
 
     # 3) check results
@@ -145,25 +145,22 @@ def test_blob_custom_parameter_storage():
     assert shape_dict["center_lon"] == custom_center_lon, (
         f"Expected center_lon: {custom_center_lon}, got: {shape_dict['center_lon']}"
     )
-    assert shape_dict["sigma_lat"] == custom_sigma_lat, (
-        f"Expected sigma_lat: {custom_sigma_lat}, got: {shape_dict['sigma_lat']}"
+    assert shape_dict["ecc_lat"] == custom_ecc_lat, (
+        f"Expected ecc_lat: {custom_ecc_lat}, got: {shape_dict['ecc_lat']}"
     )
-    assert shape_dict["sigma_lon"] == custom_sigma_lon, (
-        f"Expected sigma_lon: {custom_sigma_lon}, got: {shape_dict['sigma_lon']}"
+    assert shape_dict["ecc_lon"] == custom_ecc_lon, (
+        f"Expected ecc_lon: {custom_ecc_lon}, got: {shape_dict['ecc_lon']}"
     )
 
 
-def test_blob_custom_parameters_center(err=3):
+def test_blob_custom_parameters_center(err=1):
     """
     - Test if custom parameters for the central lat and lon for the Blob are used correctly.
     - expected behavior:
         - center_lat: mean of the latitudes in the blob should be equal to the center_lat parameter
         - center_lon: mean of the longitudes in the blob should be equal to the center_lon parameter
     Arguments:
-        - err: allowed offset for the index of the center lat and lon (ideal would be err=0, see ToDo)
-
-    ToDo:
-        - lats work fine, but lons are not exactly correct; I do no know why...
+        - err: allowed offset for the index of the center lat and lon
     """
 
     # 1) setup variables
@@ -172,8 +169,8 @@ def test_blob_custom_parameters_center(err=3):
 
     custom_center_lat = [-90, -88, 0, 42, 90]  # needs to be in range [-90, 90]
     custom_center_lon = [-179, -110, 0, 63, 179]  # needs to be in range [-180, 180]
-    custom_sigma_lat = 0.1  # small sigma for a sharp blob (only one cell)
-    custom_sigma_lon = 0.05  # small sigma for a sharp blob (only one cell)
+    custom_ecc_lat = 0.75  # small eccentricity for a sharp blob (only one cell)
+    custom_ecc_lon = 0.75  # small eccentricity for a sharp blob (only one cell)
 
     for center_lat in custom_center_lat:
         for center_lon in custom_center_lon:
@@ -181,8 +178,8 @@ def test_blob_custom_parameters_center(err=3):
             shape_method = BLOB(
                 center_lat=center_lat,
                 center_lon=center_lon,
-                sigma_lat=custom_sigma_lat,
-                sigma_lon=custom_sigma_lon,
+                ecc_lat=custom_ecc_lat,
+                ecc_lon=custom_ecc_lon,
             )
             mask_custom = shape_method.make_shape(
                 lats=np.linspace(-90, 90, lat_size),
