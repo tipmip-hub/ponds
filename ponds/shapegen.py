@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-# for BLOB
-# from scipy.stats import multivariate_normal
-
 
 # Abstract class
 class ShapesMethod(ABC):
@@ -42,16 +39,16 @@ class SINGLE(ShapesMethod):
 
 
 ###################################################################################################
-############################################ BLOB #################################################
+######################################## ELLIPSIS #################################################
 ###################################################################################################
+    
 
-
-class BLOB(ShapesMethod):
+class ELLIPSIS(ShapesMethod):
     def __init__(
         self,
         random_seed=1,
-        center_lat=None,  # center latitude of the blob
-        center_lon=None,  # center longitude of the blob
+        center_lat=None,  # center latitude of the ellipsis
+        center_lon=None,  # center longitude of the ellipsis
         ecc_lat=None,  # standard deviation in latitude
         ecc_lon=None,  # standard deviation in longitude
     ):
@@ -73,7 +70,7 @@ class BLOB(ShapesMethod):
         self.ecc_lon = ecc_lon
 
         self.param_dict = {
-            "shape_type": BLOB,
+            "shape_type": ELLIPSIS,
             "center_lat": center_lat,
             "center_lon": center_lon,
             "ecc_lat": ecc_lat,
@@ -86,9 +83,9 @@ class BLOB(ShapesMethod):
         lons,
     ) -> np.ndarray:
         """
-        Generates a 2D spatial blob of eliptic shape. Given are the central latitude and longitude, as well as the
-        extend of the blob in latitude and longitude. The function returns a mask of the same shape as the grid,
-        where are values that are part of the blob are True, and all other values are False.
+        Generates a 2D spatial ellipsis shape. Given are the central latitude and longitude, as well as the
+        extend of the ellipsis in latitude and longitude. The function returns a mask of the same shape as the grid,
+        where are values that are part of the ellipsis are True, and all other values are False.
 
         Elliptic Formula:
         ((lat - center_lat) / sigma_lat)**2 + ((lon - center_lon) / sigma_lon)**2 <= 1

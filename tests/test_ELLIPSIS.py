@@ -1,17 +1,17 @@
 import numpy as np
-from ponds import PONDS, BLOB
+from ponds import PONDS, ELLIPSIS
 
 """
 
 Things to Test:
-    - Random Blob
+    - Random ELLIPSIS
         x must return boolean 2D array
-        x blob mask must have the same shape as the ponds grid
-        x does the same seed produce the same blob mask
+        x ellipsis mask must have the same shape as the ponds grid
+        x does the same seed produce the same ellipsis mask
         x check compatibility with the PONDS.add_shift() function
-        x check if in blob mask at least one cell is True
-        - do the blobs scale with the grid size
-    - Custom Blob
+        x check if in ellipsis mask at least one cell is True
+        - do the ellipses scale with the grid size
+    - Custom Ellipsis
         x are the correct shape-params stored as attributes on the DataArray Level
         x is the location correct
         - is the shape correct
@@ -22,11 +22,11 @@ Legend:
 """
 
 ###################################################################################################
-######################################## Random Blob ##############################################
+##################################### Random Ellipsis #############################################
 ###################################################################################################
 
 
-def test_blob_output():
+def test_ellipsis_output():
     """
     Checking two cases: small and large grid size.
         - check if the output is a boolean 2D array
@@ -38,12 +38,12 @@ def test_blob_output():
     lon_size = 20
     ponds_small = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
-    blob_small = BLOB()
-    blob_small = blob_small.make_shape(lats=ponds_small.lats, lons=ponds_small.lons)
+    ellipsis_small = ELLIPSIS()
+    ellipsis_small = ellipsis_small.make_shape(lats=ponds_small.lats, lons=ponds_small.lons)
     # 3) check results
-    assert isinstance(blob_small, np.ndarray), "Blob must be a numpy array."
-    assert blob_small.dtype == bool, "Blob must be a boolean array."
-    assert blob_small.shape == (lat_size, lon_size)
+    assert isinstance(ellipsis_small, np.ndarray), "Ellipsis must be a numpy array."
+    assert ellipsis_small.dtype == bool, "Ellipsis must be a boolean array."
+    assert ellipsis_small.shape == (lat_size, lon_size)
 
     # >> large ponds
     # 1) setup variables
@@ -51,17 +51,17 @@ def test_blob_output():
     lon_size = 300
     ponds_large = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
-    blob_large = BLOB()
-    blob_large = blob_large.make_shape(lats=ponds_large.lats, lons=ponds_large.lons)
+    ellipsis_large = ELLIPSIS()
+    ellipsis_large = ellipsis_large.make_shape(lats=ponds_large.lats, lons=ponds_large.lons)
     # 3) check results
-    assert isinstance(blob_large, np.ndarray), "Blob must be a numpy array."
-    assert blob_large.dtype == bool, "Blob must be a boolean array."
-    assert blob_large.shape == (lat_size, lon_size)
+    assert isinstance(ellipsis_large, np.ndarray), "Ellipsis must be a numpy array."
+    assert ellipsis_large.dtype == bool, "Ellipsis must be a boolean array."
+    assert ellipsis_large.shape == (lat_size, lon_size)
 
 
-def test_blob_same_seed_produces_same_blob_mask(R=5):
+def test_ellipsis_same_seed_produces_same_ellipsis_mask(R=5):
     """
-    - check if the same random seed produces the same blob mask
+    - check if the same random seed produces the same ellipsis mask
     """
 
     # 1.1) setup variables
@@ -70,7 +70,7 @@ def test_blob_same_seed_produces_same_blob_mask(R=5):
 
     for _ in range(R):
         # 1.2) setup variables
-        seed_blob = np.random.randint(0, 1000)
+        seed_ellipsis = np.random.randint(0, 1000)
         ponds1 = PONDS(
             lat_size=lat_size,
             lon_size=lon_size,
@@ -81,26 +81,26 @@ def test_blob_same_seed_produces_same_blob_mask(R=5):
         )
 
         # 2) call function
-        blob1 = BLOB(random_seed=seed_blob)
-        blob1 = blob1.make_shape(lats=ponds1.lats, lons=ponds1.lons)
-        blob2 = BLOB(random_seed=seed_blob)
-        blob2 = blob2.make_shape(lats=ponds2.lats, lons=ponds2.lons)
+        ellipsis1 = ELLIPSIS(random_seed=seed_ellipsis)
+        ellipsis1 = ellipsis1.make_shape(lats=ponds1.lats, lons=ponds1.lons)
+        ellipsis2 = ELLIPSIS(random_seed=seed_ellipsis)
+        ellipsis2 = ellipsis2.make_shape(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results
-        assert np.array_equal(blob1, blob2), "Blobs with same seed should be identical."
+        assert np.array_equal(ellipsis1, ellipsis2), "Ellipses with same seed should be identical."
 
 
-def test_blob_add_shift_integration(mock_shift):
+def test_ellipsis_add_shift_integration(mock_shift):
     """
     - test compatibility with PONDS.add_shift()
-    - check if blob_mask is not all False
+    - check if ellipsis_mask is not all False
     """
 
     # 1) setup variables
     ponds = PONDS(lat_size=10, lon_size=20, time_size=30)
 
     # 2) call function
-    ponds.add_shift(shape_method=BLOB(), shift_method=mock_shift())
+    ponds.add_shift(shape_method=ELLIPSIS(), shift_method=mock_shift())
 
     # 3) check results
     # - Check if cluster mask is True at least somewhere
@@ -111,11 +111,11 @@ def test_blob_add_shift_integration(mock_shift):
 
 
 ###################################################################################################
-######################################## Custom Blob ##############################################
+##################################### Custom Ellipsis #############################################
 ###################################################################################################
 
 
-def test_blob_custom_parameter_storage():
+def test_ellipsis_custom_parameter_storage():
     """
     - check if the custom parameters are stored correctly in the GAUSS class
     - expected behavior:
@@ -129,7 +129,7 @@ def test_blob_custom_parameter_storage():
     custom_ecc_lon = 10
 
     # 2) call function
-    shape_method = BLOB(
+    shape_method = ELLIPSIS(
         center_lat=custom_center_lat,
         center_lon=custom_center_lon,
         ecc_lat=custom_ecc_lat,
@@ -138,7 +138,7 @@ def test_blob_custom_parameter_storage():
 
     # 3) check results
     shape_dict = shape_method.param_dict
-    assert shape_dict["shape_type"] == BLOB, "Type should be 'BLOB'."
+    assert shape_dict["shape_type"] == ELLIPSIS, "Type should be 'ELLIPSIS'."
     assert shape_dict["center_lat"] == custom_center_lat, (
         f"Expected center_lat: {custom_center_lat}, got: {shape_dict['center_lat']}"
     )
@@ -153,12 +153,12 @@ def test_blob_custom_parameter_storage():
     )
 
 
-def test_blob_custom_parameters_center(err=1):
+def test_ellipsis_custom_parameters_center(err=1):
     """
-    - Test if custom parameters for the central lat and lon for the Blob are used correctly.
+    - Test if custom parameters for the central lat and lon for the Ellipsis are used correctly.
     - expected behavior:
-        - center_lat: mean of the latitudes in the blob should be equal to the center_lat parameter
-        - center_lon: mean of the longitudes in the blob should be equal to the center_lon parameter
+        - center_lat: mean of the latitudes in the ellipsis should be equal to the center_lat parameter
+        - center_lon: mean of the longitudes in the ellipsis should be equal to the center_lon parameter
     Arguments:
         - err: allowed offset for the index of the center lat and lon
     """
@@ -169,13 +169,13 @@ def test_blob_custom_parameters_center(err=1):
 
     custom_center_lat = [-90, -88, 0, 42, 90]  # needs to be in range [-90, 90]
     custom_center_lon = [-179, -110, 0, 63, 179]  # needs to be in range [-180, 180]
-    custom_ecc_lat = 0.75  # small eccentricity for a sharp blob (only one cell)
-    custom_ecc_lon = 0.75  # small eccentricity for a sharp blob (only one cell)
+    custom_ecc_lat = 0.75  # small eccentricity for a sharp ellipsis (only one cell)
+    custom_ecc_lon = 0.75  # small eccentricity for a sharp ellipsis (only one cell)
 
     for center_lat in custom_center_lat:
         for center_lon in custom_center_lon:
             # 2) call function
-            shape_method = BLOB(
+            shape_method = ELLIPSIS(
                 center_lat=center_lat,
                 center_lon=center_lon,
                 ecc_lat=custom_ecc_lat,
