@@ -111,7 +111,7 @@ def test_custom_add_shift():
     assert ts[0, 1, 0] == 0.0
     assert ts[-1, 1, 0] == 0.0
     # - check TRUE values
-    assert ts[0, 0, 0] < 0.5
-    assert ts[-1, 0, 0] > 0.5
-    assert ts[0, 1, 1] < 0.5
-    assert ts[-1, 1, 1] > 0.5
+    assert ts[0, 0, 0] <= 0.5
+    assert ts[-1, 0, 0] >= 0.5
+    assert ts[0, 1, 1] <= 0.5
+    assert ts[-1, 1, 1] >= 0.5

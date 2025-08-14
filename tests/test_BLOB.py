@@ -1,25 +1,22 @@
 import numpy as np
-from ponds import PONDS, ELLIPSIS
+from ponds import PONDS, BLOB
 
 """
 
 Things to Test:
-    - Random Blob
-        - is the shape reproducible using stored metadata?
-        - does the same seed produce the same blob mask?
-    - Custom Blob
-        - do the center coordinates match the expected location?
-        - bigger `size` value leads to larger blob?
-        - does the blob wrap around the lon=0° line?
+    x Random Blob
+        x is the shape reproducible using stored metadata?
+        x does the same seed produce the same blob mask?
+    x Custom Blob
+        x do the center coordinates match the expected location?
+        x bigger `size` value leads to larger blob?
+        x does the blob wrap around the lon=0° line?
 
 Legend:
     - : to do
     x : done
 """
 
-import numpy as np
-import pytest
-from ponds import PONDS, BLOB
 
 ###################################################################################################
 ##################################### Random Blob ################################################
