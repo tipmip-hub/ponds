@@ -172,7 +172,9 @@ def worldmap(
             )
 
     ax.set_title(title)
-    plt.show()
+    #plt.show()
+
+    return fig, ax
 
 
 def _get_grid_edges(coords: np.ndarray):

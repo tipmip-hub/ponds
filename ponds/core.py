@@ -584,7 +584,7 @@ class PONDS:
             title (str): Title of the plot.
         """
 
-        plotter.worldmap(
+        fig, ax = plotter.worldmap(
             ponds=self,
             verbose=verbose,
             figsize=figsize,
@@ -594,3 +594,5 @@ class PONDS:
             shift_type=shift_type,
             title=title,
         )
+
+        return fig, ax

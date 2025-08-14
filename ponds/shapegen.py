@@ -230,7 +230,9 @@ class BLOB(ShapesMethod):
 
         # Create a few metaballs near the center
         balls = []
-        for _ in range(self.max_bellys):
+        # place first ball in center
+        balls.append(_Ball(self.center_lat, self.center_lon, size=self.size))
+        for _ in range(1, self.max_bellys):
             offset = 5 * self.size
             lat_offset = np.random.uniform(-offset, offset)
             lon_offset = np.random.uniform(-offset, offset)
