@@ -6,7 +6,7 @@ class MockShape:
     """
     Always returns a mask with a single True value at (0, 0).
     This is a mock implementation for testing purposes.
-    It simulates the behavior of a blob generator that creates a mask
+    It simulates the behavior of a shape generator that creates a mask
     for a pond.
     """
 

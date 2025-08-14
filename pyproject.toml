@@ -39,6 +39,7 @@ dependencies = [
         "matplotlib",
         "netCDF4",
         "cartopy",
+        "scipy",
 ]
 
 [project.optional-dependencies]

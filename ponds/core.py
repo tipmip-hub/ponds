@@ -41,17 +41,12 @@ class PONDS:
         lat_size: int = 1,
         lon_size: int = 1,
         time_size: int = 100,
-        # background_trend: float = 0.0,
-        # background_noise: float = 0.0,
         cluster_key: str = "c",
         perturbation_key: str = "p",
-        # random_seed: int = 1,
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
         """
-        # if random_seed is not None:
-        #    np.random.seed(random_seed)
 
         # 1) Set up coordinates
         self.lats = np.linspace(-90, 90, lat_size)
@@ -60,12 +55,6 @@ class PONDS:
 
         # 2) Generate background data with trend and noise
         data_ts = np.zeros((time_size, lat_size, lon_size))
-        # for i in range(lat_size):
-        #    for j in range(lon_size):
-        #        data_ts[:, i, j] = (
-        #            background_trend * self.time
-        #            + background_noise * np.random.randn(time_size)
-        #        )
 
         # - Create xarray DataArray, init with background time series data
         dims = ("time", "lat", "lon")
@@ -77,11 +66,6 @@ class PONDS:
                 "lat": self.lats,
                 "lon": self.lons,
             },
-            # attrs={
-            #    "random_seed": random_seed,
-            #    "background_trend": background_trend,
-            #    "background_noise": background_noise,
-            # },
         )
         # - Create xarray Dataset to hold the time series data
         self.data = xr.Dataset(
@@ -115,7 +99,8 @@ class PONDS:
             np.random.seed(perturbation_method.random_seed)
         except AttributeError:
             print(
-                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
+                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state." \
+                "In case the perturbation method relies on randomness, results may not be reproducible."
             )
 
         # 1) Generate shape mask if shape_method is provided
@@ -183,7 +168,8 @@ class PONDS:
             np.random.seed(shift_method.random_seed)
         except AttributeError:
             print(
-                "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
+                "Warning: shift_method has no 'random_seed' attribute; using global RNG state." \
+                "In case the shift method relies on randomness, results may not be reproducible."
             )
 
         # 1) generate shape mask
@@ -598,7 +584,7 @@ class PONDS:
             title (str): Title of the plot.
         """
 
-        plotter.worldmap(
+        fig, ax = plotter.worldmap(
             ponds=self,
             verbose=verbose,
             figsize=figsize,
@@ -608,3 +594,5 @@ class PONDS:
             shift_type=shift_type,
             title=title,
         )
+
+        return fig, ax

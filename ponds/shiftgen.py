@@ -25,7 +25,7 @@ class SIGMOID(ShiftsMethod):
         sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
-        random_seed: int = 1,
+        random_seed: int = None,
     ):
         if random_seed is not None:
             np.random.seed(random_seed)
