@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, BLOB, SIGMOID, WhiteNoise
+from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise
 
 """
 Testing the PONDS core class and its methods.
@@ -16,7 +16,7 @@ Things to Test:
         x is the shape of the grid unaltered
         x is the shift-type stored as an attribute on Dataset Level
         x is the shift- and shape-type stored as an attribute on DataArray Level
-    x Reproducibility using stored attributes -> use SIGMOID and BLOB to benchmark
+    x Reproducibility using stored attributes -> use SIGMOID and ELLIPSIS to benchmark
         x can I reproduce a shift using the stored attributes?
 
 
@@ -199,16 +199,16 @@ def test_add_shift_parameter_storage(mock_shape, mock_shift):
 ####################################### Reproducibility ###########################################
 ###################################################################################################
 
-# use SIGMOID and BLOB to benchmark reproducibility
+# use SIGMOID and ELLIPSIS to benchmark reproducibility
 
 
 def test_reproducibility(R=5):
     """
     - check if stored attributes can be used to reproduce a shift
-        -> do this using SIGMOID, BLOB and WhiteNoise
+        -> do this using SIGMOID, ELLIPSIS and WhiteNoise
 
         Idea: - create a PONDS object using a certain random seed
-                - add a shift using SIGMOID, BLOB and WhiteNoise, each with a random seed
+                - add a shift using SIGMOID, ELLIPSIS and WhiteNoise, each with a random seed
                 - extract all parameters from the Dataset
               - reproduce the ponds object using the same random seed
               - check if the time series and masks are equal
@@ -236,9 +236,10 @@ def test_reproducibility(R=5):
         ponds.add_perturbation(
             perturbation_method=WhiteNoise(magnitude=noise, random_seed=rs1),
         )
-        # - add a shift using SIGMOID and BLOB
+        # - add a shift using SIGMOID and ELLIPSIS
         ponds.add_shift(
-            shape_method=BLOB(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+            shape_method=ELLIPSIS(random_seed=rs2),
+            shift_method=SIGMOID(random_seed=rs3),
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()

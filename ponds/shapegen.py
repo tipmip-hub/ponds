@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 # for BLOB
-# from scipy.stats import multivariate_normal
+from scipy.ndimage import label
 
 
 # Abstract class
@@ -42,16 +42,16 @@ class SINGLE(ShapesMethod):
 
 
 ###################################################################################################
-############################################ BLOB #################################################
+######################################## ELLIPSIS #################################################
 ###################################################################################################
 
 
-class BLOB(ShapesMethod):
+class ELLIPSIS(ShapesMethod):
     def __init__(
         self,
         random_seed=1,
-        center_lat=None,  # center latitude of the blob
-        center_lon=None,  # center longitude of the blob
+        center_lat=None,  # center latitude of the ellipsis
+        center_lon=None,  # center longitude of the ellipsis
         ecc_lat=None,  # standard deviation in latitude
         ecc_lon=None,  # standard deviation in longitude
     ):
@@ -73,7 +73,7 @@ class BLOB(ShapesMethod):
         self.ecc_lon = ecc_lon
 
         self.param_dict = {
-            "shape_type": BLOB,
+            "shape_type": ELLIPSIS,
             "center_lat": center_lat,
             "center_lon": center_lon,
             "ecc_lat": ecc_lat,
@@ -86,9 +86,9 @@ class BLOB(ShapesMethod):
         lons,
     ) -> np.ndarray:
         """
-        Generates a 2D spatial blob of eliptic shape. Given are the central latitude and longitude, as well as the
-        extend of the blob in latitude and longitude. The function returns a mask of the same shape as the grid,
-        where are values that are part of the blob are True, and all other values are False.
+        Generates a 2D spatial ellipsis shape. Given are the central latitude and longitude, as well as the
+        extend of the ellipsis in latitude and longitude. The function returns a mask of the same shape as the grid,
+        where are values that are part of the ellipsis are True, and all other values are False.
 
         Elliptic Formula:
         ((lat - center_lat) / sigma_lat)**2 + ((lon - center_lon) / sigma_lon)**2 <= 1
@@ -155,3 +155,191 @@ class CUSTOM(ShapesMethod):
             raise ValueError("Shape mask must be a boolean array.")
 
         return self.shape_mask
+
+
+###################################################################################################
+############################################ BLOB #################################################
+###################################################################################################
+
+
+class BLOB(ShapesMethod):
+    def __init__(
+        self,
+        center_lat=None,
+        center_lon=None,
+        size=None,
+        max_bellys=None,
+        goo=None,
+        random_seed=None,
+    ):
+        """
+        Creates a shape using the following algorithm:
+            - place `max_bellys` points in proximity to the center point
+            - draw a circle around each point with a radius around `size`
+            - apply a water-surface effect depending on the strength of `goo` (like stickyness)
+                - if `goo` is not None, the algorithm will find the largest `goo` value for
+                    which all circles are still connected
+
+        Args:
+            center_lat (float): The latitude of the center point.
+            center_lon (float): The longitude of the center point.
+            size (float): The size of the circles.
+            max_bellys (int): The maximum number of points to place.
+            goo (float): 'Stickyness' of the water-surface effect.
+            random_seed (int): Seed for reproducibility.
+        """
+
+        if random_seed is not None:
+            np.random.seed(random_seed)
+
+        if center_lat is None:
+            center_lat = np.random.uniform(-80, 80)
+        if center_lon is None:
+            center_lon = np.random.uniform(-180, 180)
+        if size is None:
+            size = np.random.uniform(5, 10)
+        if max_bellys is None:
+            max_bellys = np.random.randint(2, 10)
+
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+        self.size = size
+        self.max_bellys = max_bellys
+        self.goo = goo
+        self.random_seed = random_seed
+
+        self.param_dict = {
+            "shape_type": BLOB,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "size": size,
+            "max_bellys": max_bellys,
+            "goo": goo,
+            "random_seed": random_seed,
+        }
+
+    def make_shape(
+        self,
+        lats,
+        lons,
+    ):
+        """Create a metaball mask in lat/lon space."""
+
+        if self.random_seed is not None:
+            np.random.seed(self.random_seed)
+
+        # Create a few metaballs near the center
+        balls = []
+        # place first ball in center
+        balls.append(_Ball(self.center_lat, self.center_lon, size=self.size))
+        for _ in range(1, self.max_bellys):
+            offset = 5 * self.size
+            lat_offset = np.random.uniform(-offset, offset)
+            lon_offset = np.random.uniform(-offset, offset)
+            size = self.size / self.max_bellys * np.random.uniform(0.8, 1.2)
+            balls.append(
+                _Ball(
+                    self.center_lat + lat_offset,
+                    self.center_lon + lon_offset,
+                    size=size,
+                )
+            )
+
+        # Finding the right value for `goo`
+        # - 1st Case: Single metaball, blob will always be connected
+        if self.goo is None and self.max_bellys == 1:
+            self.goo = 2.0
+        # - 2nd Case: Multiple metaballs, need to find optimal goo
+        elif self.goo is None and self.max_bellys != 1:
+            step = 0.1
+            goo = 1.5  # low stickyness leads to larger expansion of the blob
+            mbs = _Metaball(balls, goo=goo, threshold=0.02)
+            mask = mbs.field_mask(lats, lons)
+            # check if all TRUE in mask are still connected
+            while self._mask_connected(mask) and goo < 4.0:
+                goo += step
+                mbs = _Metaball(balls, goo=goo, threshold=0.02)
+                mask = mbs.field_mask(lats, lons)
+            # mask is not connected -> reduce goo again
+            goo -= step  # last goo was too much
+            self.goo = goo
+
+        # goo is set, create metaball system
+        mbs = _Metaball(balls, goo=self.goo, threshold=0.02)
+        shape_mask = mbs.field_mask(lats, lons)
+
+        self.param_dict["goo"] = self.goo
+
+        return shape_mask
+
+    def _mask_connected(self, mask):
+        """
+        Check if all TRUE values of the mask are connected to each other.
+        """
+        if not np.any(mask):
+            return False  # No True cells at all
+
+        # connectivity structure
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=bool)
+
+        # Label connected components in extended mask
+        _, num_features = label(mask, structure=structure)  # use scipy.ndimage function
+
+        if num_features == 1:
+            return True
+        # check if split at longitude
+        else:
+            lon_size = mask.shape[1]
+            extended_mask = np.hstack([mask, mask])  # (lat, 2*lon)
+            extended_mask = extended_mask[
+                :, lon_size // 2 : 3 * lon_size // 2
+            ]  # keep only the middle section
+
+            # Label connected components in extended mask
+            _, num_features = label(
+                extended_mask, structure=structure
+            )  # use scipy.ndimage function
+
+            if num_features == 1:
+                return True
+            else:
+                return False
+
+
+# Helper Classes for the Blob Generation
+class _Ball:
+    """Single metaball."""
+
+    def __init__(self, lat, lon, size):
+        self.lat = lat
+        self.lon = lon
+        self.size = size
+
+
+class _Metaball:
+    """Metaball system in lat/lon space with longitude wrapping."""
+
+    def __init__(self, balls, goo=2.0, threshold=0.0004):
+        self.balls = balls
+        self.goo = goo
+        self.threshold = threshold
+
+    def _distance(self, lat1, lon1, lat2, lon2):
+        """Euclidean distance in lat/lon degrees, with lon wrapping."""
+        # Wrap longitudes to [-180, 180]
+        dlon = ((lon1 - lon2 + 180) % 360) - 180
+        dlat = lat1 - lat2
+        return np.sqrt(dlat**2 + dlon**2)
+
+    def field_mask(self, lats, lons):
+        """Compute boolean mask for the metaball field."""
+        LAT, LON = np.meshgrid(lats, lons, indexing="ij")  # shape (lat_size, lon_size)
+        field = np.zeros_like(LAT, dtype=float)
+
+        for ball in self.balls:
+            dist = self._distance(LAT, LON, ball.lat, ball.lon)
+            # avoid division by zero
+            dist[dist == 0] = 1e-12
+            field += ball.size / (dist**self.goo)
+
+        return field >= self.threshold
