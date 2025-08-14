@@ -172,7 +172,7 @@ def worldmap(
             )
 
     ax.set_title(title)
-    #plt.show()
+    # plt.show()
 
     return fig, ax
 

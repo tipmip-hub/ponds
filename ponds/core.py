@@ -99,7 +99,7 @@ class PONDS:
             np.random.seed(perturbation_method.random_seed)
         except AttributeError:
             print(
-                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state." \
+                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
                 "In case the perturbation method relies on randomness, results may not be reproducible."
             )
 
@@ -168,7 +168,7 @@ class PONDS:
             np.random.seed(shift_method.random_seed)
         except AttributeError:
             print(
-                "Warning: shift_method has no 'random_seed' attribute; using global RNG state." \
+                "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
                 "In case the shift method relies on randomness, results may not be reproducible."
             )
 

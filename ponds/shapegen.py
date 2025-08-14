@@ -161,67 +161,67 @@ class CUSTOM(ShapesMethod):
 ############################################ BLOB #################################################
 ###################################################################################################
 
+
 class BLOB(ShapesMethod):
-
     def __init__(
-            self,
-            center_lat=None,
-            center_lon=None,
-            size=None,
-            max_bellys=None,
-            goo=None,
-            random_seed=None,
-        ):
-            """
-            Creates a shape using the following algorithm:
-                - place `max_bellys` points in proximity to the center point
-                - draw a circle around each point with a radius around `size`
-                - apply a water-surface effect depending on the strength of `goo` (like stickyness)
-                    - if `goo` is not None, the algorithm will find the largest `goo` value for
-                        which all circles are still connected
+        self,
+        center_lat=None,
+        center_lon=None,
+        size=None,
+        max_bellys=None,
+        goo=None,
+        random_seed=None,
+    ):
+        """
+        Creates a shape using the following algorithm:
+            - place `max_bellys` points in proximity to the center point
+            - draw a circle around each point with a radius around `size`
+            - apply a water-surface effect depending on the strength of `goo` (like stickyness)
+                - if `goo` is not None, the algorithm will find the largest `goo` value for
+                    which all circles are still connected
 
-            Args:
-                center_lat (float): The latitude of the center point.
-                center_lon (float): The longitude of the center point.
-                size (float): The size of the circles.
-                max_bellys (int): The maximum number of points to place.
-                goo (float): 'Stickyness' of the water-surface effect.
-                random_seed (int): Seed for reproducibility.
-            """
+        Args:
+            center_lat (float): The latitude of the center point.
+            center_lon (float): The longitude of the center point.
+            size (float): The size of the circles.
+            max_bellys (int): The maximum number of points to place.
+            goo (float): 'Stickyness' of the water-surface effect.
+            random_seed (int): Seed for reproducibility.
+        """
 
-            if random_seed is not None:
-                np.random.seed(random_seed)
+        if random_seed is not None:
+            np.random.seed(random_seed)
 
-            if center_lat is None:
-                center_lat = np.random.uniform(-80, 80)
-            if center_lon is None:
-                center_lon = np.random.uniform(-180, 180)
-            if size is None:
-                size = np.random.uniform(5, 10)
-            if max_bellys is None:
-                max_bellys = np.random.randint(2, 10)
+        if center_lat is None:
+            center_lat = np.random.uniform(-80, 80)
+        if center_lon is None:
+            center_lon = np.random.uniform(-180, 180)
+        if size is None:
+            size = np.random.uniform(5, 10)
+        if max_bellys is None:
+            max_bellys = np.random.randint(2, 10)
 
-            self.center_lat = center_lat
-            self.center_lon = center_lon
-            self.size = size
-            self.max_bellys = max_bellys
-            self.goo = goo
-            self.random_seed = random_seed
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+        self.size = size
+        self.max_bellys = max_bellys
+        self.goo = goo
+        self.random_seed = random_seed
 
-            self.param_dict = {
-                "shape_type": BLOB,
-                "center_lat": center_lat,
-                "center_lon": center_lon,
-                "size": size,
-                "max_bellys": max_bellys,
-                "goo": goo,
-                "random_seed": random_seed,
-            }
-    
+        self.param_dict = {
+            "shape_type": BLOB,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "size": size,
+            "max_bellys": max_bellys,
+            "goo": goo,
+            "random_seed": random_seed,
+        }
+
     def make_shape(
-            self,
-            lats,
-            lons,
+        self,
+        lats,
+        lons,
     ):
         """Create a metaball mask in lat/lon space."""
 
@@ -236,8 +236,14 @@ class BLOB(ShapesMethod):
             offset = 5 * self.size
             lat_offset = np.random.uniform(-offset, offset)
             lon_offset = np.random.uniform(-offset, offset)
-            size = self.size/self.max_bellys * np.random.uniform(0.8, 1.2)
-            balls.append(_Ball(self.center_lat + lat_offset, self.center_lon + lon_offset, size=size))
+            size = self.size / self.max_bellys * np.random.uniform(0.8, 1.2)
+            balls.append(
+                _Ball(
+                    self.center_lat + lat_offset,
+                    self.center_lon + lon_offset,
+                    size=size,
+                )
+            )
 
         # Finding the right value for `goo`
         # - 1st Case: Single metaball, blob will always be connected
@@ -246,7 +252,7 @@ class BLOB(ShapesMethod):
         # - 2nd Case: Multiple metaballs, need to find optimal goo
         elif self.goo is None and self.max_bellys != 1:
             step = 0.1
-            goo = 1.5   # low stickyness leads to larger expansion of the blob
+            goo = 1.5  # low stickyness leads to larger expansion of the blob
             mbs = _Metaball(balls, goo=goo, threshold=0.02)
             mask = mbs.field_mask(lats, lons)
             # check if all TRUE in mask are still connected
@@ -255,7 +261,7 @@ class BLOB(ShapesMethod):
                 mbs = _Metaball(balls, goo=goo, threshold=0.02)
                 mask = mbs.field_mask(lats, lons)
             # mask is not connected -> reduce goo again
-            goo -= step        # last goo was too much
+            goo -= step  # last goo was too much
             self.goo = goo
 
         # goo is set, create metaball system
@@ -265,22 +271,17 @@ class BLOB(ShapesMethod):
         self.param_dict["goo"] = self.goo
 
         return shape_mask
-    
-    def _mask_connected(
-            self,
-            mask
-    ):
+
+    def _mask_connected(self, mask):
         """
         Check if all TRUE values of the mask are connected to each other.
         """
         if not np.any(mask):
             return False  # No True cells at all
-            
+
         # connectivity structure
-        structure = np.array([[0,1,0],
-                            [1,1,1],
-                            [0,1,0]], dtype=bool)
-        
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=bool)
+
         # Label connected components in extended mask
         _, num_features = label(mask, structure=structure)  # use scipy.ndimage function
 
@@ -290,26 +291,34 @@ class BLOB(ShapesMethod):
         else:
             lon_size = mask.shape[1]
             extended_mask = np.hstack([mask, mask])  # (lat, 2*lon)
-            extended_mask = extended_mask[:, lon_size//2:3*lon_size//2]     # keep only the middle section
+            extended_mask = extended_mask[
+                :, lon_size // 2 : 3 * lon_size // 2
+            ]  # keep only the middle section
 
             # Label connected components in extended mask
-            _, num_features = label(extended_mask, structure=structure)     # use scipy.ndimage function
+            _, num_features = label(
+                extended_mask, structure=structure
+            )  # use scipy.ndimage function
 
             if num_features == 1:
                 return True
             else:
                 return False
 
-# Helper Classes for the Blob Generation    
+
+# Helper Classes for the Blob Generation
 class _Ball:
     """Single metaball."""
+
     def __init__(self, lat, lon, size):
         self.lat = lat
         self.lon = lon
         self.size = size
 
+
 class _Metaball:
     """Metaball system in lat/lon space with longitude wrapping."""
+
     def __init__(self, balls, goo=2.0, threshold=0.0004):
         self.balls = balls
         self.goo = goo

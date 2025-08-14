@@ -39,7 +39,9 @@ def test_ellipsis_output():
     ponds_small = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
     ellipsis_small = ELLIPSIS()
-    ellipsis_small = ellipsis_small.make_shape(lats=ponds_small.lats, lons=ponds_small.lons)
+    ellipsis_small = ellipsis_small.make_shape(
+        lats=ponds_small.lats, lons=ponds_small.lons
+    )
     # 3) check results
     assert isinstance(ellipsis_small, np.ndarray), "Ellipsis must be a numpy array."
     assert ellipsis_small.dtype == bool, "Ellipsis must be a boolean array."
@@ -52,7 +54,9 @@ def test_ellipsis_output():
     ponds_large = PONDS(lat_size=lat_size, lon_size=lon_size)
     # 2) call function
     ellipsis_large = ELLIPSIS()
-    ellipsis_large = ellipsis_large.make_shape(lats=ponds_large.lats, lons=ponds_large.lons)
+    ellipsis_large = ellipsis_large.make_shape(
+        lats=ponds_large.lats, lons=ponds_large.lons
+    )
     # 3) check results
     assert isinstance(ellipsis_large, np.ndarray), "Ellipsis must be a numpy array."
     assert ellipsis_large.dtype == bool, "Ellipsis must be a boolean array."
@@ -87,7 +91,9 @@ def test_ellipsis_same_seed_produces_same_ellipsis_mask(R=5):
         ellipsis2 = ellipsis2.make_shape(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results
-        assert np.array_equal(ellipsis1, ellipsis2), "Ellipses with same seed should be identical."
+        assert np.array_equal(ellipsis1, ellipsis2), (
+            "Ellipses with same seed should be identical."
+        )
 
 
 def test_ellipsis_add_shift_integration(mock_shift):

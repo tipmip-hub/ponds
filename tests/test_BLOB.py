@@ -22,6 +22,7 @@ Legend:
 ##################################### Random Blob ################################################
 ###################################################################################################
 
+
 def test_blob_same_seed_produces_same_mask(R=5):
     """
     Check if the same random seed produces the same BLOB mask.
@@ -66,12 +67,15 @@ def test_blob_reproducibility_from_params():
     )
     mask2 = blob_copy.make_shape(lats=ponds.lats, lons=ponds.lons)
 
-    assert np.array_equal(mask1, mask2), "BLOB recreated from params should match original."
+    assert np.array_equal(mask1, mask2), (
+        "BLOB recreated from params should match original."
+    )
 
 
 ###################################################################################################
 ##################################### Custom Blob ################################################
 ###################################################################################################
+
 
 def test_blob_center_coordinates(err=10):
     """

@@ -238,7 +238,8 @@ def test_reproducibility(R=5):
         )
         # - add a shift using SIGMOID and ELLIPSIS
         ponds.add_shift(
-            shape_method=ELLIPSIS(random_seed=rs2), shift_method=SIGMOID(random_seed=rs3)
+            shape_method=ELLIPSIS(random_seed=rs2),
+            shift_method=SIGMOID(random_seed=rs3),
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()
