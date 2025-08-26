@@ -50,10 +50,10 @@ class ELLIPSIS(ShapesMethod):
     def __init__(
         self,
         random_seed=1,
-        center_lat=None,  # center latitude of the ellipsis
-        center_lon=None,  # center longitude of the ellipsis
-        ecc_lat=None,  # standard deviation in latitude
-        ecc_lon=None,  # standard deviation in longitude
+        center_lat=None,  # center latitude degree of the ellipsis
+        center_lon=None,  # center longitude degree of the ellipsis
+        ecc_lat=None,  # standard deviation in latitude degrees
+        ecc_lon=None,  # standard deviation in longitude degrees
     ):
         if random_seed is not None:
             np.random.seed(random_seed)
