@@ -41,14 +41,6 @@ class WhiteNoise(PerturbationMethod):
             random_seed (int): Random seed for reproducibility.
             perturbation_time (np.ndarray[int]): Indices in the time series where the perturbation is applied.
         """
-
-        if random_seed is not None:
-            np.random.seed(random_seed)
-        else:
-            warnings.warn(
-                "No random seed set for PONDS. Results will not be reproducible."
-            )
-
         self.magnitude = magnitude
         self.random_seed = random_seed
         self.perturbation_time = perturbation_time
@@ -63,12 +55,14 @@ class WhiteNoise(PerturbationMethod):
     def make_perturbation(
         self,
         time_size: int,
+        rng: np.random.RandomState,
     ) -> np.ndarray:
+
         if self.perturbation_time is None:
             self.perturbation_time = np.arange(time_size)
 
         noise = np.zeros(time_size)
-        noise[self.perturbation_time] = self.magnitude * np.random.normal(
+        noise[self.perturbation_time] = self.magnitude * rng.normal(
             size=len(self.perturbation_time)
         )
         return noise

@@ -5,9 +5,10 @@ import warnings
 from ponds import (
     plotter,
 )
-from ponds.shapegen import ShapesMethod, SINGLE
-from ponds.shiftgen import ShiftsMethod
+from ponds.shapegen import ShapeMethod, SINGLE
+from ponds.shiftgen import ShiftMethod
 from ponds.perturbationgen import PerturbationMethod
+from ponds.correlationgen import CorrelationMethod
 
 
 class PONDS:
@@ -82,7 +83,7 @@ class PONDS:
     def add_perturbation(
         self,
         perturbation_method: PerturbationMethod,
-        shape_method: ShapesMethod = SINGLE(),
+        shape_method: ShapeMethod = SINGLE(),
     ):
         """
         Adds a perturbation to the time series data.
@@ -96,12 +97,15 @@ class PONDS:
         """
         # set seed for reproducibility in case perturbation_method uses a random process
         try:
-            np.random.seed(perturbation_method.random_seed)
+            rng = np.random.RandomState(perturbation_method.random_seed)
+            perturbation_args = {
+                "time_size": len(self.time),
+                "rng": rng,
+            }
         except AttributeError:
-            print(
-                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
-                "In case the perturbation method relies on randomness, results may not be reproducible."
-            )
+            perturbation_args = {
+                "time_size": len(self.time),
+            }
 
         # 1) Generate shape mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
@@ -130,7 +134,9 @@ class PONDS:
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     perturbation_effect = perturbation_method.make_perturbation(
-                        time_size=len(self.time)
+                        **perturbation_args,
+                        #time_size=len(self.time),
+                        #rng=rng,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -144,8 +150,9 @@ class PONDS:
 
     def add_shift(
         self,
-        shift_method: ShiftsMethod,
-        shape_method: ShapesMethod = SINGLE(),
+        shift_method: ShiftMethod,
+        shape_method: ShapeMethod = SINGLE(),
+        correlation_method: CorrelationMethod = None,
     ):
         """
         Adds a shift to the time series data.
@@ -158,19 +165,14 @@ class PONDS:
             - ...
 
         Args:
-            shape_method (ShapesMethod): Method to generate the shape of the shift.
-            shift_method (ShiftsMethod): Method to generate the shift in the time series.
+            shape_method (ShapeMethod): Method to generate the shape of the shift.
+            shift_method (ShiftMethod): Method to generate the shift in the time series.
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
-        # set seed for reproducibility in case shift_method has a random process
-        try:
-            np.random.seed(shift_method.random_seed)
-        except AttributeError:
-            print(
-                "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
-                "In case the shift method relies on randomness, results may not be reproducible."
-            )
+
+        # Align cluster shape with cluster correlation if necessary
+        self._align_cluster_shape_with_cluster_correlation(shape_method, correlation_method)
 
         # 1) generate shape mask
         if shape_method is SINGLE():
@@ -189,16 +191,22 @@ class PONDS:
             lats=self.lats,
             lons=self.lons,
         )
-        shape_dict = shape_method.param_dict
 
-        # 2) generate shift data
+        # 2) generate time offsets according to correlation method
+        if correlation_method is None:
+            time_offsets = np.zeros(shape_mask.shape, dtype=int)
+        else:
+            time_offsets = correlation_method.make_time_offsets(shape_mask)
+
+        # 3) generate shift data
         # - generate shift data and add to time serie
         mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool)
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     shift_effect, t_shift = shift_method.make_shift(
-                        self.time,
+                        time_arr=self.time,
+                        time_offset=time_offsets[i, j]
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -214,18 +222,18 @@ class PONDS:
             )
             shift_method.param_dict["shift_type"] = "UNKNOWN"
         # check if shape_method param_dict contains 'shape_type' key
-        if "shape_type" not in shape_dict:
+        if "shape_type" not in shape_method.param_dict:
             warnings.warn(
                 "Shape method param_dict does not contain 'shape_type' key. "
                 "Setting shape_type to 'UNKNOWN'."
             )
-            shape_dict["shape_type"] = "UNKNOWN"
+            shape_method.param_dict["shape_type"] = "UNKNOWN"
 
         # - store shift as a DataArray in the Dataset
         self._add_shift_to_ds(
             mask=mask3d,
             shift_dict=shift_method.param_dict,
-            shape_dict=shape_dict,
+            shape_dict=shape_method.param_dict,
         )
 
     def _get_new_perturbation_key(self):
@@ -320,6 +328,38 @@ class PONDS:
 
         # Append the new DataArray to the Dataset
         self.data[new_cluster_name] = new_da
+
+    def _align_cluster_shape_with_cluster_correlation(
+        self,
+        shape_method: ShapeMethod,
+        correlation_method: CorrelationMethod,
+    ):
+        """
+        Checks if the used ShapeMethod and CorrelationMethod both use a central coordinate. If so,
+        it further checks if the central coordinate of the CorrelationMethod is specified by the user.
+        If not, it sets the central coordinate of the CorrelationMethod to be the same as the one
+        of the ShapeMethod.
+
+        Args:
+            shape_method (CorrelationMethod): The shape method used for the cluster.
+            correlation_method (CorrelationMethod): The correlation method used for the cluster.
+        """
+
+        # check latitudes
+        if hasattr(correlation_method, "center_lat"):
+            if correlation_method.center_lat is None:
+                if hasattr(shape_method, "center_lat"):
+                    correlation_method.center_lat = shape_method.center_lat
+                else:
+                    correlation_method.center_lat = np.random.uniform(self.lats.min(), self.lats.max())
+
+        # check longitudes
+        if hasattr(correlation_method, "center_lon"):
+            if correlation_method.center_lon is None:
+                if hasattr(shape_method, "center_lon"):
+                    correlation_method.center_lon = shape_method.center_lon
+                else:
+                    correlation_method.center_lon = np.random.uniform(self.lons.min(), self.lons.max())
 
     ###################################################################################################
     ######################################### Get Functions ###########################################
@@ -592,6 +632,25 @@ class PONDS:
             coastline=coastline,
             show_cells=show_cells,
             shift_type=shift_type,
+            title=title,
+        )
+
+        return fig, ax
+    
+    def plot_all_ts(
+        self,
+        alpha: float = 0.5,
+        figsize: tuple = (16, 2),
+        title: str = "Time Series for All Cells",
+    ):
+        """
+        Plots the time series of every grid cell from the PONDS dataset.
+        """
+
+        fig, ax = plotter.plot_all_ts(
+            ponds=self,
+            alpha=alpha,
+            figsize=figsize,
             title=title,
         )
 

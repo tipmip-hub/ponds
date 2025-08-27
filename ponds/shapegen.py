@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import warnings
 
 # for BLOB
 from scipy.ndimage import label
 
 
 # Abstract class
-class ShapesMethod(ABC):
+class ShapeMethod(ABC):
     @abstractmethod
     def make_shape(
         self,
@@ -17,11 +18,11 @@ class ShapesMethod(ABC):
 
 
 ###################################################################################################
-############################################# SINGLE ###############################################
+############################################# SINGLE ##############################################
 ###################################################################################################
 
 
-class SINGLE(ShapesMethod):
+class SINGLE(ShapeMethod):
     def __init__(self):
         """
         A placeholder for a single shape method. This is used when no specific shape method is defined.
@@ -46,26 +47,29 @@ class SINGLE(ShapesMethod):
 ###################################################################################################
 
 
-class ELLIPSIS(ShapesMethod):
+class ELLIPSIS(ShapeMethod):
     def __init__(
         self,
-        random_seed=1,
         center_lat=None,  # center latitude degree of the ellipsis
         center_lon=None,  # center longitude degree of the ellipsis
         ecc_lat=None,  # standard deviation in latitude degrees
         ecc_lon=None,  # standard deviation in longitude degrees
+        random_seed=None,
     ):
         if random_seed is not None:
-            np.random.seed(random_seed)
+            #np.random.seed(random_seed)
+            rng = np.random.RandomState(random_seed)
+        else:
+            rng = np.random
 
         if center_lat is None:
-            center_lat = np.random.uniform(-80, 80)
+            center_lat = rng.uniform(-80, 80)
         if center_lon is None:
-            center_lon = np.random.uniform(-180, 180)
+            center_lon = rng.uniform(-180, 180)
         if ecc_lat is None:
-            ecc_lat = np.random.uniform(10, 20)
+            ecc_lat = rng.uniform(10, 20)
         if ecc_lon is None:
-            ecc_lon = np.random.uniform(15, 40)
+            ecc_lon = rng.uniform(15, 40)
 
         self.center_lat = center_lat
         self.center_lon = center_lon
@@ -120,7 +124,7 @@ class ELLIPSIS(ShapesMethod):
 ###################################################################################################
 
 
-class CUSTOM(ShapesMethod):
+class CUSTOM(ShapeMethod):
     def __init__(self, shape_mask: np.ndarray):
         """
         Custom shape method that uses a pre-defined mask.
@@ -162,7 +166,7 @@ class CUSTOM(ShapesMethod):
 ###################################################################################################
 
 
-class BLOB(ShapesMethod):
+class BLOB(ShapeMethod):
     def __init__(
         self,
         center_lat=None,
@@ -190,16 +194,18 @@ class BLOB(ShapesMethod):
         """
 
         if random_seed is not None:
-            np.random.seed(random_seed)
+            rng = np.random.RandomState(random_seed)
+        else:
+            rng = np.random
 
         if center_lat is None:
-            center_lat = np.random.uniform(-80, 80)
+            center_lat = rng.uniform(-80, 80)
         if center_lon is None:
-            center_lon = np.random.uniform(-180, 180)
+            center_lon = rng.uniform(-180, 180)
         if size is None:
-            size = np.random.uniform(5, 10)
+            size = rng.uniform(5, 10)
         if max_bellys is None:
-            max_bellys = np.random.randint(2, 10)
+            max_bellys = rng.randint(2, 10)
 
         self.center_lat = center_lat
         self.center_lon = center_lon
@@ -226,7 +232,13 @@ class BLOB(ShapesMethod):
         """Create a metaball mask in lat/lon space."""
 
         if self.random_seed is not None:
-            np.random.seed(self.random_seed)
+            #np.random.seed(self.random_seed)
+            rng = np.random.RandomState(self.random_seed)
+        else:
+            rng = np.random
+            warnings.warn(
+                "No random seed set for PONDS Shape Method. Results will not be reproducible."
+            )
 
         # Create a few metaballs near the center
         balls = []
@@ -234,9 +246,9 @@ class BLOB(ShapesMethod):
         balls.append(_Ball(self.center_lat, self.center_lon, size=self.size))
         for _ in range(1, self.max_bellys):
             offset = 5 * self.size
-            lat_offset = np.random.uniform(-offset, offset)
-            lon_offset = np.random.uniform(-offset, offset)
-            size = self.size / self.max_bellys * np.random.uniform(0.8, 1.2)
+            lat_offset = rng.uniform(-offset, offset)
+            lon_offset = rng.uniform(-offset, offset)
+            size = self.size / self.max_bellys * rng.uniform(0.8, 1.2)
             balls.append(
                 _Ball(
                     self.center_lat + lat_offset,

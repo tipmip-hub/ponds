@@ -29,8 +29,7 @@ class MockPerturbation:
     a perturbation for a pond.
     """
 
-    def __init__(self, random_seed=None):
-        self.random_seed = random_seed
+    def __init__(self):
 
         self.param_dict = {"perturbation_type": MockPerturbation}
 
@@ -52,11 +51,11 @@ class MockShift:
 
     def make_shift(
         self,
-        time,
-        # shift_time,
+        time_arr,
+        time_offset: int = 0,
     ):
-        t_shift = len(time) // 2
-        shift_effect = np.zeros_like(time, dtype=float)
+        t_shift = len(time_arr) // 2 + time_offset
+        shift_effect = np.zeros_like(time_arr, dtype=float)
 
         return shift_effect, t_shift
 
