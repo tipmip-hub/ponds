@@ -29,31 +29,23 @@ class SIGMOID(ShiftMethod):
     def __init__(
         self,
         central_time: int = None,
-        #sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
         random_seed: int = None,
     ):
         if random_seed is not None:
-            #np.random.seed(random_seed)
             rng = np.random.RandomState(random_seed)
         else:
             rng = np.random
-        #    warnings.warn(
-        #        "No random seed set for PONDS. Results will not be reproducible."
-        #    )
 
         if shift_steepness is None:
             shift_steepness = rng.uniform(1.5, 3.0)
         if shift_magnitude is None:
             shift_magnitude = rng.uniform(0.95, 1.05)
-        #if sigma_time is None:
-        #    sigma_time = 1.0  # Sharp shift
         if central_time is None:
             central_time_rel = rng.uniform(0, 1)
             self.central_time_rel = central_time_rel
 
-        #self.sigma_time = sigma_time
         self.shift_steepness = shift_steepness
         self.shift_magnitude = shift_magnitude
         self.central_time = central_time
@@ -62,7 +54,6 @@ class SIGMOID(ShiftMethod):
         self.param_dict = {
             "shift_type": SIGMOID,
             "central_time": central_time,
-            #"sigma_time": sigma_time,
             "shift_steepness": shift_steepness,
             "shift_magnitude": shift_magnitude,
             "random_seed": random_seed,
@@ -89,11 +80,8 @@ class SIGMOID(ShiftMethod):
             self.param_dict["central_time"] = self.central_time
 
         # get actual shift time for this cell -> shift_time +/- noise
-        t_shift = self.central_time + time_offset#int(
-            #np.round(
-            #    self.central_time + np.random.uniform(-self.sigma_time, self.sigma_time)
-            #)
-        #)
+        t_shift = self.central_time + time_offset
+        
         # Ensure t_shift is within bounds
         t_shift = max(0, min(t_shift, len(time_arr) - 1))
         shift_effect = self.shift_magnitude * sigmoid(

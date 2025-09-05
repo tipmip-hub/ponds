@@ -80,19 +80,8 @@ class Gauss(CorrelationMethod):
             sigma_lat=10,
             sigma_lon=10,
             max_offset=10,
-            #random_seed=None,
     ):
-
-        #if random_seed is not None:
-        #    rng = np.random.RandomState(random_seed)
-        #else:
-        #    rng = np.random
-
-        #if center_lat is None:
-        #    center_lat = rng.uniform(-80, 80)
-        #if center_lon is None:
-        #    center_lon = rng.uniform(-180, 180)
-
+        
         self.center_lat = center_lat
         self.center_lon = center_lon
         self.sigma_lat = sigma_lat
@@ -138,5 +127,45 @@ class Gauss(CorrelationMethod):
                     [extended_gauss_scaled[i, j + k * len(lons)] for k in range(3)],
                 )
                 offsets[i, j] = gauss_contribution - self.max_offset
+
+        return offsets
+    
+
+###################################################################################################
+########################################### Propagation ###########################################
+###################################################################################################
+
+class Propagation(CorrelationMethod):
+    """
+    The shift propagates towards a specified direction through the cluster-shape
+    (e.g. 0° -> from south to north, 90° -> from west to east)
+    """
+    def __init__(
+            self,
+            center_lat=None,
+            center_lon=None,
+            direction_angle=0,
+            max_offset=10,
+    ):
+        
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+        self.direction_angle = direction_angle
+        self.max_offset = max_offset
+
+        self.param_dict = {
+            "correlation_type": Propagation,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "direction_angle": direction_angle,
+            "max_offset": max_offset,
+        }
+
+    def make_time_offsets(
+            self,
+            shape_mask,
+    ) -> np.ndarray:
+
+        offsets = ...
 
         return offsets
