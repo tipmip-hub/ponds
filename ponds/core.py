@@ -12,6 +12,7 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
+from ponds.nonlinear import NonlinearSystem, Lorenz
 
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -389,6 +390,31 @@ class PONDS:
                     val: float = float(np.random.uniform(low, high))
                     setattr(correlation_method, "corr_center_lon", val)
                     correlation_method.param_dict["corr_center_lon"] = val
+
+    def apply_nonlinear_transformation(
+            self,
+            system: NonlinearSystem = Lorenz(),
+            dt: float = 1e-4,
+            sampling_factor: int = 500
+        ):
+        """
+        Apply a nonlinear transformation to the time series data.
+
+        Args:
+            system (str): The name of the nonlinear system to use for the transformation.
+                          Currently only "Lorenz" is supported.
+            dt (float): Time step for the integration of the nonlinear system.
+            sampling_factor (int): Number of intermediate integration steps to take for each stored timestep.
+        """
+        # check if system is supported
+        if not isinstance(system, NonlinearSystem):
+            raise ValueError(f"Unsupported system {system}, must be of type NonlinearSystem.")
+
+        # apply the nonlinear transformation to each grid cell
+        nonlinear_ts = xr.apply_ufunc(system.integrate, self.data.ts, dt, sampling_factor)
+
+        # Append the nonlinear DataArray to the Dataset
+        self.data['nonlinear_ts'] = nonlinear_ts
 
     ###################################################################################################
     ######################################### Get Functions ###########################################
