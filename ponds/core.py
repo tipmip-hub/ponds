@@ -12,7 +12,7 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
-from ponds.nonlinear import NonlinearSystem, Lorenz
+from ponds.systems import DynamicalSystem, Lorenz
 
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -391,30 +391,26 @@ class PONDS:
                     setattr(correlation_method, "corr_center_lon", val)
                     correlation_method.param_dict["corr_center_lon"] = val
 
-    def apply_nonlinear_transformation(
+    def apply_transformation(
             self,
-            system: NonlinearSystem = Lorenz(),
+            system: DynamicalSystem = Lorenz(),
             dt: float = 1e-4,
             sampling_factor: int = 500
         ):
         """
-        Apply a nonlinear transformation to the time series data.
+        Apply a transformation to the time series data.
 
         Args:
-            system (str): The name of the nonlinear system to use for the transformation.
+            system (str): The name of the dynamical system to use for the transformation.
                           Currently only "Lorenz" is supported.
             dt (float): Time step for the integration of the nonlinear system.
             sampling_factor (int): Number of intermediate integration steps to take for each stored timestep.
         """
-        # check if system is supported
-        if not isinstance(system, NonlinearSystem):
-            raise ValueError(f"Unsupported system {system}, must be of type NonlinearSystem.")
-
-        # apply the nonlinear transformation to each grid cell
-        nonlinear_ts = xr.apply_ufunc(system.integrate, self.data.ts, dt, sampling_factor)
+        # apply the transformation to each grid cell
+        system_ts = xr.apply_ufunc(system.integrate, self.data.ts, dt, sampling_factor)
 
         # Append the nonlinear DataArray to the Dataset
-        self.data['nonlinear_ts'] = nonlinear_ts
+        self.data['system_ts'] = system_ts
 
     ###################################################################################################
     ######################################### Get Functions ###########################################

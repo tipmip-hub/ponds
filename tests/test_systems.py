@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
-from ponds.nonlinear import Lorenz
+from ponds.systems import Lorenz
 
-# tests for the nonlinear module
+# tests for the systems module
+
+# tests for the Lorenz system
 
 def test_Lorenz_get_parameter_value():
     system = Lorenz()

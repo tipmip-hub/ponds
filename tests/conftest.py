@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from ponds.nonlinear import NonlinearSystem
-
+from ponds.systems import DynamicalSystem
 
 class MockShape:
     """
@@ -80,7 +79,7 @@ class MockCorrelation:
         return offsets
 
 
-class MockNonlinearSystem(NonlinearSystem):
+class MockDynamicalSystem:
     """
     Always returns an array that is the input parameter array multiplied by 2.
     This is a mock implementation for testing purposes.
@@ -96,7 +95,6 @@ class MockNonlinearSystem(NonlinearSystem):
         }
 
     def integrate(self, parameter_array, dt, sampling_factor):
-        
         return 2*parameter_array
     
     def get_parameter_value(self, state='state1'):
@@ -124,5 +122,10 @@ def mock_corr():
 
 
 @pytest.fixture
-def mock_nonlinear_system():
-    return MockNonlinearSystem
+def mock_corr():
+    return MockCorrelation
+
+
+@pytest.fixture
+def mock_dynamical_system():
+    return MockDynamicalSystem

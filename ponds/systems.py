@@ -4,13 +4,13 @@ import numpy as np
 from tqdm.auto import tqdm
 
 
-######################## Abstract base class for nonlinear systems ###############################
+######################## Abstract base class for dynamical systems ###############################
 
-class NonlinearSystem(ABC):
+class DynamicalSystem(ABC):
     @abstractmethod
     def integrate(self, parameter_array: np.ndarray) -> np.ndarray:
         """
-        Integrates the nonlinear system over time.
+        Integrates the dynamical system over time.
 
         Parameters:
             parameter_array (np.ndarray): Array of parameter values for the integration.
@@ -22,7 +22,7 @@ class NonlinearSystem(ABC):
     @abstractmethod
     def get_parameter_value(self, state: str) -> float:
         """
-        Retrieves the parameter value of a specified state of the nonlinear system.
+        Retrieves the parameter value of a specified state of the dynamical system.
 
         Parameters:
             forced_parameter (str): The name of the parameter to retrieve.
@@ -32,9 +32,9 @@ class NonlinearSystem(ABC):
             float: The value of the specified parameter.
         """
 
-###################################### Nonlinear Systems #########################################
+###################################### Dynamical Systems #########################################
 
-class Lorenz(NonlinearSystem):
+class Lorenz(DynamicalSystem):
     def __init__(
             self,
             forced_parameter: str = "beta",
@@ -71,7 +71,8 @@ class Lorenz(NonlinearSystem):
 
         Uses the Lorenz equations to generate a timeseries on the Lorenz attractor. That is, it 
         takes an array of the chosen bifurcation parameter as input, takes intermediate integration
-        steps to reduce the resolution of the timeseries, and returns a 1D timeseries.
+        steps to reduce the resolution of the timeseries, and returns a 1D timeseries (i.e. only
+        the first coordinate of the 3D Lorenz timeseries).
 
         Arguments
         ---------
