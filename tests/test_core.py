@@ -196,6 +196,28 @@ def test_add_shift_parameter_storage(mock_shape, mock_shift):
 
 
 ###################################################################################################
+#################################### Apply transformation #########################################
+###################################################################################################
+
+def test_apply_nonlinear_transformation(mock_nonlinear_system):
+    # 1) setup variables
+    # - basic parameters
+    lat_size = 100
+    lon_size = 100
+    time_size = 100
+
+    ponds = PONDS(
+            lat_size=lat_size,
+            lon_size=lon_size,
+            time_size=time_size,
+        )
+    
+    ponds.apply_nonlinear_transformation(system=mock_nonlinear_system())
+
+    assert 'nonlinear_ts' in ponds.data.keys()
+    assert isinstance(ponds.data.nonlinear_ts.values, np.ndarray)
+
+###################################################################################################
 ####################################### Reproducibility ###########################################
 ###################################################################################################
 

@@ -42,6 +42,7 @@ class Lorenz(NonlinearSystem):
             rho: float = 28.0,
             beta: float = 8/3
     ):
+        # store parameters
         self.parameters = {
             "sigma": sigma,
             "rho": rho,
@@ -50,6 +51,14 @@ class Lorenz(NonlinearSystem):
         self.forced_parameter = forced_parameter
         if self.forced_parameter not in self.parameters:
             raise ValueError(f"Unsupported parameter: {self.forced_parameter}")
+        
+        # create dictionary of supported dynamical states (to be extended)
+        self.state_dict = {
+            "beta": {"c1": 0.6,     # chaotic state
+                    "c2": 0.8,      # chaotic state
+                    "p1": 0.7       # periodic state
+            }
+        }
 
     def integrate(
             self,
@@ -127,14 +136,7 @@ class Lorenz(NonlinearSystem):
         """
         Get the parameter value for the desired type of state.
         """
-        params = {
-            "beta": {"c1": 0.6,
-                    "c2": 0.8,
-                    "p1": 0.7
-            }
-        }
-
-        if state not in params[self.forced_parameter]:
+        if state not in self.state_dict[self.forced_parameter]:
             raise ValueError(f"Unsupported state: {state}")
 
-        return params[self.forced_parameter][state]
+        return self.state_dict[self.forced_parameter][state]
