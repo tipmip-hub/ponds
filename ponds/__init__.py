@@ -2,7 +2,7 @@ from ponds.core import PONDS
 from ponds.shapegen import ShapeMethod, SINGLE, ELLIPSIS, CUSTOM, BLOB
 from ponds.shiftgen import ShiftMethod, SIGMOID
 from ponds.perturbationgen import PerturbationMethod, WhiteNoise, Trend
-from ponds.correlationgen import CorrelationMethod, Noise, Gauss
+from ponds.correlationgen import CorrelationMethod, Noise, Gauss, Custom
 
 __all__ = [
     "PONDS",
@@ -18,7 +18,8 @@ __all__ = [
     "Trend",
     "CorrelationMethod",
     "Noise",
-    "Gauss"
+    "Gauss",
+    "Custom",
 ]
 
 type_dict = {
@@ -30,5 +31,6 @@ type_dict = {
     "WhiteNoise": WhiteNoise,
     "Trend": Trend,
     "Noise": Noise,
-    "Gauss": Gauss
+    "Gauss": Gauss,
+    "Custom": Custom,
 }

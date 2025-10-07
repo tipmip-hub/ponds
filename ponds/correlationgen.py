@@ -132,40 +132,34 @@ class Gauss(CorrelationMethod):
     
 
 ###################################################################################################
-########################################### Propagation ###########################################
+########################################### Custom ###########################################
 ###################################################################################################
 
-class Propagation(CorrelationMethod):
+class Custom(CorrelationMethod):
     """
-    The shift propagates towards a specified direction through the cluster-shape
-    (e.g. 0° -> from south to north, 90° -> from west to east)
+    Custom correlation method that allows for user-defined shift patterns.
     """
     def __init__(
             self,
-            center_lat=None,
-            center_lon=None,
-            direction_angle=0,
-            max_offset=10,
+            offset_mask: np.ndarray,
     ):
-        
-        self.center_lat = center_lat
-        self.center_lon = center_lon
-        self.direction_angle = direction_angle
-        self.max_offset = max_offset
-
+        self.offset_mask = offset_mask
         self.param_dict = {
-            "correlation_type": Propagation,
-            "center_lat": center_lat,
-            "center_lon": center_lon,
-            "direction_angle": direction_angle,
-            "max_offset": max_offset,
+            "correlation_type": Custom,
         }
 
     def make_time_offsets(
             self,
             shape_mask,
     ) -> np.ndarray:
+        
+        # check if the offset_mask is of the correct shape
+        if shape_mask.shape != self.offset_mask.shape:
+            raise ValueError(
+                f"Offset mask shape {self.offset_mask.shape} does not match grid shape {shape_mask.shape}."
+            )
+        # check if the offset_mask only contains integers
+        if not np.issubdtype(self.offset_mask.dtype, np.integer):
+            raise ValueError("Offset mask must be all integer values.")
 
-        offsets = ...
-
-        return offsets
+        return self.offset_mask

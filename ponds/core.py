@@ -158,10 +158,17 @@ class PONDS:
         Adds a shift to the time series data.
 
         Shape Methods:
-            - "BLOB": Adds a shift in the shape of an eliptic blob.
+            - "ELLIPSIS": Adds a shift in the shape of an eliptic blob.
+            - "BLOB": Adds a shift in the shape of a random blob.
+            - "CUSTOM": Adds a shift in a user-defined shape.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
+            - ...
+        Correlation Methods:
+            - "Noise": Adds random time offsets to the shift times.
+            - "Gauss": Adds time offsets based on a 2D Gaussian distribution.
+            - None: No time offsets, all shifts happen at the same time.
             - ...
 
         Args:
