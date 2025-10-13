@@ -238,15 +238,15 @@ def test_reproducibility(R=5):
         )
         # - add a shift using SIGMOID and ELLIPSIS
         ponds.add_shift(
-            shape_method=ELLIPSIS(random_seed=rs2),
-            shift_method=SIGMOID(random_seed=rs3),
+            shape_method=ELLIPSIS(shape_seed=rs2),
+            shift_method=SIGMOID(shift_seed=rs3),
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()
         perturbation_instance_ex, shape_instance_p_ex = ponds.get_perturbation_instance(
             "p1"
         )
-        shift_instance_ex, shape_instance_s_ex = ponds.get_cluster_instance("c1")
+        shift_instance_ex, shape_instance_s_ex, correlation_instance_ex = ponds.get_cluster_instance("c1")
         # - reproduce the shift using the stored parameters
 
         # 2) call function
@@ -260,6 +260,7 @@ def test_reproducibility(R=5):
         ponds_rep.add_shift(
             shift_method=shift_instance_ex,
             shape_method=shape_instance_s_ex,
+            correlation_method=correlation_instance_ex,
         )
 
         # 3) check results

@@ -5,9 +5,10 @@ import warnings
 from ponds import (
     plotter,
 )
-from ponds.shapegen import ShapesMethod, SINGLE
-from ponds.shiftgen import ShiftsMethod
+from ponds.shapegen import ShapeMethod, SINGLE
+from ponds.shiftgen import ShiftMethod
 from ponds.perturbationgen import PerturbationMethod
+from ponds.correlationgen import CorrelationMethod, NoCorr
 
 
 class PONDS:
@@ -82,7 +83,7 @@ class PONDS:
     def add_perturbation(
         self,
         perturbation_method: PerturbationMethod,
-        shape_method: ShapesMethod = SINGLE(),
+        shape_method: ShapeMethod = SINGLE(),
     ):
         """
         Adds a perturbation to the time series data.
@@ -96,12 +97,15 @@ class PONDS:
         """
         # set seed for reproducibility in case perturbation_method uses a random process
         try:
-            np.random.seed(perturbation_method.random_seed)
+            rng = np.random.RandomState(perturbation_method.random_seed)
+            perturbation_args = {
+                "time_size": len(self.time),
+                "rng": rng,
+            }
         except AttributeError:
-            print(
-                "Warning: perturbation_method has no 'random_seed' attribute; using global RNG state."
-                "In case the perturbation method relies on randomness, results may not be reproducible."
-            )
+            perturbation_args = {
+                "time_size": len(self.time),
+            }
 
         # 1) Generate shape mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
@@ -130,7 +134,9 @@ class PONDS:
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     perturbation_effect = perturbation_method.make_perturbation(
-                        time_size=len(self.time)
+                        **perturbation_args,
+                        #time_size=len(self.time),
+                        #rng=rng,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -144,35 +150,39 @@ class PONDS:
 
     def add_shift(
         self,
-        shift_method: ShiftsMethod,
-        shape_method: ShapesMethod = SINGLE(),
+        shift_method: ShiftMethod,
+        shape_method: ShapeMethod = SINGLE(),
+        correlation_method: CorrelationMethod = NoCorr(),
     ):
         """
         Adds a shift to the time series data.
 
         Shape Methods:
-            - "BLOB": Adds a shift in the shape of an eliptic blob.
+            - "ELLIPSIS": Adds a shift in the shape of an eliptic blob.
+            - "BLOB": Adds a shift in the shape of a random blob.
+            - "CUSTOM": Adds a shift in a user-defined shape.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
             - ...
+        Correlation Methods:
+            - "Noise": Adds random time offsets to the shift times.
+            - "Gauss": Adds time offsets based on a 2D Gaussian distribution.
+            - None: No time offsets, all shifts happen at the same time.
+            - ...
 
         Args:
-            shape_method (ShapesMethod): Method to generate the shape of the shift.
-            shift_method (ShiftsMethod): Method to generate the shift in the time series.
+            shape_method (ShapeMethod): Method to generate the shape of the shift.
+            shift_method (ShiftMethod): Method to generate the shift in the time series.
             random_seed (int, optional): Seed for reproducibility. Defaults to None.
             kwargs (dict, optional): Additional keyword arguments for the shift method.
         """
-        # set seed for reproducibility in case shift_method has a random process
-        try:
-            np.random.seed(shift_method.random_seed)
-        except AttributeError:
-            print(
-                "Warning: shift_method has no 'random_seed' attribute; using global RNG state."
-                "In case the shift method relies on randomness, results may not be reproducible."
-            )
 
-        # 1) generate shape mask
+        # 0) preprocessing
+        # - align cluster shape with cluster correlation if necessary
+        self._align_cluster_shape_with_cluster_correlation(shape_method, correlation_method)
+
+        # - warn users to be aware of SINGLE-mode usage
         if shape_method is SINGLE():
             if self.data.sizes["lat"] != 1 or self.data.sizes["lon"] != 1:
                 warnings.warn(
@@ -185,47 +195,59 @@ class PONDS:
                     "Shape method specified for a (1x1) grid. PONDS is in single-mode. "
                     "If chosen shape method is not SINGLE it is likely to fail."
                 )
-        shape_mask = shape_method.make_shape(
-            lats=self.lats,
-            lons=self.lons,
-        )
-        shape_dict = shape_method.param_dict
 
-        # 2) generate shift data
-        # - generate shift data and add to time serie
-        mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool)
-        for i in range(self.data.sizes["lat"]):
-            for j in range(self.data.sizes["lon"]):
-                if shape_mask[i, j]:
-                    shift_effect, t_shift = shift_method.make_shift(
-                        self.time,
-                    )
-
-                    # add shift effect to the data in single grid cell, all time steps at once
-                    self.data.ts.values[:, i, j] += shift_effect
-                    # update mask3d to indicate where the shift was applied
-                    mask3d[t_shift, i, j] = True
-
-        # check if shift_method param_dict contains 'shift_type' key
+        # - check if shift_method param_dict contains 'shift_type' key
         if "shift_type" not in shift_method.param_dict:
             warnings.warn(
                 "Shift method param_dict does not contain 'shift_type' key. "
                 "Setting shift_type to 'UNKNOWN'."
             )
             shift_method.param_dict["shift_type"] = "UNKNOWN"
-        # check if shape_method param_dict contains 'shape_type' key
-        if "shape_type" not in shape_dict:
+        # - check if shape_method param_dict contains 'shape_type' key
+        if "shape_type" not in shape_method.param_dict:
             warnings.warn(
                 "Shape method param_dict does not contain 'shape_type' key. "
                 "Setting shape_type to 'UNKNOWN'."
             )
-            shape_dict["shape_type"] = "UNKNOWN"
+            shape_method.param_dict["shape_type"] = "UNKNOWN"
+        
+        # 1) generate shape mask
+        # - make the boolean shape mask
+        shape_mask = shape_method.make_shape(
+            lats=self.lats,
+            lons=self.lons,
+        )
+        # - check if shape_mask is valid -> raise error if no True values in it
+        if not shape_mask.any():
+            raise ValueError("Shape mask is empty. Please check the shape method.")
 
-        # - store shift as a DataArray in the Dataset
+        # 2) generate time offsets according to correlation method
+        time_offsets = correlation_method.make_time_offsets(shape_mask) # -> generate offset values
+
+        # 3) generate shift data
+        mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool) # provide some space -> will be later added as cluster DataArray to the Dataset
+        # - iterate through every cell
+        for i in range(self.data.sizes["lat"]):
+            for j in range(self.data.sizes["lon"]):
+                if shape_mask[i, j]:
+                    # - generate shift data using the shift method
+                    shift_effect, t_shift = shift_method.make_shift(
+                        time_arr=self.time,
+                        time_offset=time_offsets[i, j]
+                    )
+
+                    # - add shift effect to the data in single grid cell, all time steps at once
+                    self.data.ts.values[:, i, j] += shift_effect
+                    # - update mask3d to indicate where the shift was applied
+                    mask3d[t_shift, i, j] = True
+
+        # 4) documentation of shift cluster event
+        # - store shift as a DataArray to the Dataset -> stores all the information to identify and reproduce the shift event
         self._add_shift_to_ds(
             mask=mask3d,
             shift_dict=shift_method.param_dict,
-            shape_dict=shape_dict,
+            shape_dict=shape_method.param_dict,
+            correlation_dict=correlation_method.param_dict,
         )
 
     def _get_new_perturbation_key(self):
@@ -288,6 +310,7 @@ class PONDS:
         mask: np.ndarray,
         shift_dict: dict,
         shape_dict: dict,
+        correlation_dict: dict,
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -317,9 +340,50 @@ class PONDS:
         # - add shape attributes
         for k, v in shape_dict.items():
             new_da.attrs[k] = v
+        # - add correlation attributes
+        for k, v in correlation_dict.items():
+            new_da.attrs[k] = v
 
         # Append the new DataArray to the Dataset
         self.data[new_cluster_name] = new_da
+
+    def _align_cluster_shape_with_cluster_correlation(
+        self,
+        shape_method: ShapeMethod,
+        correlation_method: CorrelationMethod,
+    ):
+        """
+        Checks if the used ShapeMethod and CorrelationMethod both use a central coordinate. If so,
+        it further checks if the central coordinate of the CorrelationMethod is specified by the user.
+        If not, it sets the central coordinate of the CorrelationMethod to be the same as the one
+        of the ShapeMethod.
+
+        Args:
+            shape_method (CorrelationMethod): The shape method used for the cluster.
+            correlation_method (CorrelationMethod): The correlation method used for the cluster.
+        """
+
+        # check latitudes
+        if hasattr(correlation_method, "corr_center_lat"):
+            if correlation_method.corr_center_lat is None:
+                if hasattr(shape_method, "center_lat"):
+                    correlation_method.corr_center_lat = shape_method.center_lat
+                    correlation_method.param_dict["corr_center_lat"] = shape_method.center_lat
+                else:
+                    val = np.random.uniform(self.lats.min(), self.lats.max())
+                    correlation_method.corr_center_lat = val
+                    correlation_method.param_dict["corr_center_lat"] = val
+
+        # check longitudes
+        if hasattr(correlation_method, "corr_center_lon"):
+            if correlation_method.corr_center_lon is None:
+                if hasattr(shape_method, "center_lon"):
+                    correlation_method.corr_center_lon = shape_method.center_lon
+                    correlation_method.param_dict["corr_center_lon"] = shape_method.center_lon
+                else:
+                    val = np.random.uniform(self.lons.min(), self.lons.max())
+                    correlation_method.corr_center_lon = val
+                    correlation_method.param_dict["corr_center_lon"] = val
 
     ###################################################################################################
     ######################################### Get Functions ###########################################
@@ -441,7 +505,7 @@ class PONDS:
 
     def get_cluster_instance(self, cluster: str):
         """
-        Extracts the shift and shape metadata from a given cluster mask.
+        Extracts the shift, shape and correlation metadata from a given cluster mask.
 
         Args:
             ponds (PONDS): The PONDS instance to extract metadata from.
@@ -453,24 +517,33 @@ class PONDS:
 
         # get list of keys in order of appearance
         keys = list(self.data[cluster].attrs.keys())
-        # find index of "shape_type"
+        # find index of "shape_type" and "correlation_type"
         shape_type_index = keys.index("shape_type")
+        correlation_type_index = keys.index("correlation_type")
 
-        # split keys into shift and shape dicts
+        # split keys into shift, shape and correlation dicts
         # - shift dict contains all keys before "shape_type"
         shift_dict = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
         for key in keys[1:shape_type_index]:
             shift_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
-        # - shape dict contains all keys after "shape_type"
+
+        # - shape dict contains all keys between "shape_type" and "correlation_type"
         shape_dict = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
-        for key in keys[shape_type_index + 1 :]:
+        for key in keys[shape_type_index + 1 : correlation_type_index]:
             shape_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shape instance
         shape_instance = shape_dict["class"](**shape_dict["params"])
 
-        return shift_instance, shape_instance
+        # - correlation dict contains all keys after "correlation_type"
+        correlation_dict = {"class": self.data[cluster].attrs["correlation_type"], "params": {}}
+        for key in keys[correlation_type_index + 1 :]:
+            correlation_dict["params"][key] = self.data[cluster].attrs[key]
+        # - create correlation instance
+        correlation_instance = correlation_dict["class"](**correlation_dict["params"])
+
+        return shift_instance, shape_instance, correlation_instance
 
     ###################################################################################################
     ###################################### Read and Write #############################################
@@ -496,6 +569,7 @@ class PONDS:
                 if "shape_type" in key
                 or "perturbation_type" in key
                 or "shift_type" in key
+                or "correlation_type" in key
             ]
             # for these keys, set the value to string type (netCDF4 does not support class instances)
             for key in keys:
@@ -539,6 +613,7 @@ class PONDS:
                 if "shape_type" in key
                 or "perturbation_type" in key
                 or "shift_type" in key
+                or "correlation_type" in key
             ]
             # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
             for key in keys:
@@ -592,6 +667,25 @@ class PONDS:
             coastline=coastline,
             show_cells=show_cells,
             shift_type=shift_type,
+            title=title,
+        )
+
+        return fig, ax
+    
+    def plot_all_ts(
+        self,
+        alpha: float = 0.5,
+        figsize: tuple = (16, 2),
+        title: str = "Time Series for All Cells",
+    ):
+        """
+        Plots the time series of every grid cell from the PONDS dataset.
+        """
+
+        fig, ax = plotter.plot_all_ts(
+            ponds=self,
+            alpha=alpha,
+            figsize=figsize,
             title=title,
         )
 

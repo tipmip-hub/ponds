@@ -85,9 +85,9 @@ def test_ellipsis_same_seed_produces_same_ellipsis_mask(R=5):
         )
 
         # 2) call function
-        ellipsis1 = ELLIPSIS(random_seed=seed_ellipsis)
+        ellipsis1 = ELLIPSIS(shape_seed=seed_ellipsis)
         ellipsis1 = ellipsis1.make_shape(lats=ponds1.lats, lons=ponds1.lons)
-        ellipsis2 = ELLIPSIS(random_seed=seed_ellipsis)
+        ellipsis2 = ELLIPSIS(shape_seed=seed_ellipsis)
         ellipsis2 = ellipsis2.make_shape(lats=ponds2.lats, lons=ponds2.lons)
 
         # 3) check results
