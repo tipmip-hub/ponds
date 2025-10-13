@@ -23,7 +23,6 @@ class MockShape:
 
 class MockPerturbation:
     """
-    Always returns a perturbation array with a fixed value of 1.0.
     This is a mock implementation for testing purposes.
     It simulates the behavior of a perturbation generator that creates
     a perturbation for a pond.
@@ -39,7 +38,6 @@ class MockPerturbation:
 
 class MockShift:
     """
-    Always returns a shift dictionary with a fixed shift_id of -1.
     This is a mock implementation for testing purposes.
     It simulates the behavior of a shift generator that creates a shift
     for a pond."""
@@ -58,7 +56,27 @@ class MockShift:
         shift_effect = np.zeros_like(time_arr, dtype=float)
 
         return shift_effect, t_shift
+    
+class MockCorrelation:
+    """
+    This is a mock implementation for testing purposes.
+    """
 
+    def __init__(
+        self,
+    ):
+        self.param_dict = {
+            "correlation_type": MockCorrelation,
+        }
+
+    def make_time_offsets(
+        self,
+        shape_mask,
+    ) -> np.ndarray:
+
+        offsets = np.zeros(shape_mask.shape, dtype=int)
+
+        return offsets
 
 @pytest.fixture
 def mock_shape():
@@ -73,3 +91,7 @@ def mock_perturbation():
 @pytest.fixture
 def mock_shift():
     return MockShift
+
+@pytest.fixture
+def mock_corr():
+    return MockCorrelation

@@ -38,18 +38,18 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
     time = np.arange(0, 20, 1)  # Example time array
 
     for _ in range(R):
-        random_seed = np.random.randint(0, 1000)
+        shift_seed = np.random.randint(0, 1000)
 
         # 2) call function
         sigmoid1 = SIGMOID(
-            random_seed=random_seed
+            shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect1, _ = sigmoid1.make_shift(
             time,
         )
 
         sigmoid2 = SIGMOID(
-            random_seed=random_seed
+            shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect2, _ = sigmoid2.make_shift(
             time,

@@ -54,11 +54,11 @@ class ELLIPSIS(ShapeMethod):
         center_lon=None,  # center longitude degree of the ellipsis
         ecc_lat=None,  # standard deviation in latitude degrees
         ecc_lon=None,  # standard deviation in longitude degrees
-        random_seed=None,
+        shape_seed=None,
     ):
-        if random_seed is not None:
+        if shape_seed is not None:
             #np.random.seed(random_seed)
-            rng = np.random.RandomState(random_seed)
+            rng = np.random.RandomState(shape_seed)
         else:
             rng = np.random
 
@@ -174,7 +174,7 @@ class BLOB(ShapeMethod):
         size=None,
         max_bellys=None,
         goo=None,
-        random_seed=None,
+        shape_seed=None,
     ):
         """
         Creates a shape using the following algorithm:
@@ -190,11 +190,11 @@ class BLOB(ShapeMethod):
             size (float): The size of the circles.
             max_bellys (int): The maximum number of points to place.
             goo (float): 'Stickyness' of the water-surface effect.
-            random_seed (int): Seed for reproducibility.
+            shape_seed (int): Seed for reproducibility.
         """
 
-        if random_seed is not None:
-            rng = np.random.RandomState(random_seed)
+        if shape_seed is not None:
+            rng = np.random.RandomState(shape_seed)
         else:
             rng = np.random
 
@@ -212,7 +212,7 @@ class BLOB(ShapeMethod):
         self.size = size
         self.max_bellys = max_bellys
         self.goo = goo
-        self.random_seed = random_seed
+        self.random_seed = shape_seed
 
         self.param_dict = {
             "shape_type": BLOB,
@@ -221,7 +221,7 @@ class BLOB(ShapeMethod):
             "size": size,
             "max_bellys": max_bellys,
             "goo": goo,
-            "random_seed": random_seed,
+            "shape_seed": shape_seed,
         }
 
     def make_shape(

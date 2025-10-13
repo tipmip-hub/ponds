@@ -8,7 +8,7 @@ from ponds import (
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.perturbationgen import PerturbationMethod
-from ponds.correlationgen import CorrelationMethod
+from ponds.correlationgen import CorrelationMethod, NoCorr
 
 
 class PONDS:
@@ -152,7 +152,7 @@ class PONDS:
         self,
         shift_method: ShiftMethod,
         shape_method: ShapeMethod = SINGLE(),
-        correlation_method: CorrelationMethod = None,
+        correlation_method: CorrelationMethod = NoCorr(),
     ):
         """
         Adds a shift to the time series data.
@@ -222,10 +222,7 @@ class PONDS:
             raise ValueError("Shape mask is empty. Please check the shape method.")
 
         # 2) generate time offsets according to correlation method
-        if correlation_method is None:                                      # no shift-time offset
-            time_offsets = np.zeros(shape_mask.shape, dtype=int)            # -> all 0
-        else:                                                               # shift-time offset
-            time_offsets = correlation_method.make_time_offsets(shape_mask) # -> generate offset values
+        time_offsets = correlation_method.make_time_offsets(shape_mask) # -> generate offset values
 
         # 3) generate shift data
         mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool) # provide some space -> will be later added as cluster DataArray to the Dataset
@@ -250,6 +247,7 @@ class PONDS:
             mask=mask3d,
             shift_dict=shift_method.param_dict,
             shape_dict=shape_method.param_dict,
+            correlation_dict=correlation_method.param_dict,
         )
 
     def _get_new_perturbation_key(self):
@@ -312,6 +310,7 @@ class PONDS:
         mask: np.ndarray,
         shift_dict: dict,
         shape_dict: dict,
+        correlation_dict: dict,
     ):
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -341,6 +340,9 @@ class PONDS:
         # - add shape attributes
         for k, v in shape_dict.items():
             new_da.attrs[k] = v
+        # - add correlation attributes
+        for k, v in correlation_dict.items():
+            new_da.attrs[k] = v
 
         # Append the new DataArray to the Dataset
         self.data[new_cluster_name] = new_da
@@ -362,20 +364,26 @@ class PONDS:
         """
 
         # check latitudes
-        if hasattr(correlation_method, "center_lat"):
-            if correlation_method.center_lat is None:
+        if hasattr(correlation_method, "corr_center_lat"):
+            if correlation_method.corr_center_lat is None:
                 if hasattr(shape_method, "center_lat"):
-                    correlation_method.center_lat = shape_method.center_lat
+                    correlation_method.corr_center_lat = shape_method.center_lat
+                    correlation_method.param_dict["corr_center_lat"] = shape_method.center_lat
                 else:
-                    correlation_method.center_lat = np.random.uniform(self.lats.min(), self.lats.max())
+                    val = np.random.uniform(self.lats.min(), self.lats.max())
+                    correlation_method.corr_center_lat = val
+                    correlation_method.param_dict["corr_center_lat"] = val
 
         # check longitudes
-        if hasattr(correlation_method, "center_lon"):
-            if correlation_method.center_lon is None:
+        if hasattr(correlation_method, "corr_center_lon"):
+            if correlation_method.corr_center_lon is None:
                 if hasattr(shape_method, "center_lon"):
-                    correlation_method.center_lon = shape_method.center_lon
+                    correlation_method.corr_center_lon = shape_method.center_lon
+                    correlation_method.param_dict["corr_center_lon"] = shape_method.center_lon
                 else:
-                    correlation_method.center_lon = np.random.uniform(self.lons.min(), self.lons.max())
+                    val = np.random.uniform(self.lons.min(), self.lons.max())
+                    correlation_method.corr_center_lon = val
+                    correlation_method.param_dict["corr_center_lon"] = val
 
     ###################################################################################################
     ######################################### Get Functions ###########################################
@@ -497,7 +505,7 @@ class PONDS:
 
     def get_cluster_instance(self, cluster: str):
         """
-        Extracts the shift and shape metadata from a given cluster mask.
+        Extracts the shift, shape and correlation metadata from a given cluster mask.
 
         Args:
             ponds (PONDS): The PONDS instance to extract metadata from.
@@ -509,24 +517,33 @@ class PONDS:
 
         # get list of keys in order of appearance
         keys = list(self.data[cluster].attrs.keys())
-        # find index of "shape_type"
+        # find index of "shape_type" and "correlation_type"
         shape_type_index = keys.index("shape_type")
+        correlation_type_index = keys.index("correlation_type")
 
-        # split keys into shift and shape dicts
+        # split keys into shift, shape and correlation dicts
         # - shift dict contains all keys before "shape_type"
         shift_dict = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
         for key in keys[1:shape_type_index]:
             shift_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
-        # - shape dict contains all keys after "shape_type"
+
+        # - shape dict contains all keys between "shape_type" and "correlation_type"
         shape_dict = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
-        for key in keys[shape_type_index + 1 :]:
+        for key in keys[shape_type_index + 1 : correlation_type_index]:
             shape_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shape instance
         shape_instance = shape_dict["class"](**shape_dict["params"])
 
-        return shift_instance, shape_instance
+        # - correlation dict contains all keys after "correlation_type"
+        correlation_dict = {"class": self.data[cluster].attrs["correlation_type"], "params": {}}
+        for key in keys[correlation_type_index + 1 :]:
+            correlation_dict["params"][key] = self.data[cluster].attrs[key]
+        # - create correlation instance
+        correlation_instance = correlation_dict["class"](**correlation_dict["params"])
+
+        return shift_instance, shape_instance, correlation_instance
 
     ###################################################################################################
     ###################################### Read and Write #############################################
@@ -552,6 +569,7 @@ class PONDS:
                 if "shape_type" in key
                 or "perturbation_type" in key
                 or "shift_type" in key
+                or "correlation_type" in key
             ]
             # for these keys, set the value to string type (netCDF4 does not support class instances)
             for key in keys:
@@ -595,6 +613,7 @@ class PONDS:
                 if "shape_type" in key
                 or "perturbation_type" in key
                 or "shift_type" in key
+                or "correlation_type" in key
             ]
             # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
             for key in keys:

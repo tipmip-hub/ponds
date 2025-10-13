@@ -12,13 +12,39 @@ class CorrelationMethod(ABC):
     @abstractmethod
     def make_time_offsets(
         self,
-        time,
+        shape_mask,
     ) -> np.ndarray:
         """
         Generate time offsets for the time of the shift. An offset value for each grid cell of the
         spatial grid is created at once.
         """
         pass
+
+
+###################################################################################################
+############################################# Uniform #############################################
+###################################################################################################
+
+class NoCorr(CorrelationMethod):
+    """
+    Default correlation method that does not apply any correlation. All offsets are zero.
+    """
+
+    def __init__(
+        self,
+    ):
+        self.param_dict = {
+            "correlation_type": NoCorr,
+        }
+
+    def make_time_offsets(
+        self,
+        shape_mask,
+    ) -> np.ndarray:
+
+        offsets = np.zeros(shape_mask.shape, dtype=int)
+
+        return offsets
 
 
 
@@ -31,15 +57,15 @@ class Noise(CorrelationMethod):
     def __init__(
         self,
         max_offset: int = 5,
-        random_seed: int = None,
+        corr_seed: int = None,
     ):
         self.max_offset = max_offset
-        self.random_seed = random_seed
+        self.corr_seed = corr_seed
 
         self.param_dict = {
             "correlation_type": Noise,
             "max_offset": max_offset,
-            "random_seed": random_seed,
+            "corr_seed": corr_seed,
         }
 
     def make_time_offsets(
@@ -47,8 +73,8 @@ class Noise(CorrelationMethod):
         shape_mask,
     ) -> np.ndarray:
         
-        if self.random_seed is not None:
-            rng = np.random.RandomState(self.random_seed)
+        if self.corr_seed is not None:
+            rng = np.random.RandomState(self.corr_seed)
         else:
             rng = np.random
             warnings.warn(
@@ -75,23 +101,23 @@ class Gauss(CorrelationMethod):
     """
     def __init__(
             self,
-            center_lat=None,
-            center_lon=None,
+            corr_center_lat=None,
+            corr_center_lon=None,
             sigma_lat=10,
             sigma_lon=10,
             max_offset=10,
     ):
         
-        self.center_lat = center_lat
-        self.center_lon = center_lon
+        self.corr_center_lat = corr_center_lat
+        self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
         self.sigma_lon = sigma_lon
         self.max_offset = max_offset
 
         self.param_dict = {
             "correlation_type": Gauss,
-            "center_lat": center_lat,
-            "center_lon": center_lon,
+            "corr_center_lat": corr_center_lat,
+            "corr_center_lon": corr_center_lon,
             "sigma_lat": sigma_lat,
             "sigma_lon": sigma_lon,
             "max_offset": max_offset,
@@ -114,7 +140,7 @@ class Gauss(CorrelationMethod):
 
         # Calculate Gaussian over the whole extended grid
         cov = np.array([[self.sigma_lat**2, 0], [0, self.sigma_lon**2]])
-        rv = multivariate_normal(mean=[self.center_lat, self.center_lon], cov=cov)
+        rv = multivariate_normal(mean=[self.corr_center_lat, self.corr_center_lon], cov=cov)
         extended_gauss = rv.pdf(pos_extended)
         extended_gauss_scaled = extended_gauss / np.max(extended_gauss) * self.max_offset 
 
