@@ -57,7 +57,7 @@ class ELLIPSIS(ShapeMethod):
         shape_seed=None,
     ):
         if shape_seed is not None:
-            #np.random.seed(random_seed)
+            # np.random.seed(random_seed)
             rng = np.random.RandomState(shape_seed)
         else:
             rng = np.random
@@ -232,7 +232,7 @@ class BLOB(ShapeMethod):
         """Create a metaball mask in lat/lon space."""
 
         if self.random_seed is not None:
-            #np.random.seed(self.random_seed)
+            # np.random.seed(self.random_seed)
             rng = np.random.RandomState(self.random_seed)
         else:
             rng = np.random

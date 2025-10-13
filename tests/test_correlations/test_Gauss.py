@@ -1,5 +1,6 @@
 import numpy as np
 from ponds import PONDS, Gauss, ELLIPSIS
+
 """
 
 Things to Test:
@@ -12,6 +13,7 @@ Legend:
     - : to do
     x : done
 """
+
 
 def test_gauss_center_coordinates(err=2):
     """
@@ -35,9 +37,9 @@ def test_gauss_center_coordinates(err=2):
         gauss = Gauss(
             corr_center_lat=center_lat,
             corr_center_lon=center_lon,
-            sigma_lat=5,                    # <- smaller sigma for sharper peak
+            sigma_lat=5,  # <- smaller sigma for sharper peak
             sigma_lon=5,
-            max_offset=20,                  # <- larger max offset for better contrast
+            max_offset=20,  # <- larger max offset for better contrast
         )
 
         mask = np.ones((lat_size, lon_size), dtype=bool)
@@ -54,6 +56,7 @@ def test_gauss_center_coordinates(err=2):
         assert abs(max_pos[1] - lon_ix_exp) <= err, (
             f"Lon center mismatch: expected {lon_ix_exp}, got {max_pos[1]}"
         )
+
 
 '''
 def test_gauss_sigma_values_affect_spread():
@@ -93,6 +96,7 @@ def test_gauss_sigma_values_affect_spread():
     )
 '''
 
+
 def test_gauss_max_offset_scaling():
     """
     - Check that the specified max_offset value scales the amplitude correctly.
@@ -124,6 +128,7 @@ def test_gauss_max_offset_scaling():
     assert np.abs(off_high).max() > np.abs(off_low).max(), (
         "Higher max_offset should produce larger absolute offsets."
     )
+
 
 def test_gauss_and_ellipsis_alignment(mock_shift):
     """

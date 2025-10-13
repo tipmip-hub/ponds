@@ -135,8 +135,8 @@ class PONDS:
                 if shape_mask[i, j]:
                     perturbation_effect = perturbation_method.make_perturbation(
                         **perturbation_args,
-                        #time_size=len(self.time),
-                        #rng=rng,
+                        # time_size=len(self.time),
+                        # rng=rng,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -180,7 +180,9 @@ class PONDS:
 
         # 0) preprocessing
         # - align cluster shape with cluster correlation if necessary
-        self._align_cluster_shape_with_cluster_correlation(shape_method, correlation_method)
+        self._align_cluster_shape_with_cluster_correlation(
+            shape_method, correlation_method
+        )
 
         # - warn users to be aware of SINGLE-mode usage
         if shape_method is SINGLE():
@@ -210,7 +212,7 @@ class PONDS:
                 "Setting shape_type to 'UNKNOWN'."
             )
             shape_method.param_dict["shape_type"] = "UNKNOWN"
-        
+
         # 1) generate shape mask
         # - make the boolean shape mask
         shape_mask = shape_method.make_shape(
@@ -222,18 +224,21 @@ class PONDS:
             raise ValueError("Shape mask is empty. Please check the shape method.")
 
         # 2) generate time offsets according to correlation method
-        time_offsets = correlation_method.make_time_offsets(shape_mask) # -> generate offset values
+        time_offsets = correlation_method.make_time_offsets(
+            shape_mask
+        )  # -> generate offset values
 
         # 3) generate shift data
-        mask3d = np.zeros((self.data.sizes["time"], *shape_mask.shape), dtype=bool) # provide some space -> will be later added as cluster DataArray to the Dataset
+        mask3d = np.zeros(
+            (self.data.sizes["time"], *shape_mask.shape), dtype=bool
+        )  # provide some space -> will be later added as cluster DataArray to the Dataset
         # - iterate through every cell
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     # - generate shift data using the shift method
                     shift_effect, t_shift = shift_method.make_shift(
-                        time_arr=self.time,
-                        time_offset=time_offsets[i, j]
+                        time_arr=self.time, time_offset=time_offsets[i, j]
                     )
 
                     # - add shift effect to the data in single grid cell, all time steps at once
@@ -368,7 +373,9 @@ class PONDS:
             if correlation_method.corr_center_lat is None:
                 if hasattr(shape_method, "center_lat"):
                     correlation_method.corr_center_lat = shape_method.center_lat
-                    correlation_method.param_dict["corr_center_lat"] = shape_method.center_lat
+                    correlation_method.param_dict["corr_center_lat"] = (
+                        shape_method.center_lat
+                    )
                 else:
                     val = np.random.uniform(self.lats.min(), self.lats.max())
                     correlation_method.corr_center_lat = val
@@ -379,7 +386,9 @@ class PONDS:
             if correlation_method.corr_center_lon is None:
                 if hasattr(shape_method, "center_lon"):
                     correlation_method.corr_center_lon = shape_method.center_lon
-                    correlation_method.param_dict["corr_center_lon"] = shape_method.center_lon
+                    correlation_method.param_dict["corr_center_lon"] = (
+                        shape_method.center_lon
+                    )
                 else:
                     val = np.random.uniform(self.lons.min(), self.lons.max())
                     correlation_method.corr_center_lon = val
@@ -537,7 +546,10 @@ class PONDS:
         shape_instance = shape_dict["class"](**shape_dict["params"])
 
         # - correlation dict contains all keys after "correlation_type"
-        correlation_dict = {"class": self.data[cluster].attrs["correlation_type"], "params": {}}
+        correlation_dict = {
+            "class": self.data[cluster].attrs["correlation_type"],
+            "params": {},
+        }
         for key in keys[correlation_type_index + 1 :]:
             correlation_dict["params"][key] = self.data[cluster].attrs[key]
         # - create correlation instance
@@ -671,7 +683,7 @@ class PONDS:
         )
 
         return fig, ax
-    
+
     def plot_all_ts(
         self,
         alpha: float = 0.5,

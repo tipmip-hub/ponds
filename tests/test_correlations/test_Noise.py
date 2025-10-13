@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, Noise
+from ponds import Noise
 
 """
 
@@ -14,6 +14,7 @@ Legend:
     - : to do
     x : done
 """
+
 
 def test_noise_output_shape_and_type():
     """
@@ -47,7 +48,7 @@ def test_noise_same_seed_produces_same_offsets(R=5):
     for _ in range(R):
         seed1 = np.random.randint(0, 10000)
         seed2 = np.random.randint(0, 10000)
-        while seed2 == seed1:                   # re-roll to ensure different seeds
+        while seed2 == seed1:  # re-roll to ensure different seeds
             seed2 = np.random.randint(0, 10000)
         n1 = Noise(corr_seed=seed1)
         n2 = Noise(corr_seed=seed1)
@@ -56,11 +57,14 @@ def test_noise_same_seed_produces_same_offsets(R=5):
         off1 = n1.make_time_offsets(shape_mask)
         off2 = n2.make_time_offsets(shape_mask)
         off3 = n3.make_time_offsets(shape_mask)
-        
-        assert np.array_equal(off1, off2), "Offsets must be identical for the same seed."
-        assert not np.array_equal(
-            off1, off3
-        ), "Offsets must differ for different seeds."
+
+        assert np.array_equal(off1, off2), (
+            "Offsets must be identical for the same seed."
+        )
+        assert not np.array_equal(off1, off3), (
+            "Offsets must differ for different seeds."
+        )
+
 
 def test_noise_offsets_within_range(R=5):
     """
@@ -77,7 +81,10 @@ def test_noise_offsets_within_range(R=5):
         offsets = noise.make_time_offsets(shape_mask)
 
         assert offsets.min() >= -max_offset, f"Offsets below -{max_offset} detected."
-        assert offsets.max() < max_offset, f"Offsets equal or above {max_offset} detected."
+        assert offsets.max() < max_offset, (
+            f"Offsets equal or above {max_offset} detected."
+        )
+
 
 def test_noise_param_dict():
     """
@@ -89,5 +96,9 @@ def test_noise_param_dict():
 
     pdict = noise.param_dict
     assert pdict["correlation_type"] == Noise, "Wrong correlation_type stored."
-    assert pdict["max_offset"] == max_offset, f"Expected max_offset={max_offset}, got {pdict['max_offset']}"
-    assert pdict["corr_seed"] == corr_seed, f"Expected corr_seed={corr_seed}, got {pdict['corr_seed']}"
+    assert pdict["max_offset"] == max_offset, (
+        f"Expected max_offset={max_offset}, got {pdict['max_offset']}"
+    )
+    assert pdict["corr_seed"] == corr_seed, (
+        f"Expected corr_seed={corr_seed}, got {pdict['corr_seed']}"
+    )

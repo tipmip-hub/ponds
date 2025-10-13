@@ -246,7 +246,9 @@ def test_reproducibility(R=5):
         perturbation_instance_ex, shape_instance_p_ex = ponds.get_perturbation_instance(
             "p1"
         )
-        shift_instance_ex, shape_instance_s_ex, correlation_instance_ex = ponds.get_cluster_instance("c1")
+        shift_instance_ex, shape_instance_s_ex, correlation_instance_ex = (
+            ponds.get_cluster_instance("c1")
+        )
         # - reproduce the shift using the stored parameters
 
         # 2) call function

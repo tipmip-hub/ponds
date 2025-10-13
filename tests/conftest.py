@@ -29,7 +29,6 @@ class MockPerturbation:
     """
 
     def __init__(self):
-
         self.param_dict = {"perturbation_type": MockPerturbation}
 
     def make_perturbation(self, time_size):
@@ -56,7 +55,8 @@ class MockShift:
         shift_effect = np.zeros_like(time_arr, dtype=float)
 
         return shift_effect, t_shift
-    
+
+
 class MockCorrelation:
     """
     This is a mock implementation for testing purposes.
@@ -73,10 +73,10 @@ class MockCorrelation:
         self,
         shape_mask,
     ) -> np.ndarray:
-
         offsets = np.zeros(shape_mask.shape, dtype=int)
 
         return offsets
+
 
 @pytest.fixture
 def mock_shape():
@@ -91,6 +91,7 @@ def mock_perturbation():
 @pytest.fixture
 def mock_shift():
     return MockShift
+
 
 @pytest.fixture
 def mock_corr():

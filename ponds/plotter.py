@@ -4,8 +4,8 @@ import cartopy.feature as cfeature
 import numpy as np
 from matplotlib.colors import ListedColormap
 
-#from build.lib.build.lib.ponds.core import PONDS
-#import ponds
+# from build.lib.build.lib.ponds.core import PONDS
+# import ponds
 
 
 def worldmap(
@@ -190,10 +190,10 @@ def _get_grid_edges(coords: np.ndarray):
 
 
 def plot_all_ts(
-        ponds,
-        alpha: float = 0.5,
-        figsize: tuple = (16, 4),
-        title: str = "Time Series for All Cells",
+    ponds,
+    alpha: float = 0.5,
+    figsize: tuple = (16, 4),
+    title: str = "Time Series for All Cells",
 ):
     """
     Plots the time series of every grid cell from the PONDS dataset.
@@ -203,15 +203,14 @@ def plot_all_ts(
         figsize=figsize,
     )
 
-
     for i in range(ponds.data.sizes["lat"]):
         for j in range(ponds.data.sizes["lon"]):
             ax.plot(
                 ponds.data.ts[:, i, j],
-                linestyle='-',
+                linestyle="-",
                 linewidth=0.5,
                 marker=None,
-                color='grey',
+                color="grey",
                 alpha=alpha,
             )
 
@@ -219,7 +218,7 @@ def plot_all_ts(
     ax.set_title(title)
     ax.set_xlabel("Time")
     ax.set_ylabel("Value")
-    #ax.legend()
-    #plt.show()
+    # ax.legend()
+    # plt.show()
 
     return fig, ax

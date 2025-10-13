@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from turtle import pd
 import numpy as np
 import warnings
 
@@ -25,6 +24,7 @@ class CorrelationMethod(ABC):
 ############################################# Uniform #############################################
 ###################################################################################################
 
+
 class NoCorr(CorrelationMethod):
     """
     Default correlation method that does not apply any correlation. All offsets are zero.
@@ -41,19 +41,17 @@ class NoCorr(CorrelationMethod):
         self,
         shape_mask,
     ) -> np.ndarray:
-
         offsets = np.zeros(shape_mask.shape, dtype=int)
 
         return offsets
-
 
 
 ###################################################################################################
 ############################################# Noise ###############################################
 ###################################################################################################
 
-class Noise(CorrelationMethod):
 
+class Noise(CorrelationMethod):
     def __init__(
         self,
         max_offset: int = 5,
@@ -72,7 +70,6 @@ class Noise(CorrelationMethod):
         self,
         shape_mask,
     ) -> np.ndarray:
-        
         if self.corr_seed is not None:
             rng = np.random.RandomState(self.corr_seed)
         else:
@@ -82,9 +79,7 @@ class Noise(CorrelationMethod):
             )
 
         offsets = rng.uniform(
-            -self.max_offset,
-            self.max_offset,
-            size=shape_mask.shape
+            -self.max_offset, self.max_offset, size=shape_mask.shape
         ).astype(int)
 
         return offsets
@@ -94,20 +89,21 @@ class Noise(CorrelationMethod):
 ############################################# Gauss ###############################################
 ###################################################################################################
 
+
 class Gauss(CorrelationMethod):
     """
     Creates a Gauss-like correlation pattern. For a positive value `max_offset`, the central shift
     time occurs at the peak of the 2D gauss curve. All values around it are pushed towards the past.
     """
+
     def __init__(
-            self,
-            corr_center_lat=None,
-            corr_center_lon=None,
-            sigma_lat=10,
-            sigma_lon=10,
-            max_offset=10,
+        self,
+        corr_center_lat=None,
+        corr_center_lon=None,
+        sigma_lat=10,
+        sigma_lon=10,
+        max_offset=10,
     ):
-        
         self.corr_center_lat = corr_center_lat
         self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
@@ -124,10 +120,9 @@ class Gauss(CorrelationMethod):
         }
 
     def make_time_offsets(
-            self,
-            shape_mask,
+        self,
+        shape_mask,
     ) -> np.ndarray:
-
         # Create lat/lon grid
         lats = np.linspace(-90, 90, shape_mask.shape[0])
         lons = np.linspace(-180, 180, shape_mask.shape[1])
@@ -140,9 +135,13 @@ class Gauss(CorrelationMethod):
 
         # Calculate Gaussian over the whole extended grid
         cov = np.array([[self.sigma_lat**2, 0], [0, self.sigma_lon**2]])
-        rv = multivariate_normal(mean=[self.corr_center_lat, self.corr_center_lon], cov=cov)
+        rv = multivariate_normal(
+            mean=[self.corr_center_lat, self.corr_center_lon], cov=cov
+        )
         extended_gauss = rv.pdf(pos_extended)
-        extended_gauss_scaled = extended_gauss / np.max(extended_gauss) * self.max_offset 
+        extended_gauss_scaled = (
+            extended_gauss / np.max(extended_gauss) * self.max_offset
+        )
 
         # Apply shift to data
         offsets = np.zeros(shape_mask.shape, dtype=int)
@@ -155,19 +154,21 @@ class Gauss(CorrelationMethod):
                 offsets[i, j] = gauss_contribution - self.max_offset
 
         return offsets
-    
+
 
 ###################################################################################################
 ########################################### Custom ###########################################
 ###################################################################################################
 
+
 class Custom(CorrelationMethod):
     """
     Custom correlation method that allows for user-defined shift patterns.
     """
+
     def __init__(
-            self,
-            offset_mask: np.ndarray,
+        self,
+        offset_mask: np.ndarray,
     ):
         self.offset_mask = offset_mask
         self.param_dict = {
@@ -175,10 +176,9 @@ class Custom(CorrelationMethod):
         }
 
     def make_time_offsets(
-            self,
-            shape_mask,
+        self,
+        shape_mask,
     ) -> np.ndarray:
-        
         # check if the offset_mask is of the correct shape
         if shape_mask.shape != self.offset_mask.shape:
             raise ValueError(
