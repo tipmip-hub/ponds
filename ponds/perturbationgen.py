@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import warnings
 
 
 # Abstract class
@@ -57,7 +56,6 @@ class WhiteNoise(PerturbationMethod):
         time_size: int,
         rng: np.random.RandomState,
     ) -> np.ndarray:
-
         if self.perturbation_time is None:
             self.perturbation_time = np.arange(time_size)
 

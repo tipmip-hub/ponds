@@ -76,12 +76,14 @@ class SIGMOID(ShiftMethod):
         """
         if self.central_time is None:
             # Calculate the actual shift time based on the relative shift time
-            self.central_time = int(np.round(self.central_time_rel * (len(time_arr) - 1)))
+            self.central_time = int(
+                np.round(self.central_time_rel * (len(time_arr) - 1))
+            )
             self.param_dict["central_time"] = self.central_time
 
         # get actual shift time for this cell -> shift_time +/- noise
         t_shift = self.central_time + time_offset
-        
+
         # Ensure t_shift is within bounds
         t_shift = max(0, min(t_shift, len(time_arr) - 1))
         shift_effect = self.shift_magnitude * sigmoid(
