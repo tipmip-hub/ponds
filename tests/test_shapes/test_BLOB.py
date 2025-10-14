@@ -35,10 +35,10 @@ def test_blob_same_seed_produces_same_mask(R=5):
         ponds1 = PONDS(lat_size=lat_size, lon_size=lon_size)
         ponds2 = PONDS(lat_size=lat_size, lon_size=lon_size)
 
-        blob1 = BLOB(random_seed=seed_blob)
+        blob1 = BLOB(shape_seed=seed_blob)
         mask1 = blob1.make_shape(lats=ponds1.lats, lons=ponds1.lons)
 
-        blob2 = BLOB(random_seed=seed_blob)
+        blob2 = BLOB(shape_seed=seed_blob)
         mask2 = blob2.make_shape(lats=ponds2.lats, lons=ponds2.lons)
 
         assert np.array_equal(mask1, mask2), "BLOBs with same seed should be identical."
@@ -52,7 +52,7 @@ def test_blob_reproducibility_from_params():
     lon_size = 120
     ponds = PONDS(lat_size=lat_size, lon_size=lon_size)
 
-    blob = BLOB(random_seed=42)
+    blob = BLOB(shape_seed=42)
     mask1 = blob.make_shape(lats=ponds.lats, lons=ponds.lons)
 
     # Recreate from stored params
@@ -63,7 +63,7 @@ def test_blob_reproducibility_from_params():
         size=params["size"],
         max_bellys=params["max_bellys"],
         goo=params["goo"],
-        random_seed=params["random_seed"],
+        shape_seed=params["shape_seed"],
     )
     mask2 = blob_copy.make_shape(lats=ponds.lats, lons=ponds.lons)
 
@@ -127,10 +127,10 @@ def test_blob_size_scaling():
     lon_size = 200
     ponds = PONDS(lat_size=lat_size, lon_size=lon_size)
 
-    blob_small = BLOB(size=5, max_bellys=1, goo=2.0, random_seed=1)
+    blob_small = BLOB(size=5, max_bellys=1, goo=2.0, shape_seed=1)
     mask_small = blob_small.make_shape(lats=ponds.lats, lons=ponds.lons)
 
-    blob_large = BLOB(size=15, max_bellys=1, goo=2.0, random_seed=1)
+    blob_large = BLOB(size=15, max_bellys=1, goo=2.0, shape_seed=1)
     mask_large = blob_large.make_shape(lats=ponds.lats, lons=ponds.lons)
 
     assert mask_large.sum() > mask_small.sum(), (

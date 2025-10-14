@@ -1,14 +1,21 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import warnings
 
 
 # Abstract class
-class ShiftsMethod(ABC):
+class ShiftMethod(ABC):
+    @abstractmethod
+    def __init__(
+        self,
+        central_time: int,
+    ) -> None:
+        self.central_time = central_time
+
     @abstractmethod
     def make_shift(
         self,
-        time,
+        time_arr,
+        time_offset,
     ) -> tuple[np.ndarray, dict]:
         pass
 
@@ -18,77 +25,69 @@ class ShiftsMethod(ABC):
 ###################################################################################################
 
 
-class SIGMOID(ShiftsMethod):
+class SIGMOID(ShiftMethod):
     def __init__(
         self,
         central_time: int = None,
-        sigma_time: float = None,
         shift_steepness: float = None,
         shift_magnitude: float = None,
-        random_seed: int = None,
+        shift_seed: int = None,
     ):
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        if shift_seed is not None:
+            rng = np.random.RandomState(shift_seed)
         else:
-            warnings.warn(
-                "No random seed set for PONDS. Results will not be reproducible."
-            )
+            rng = np.random
 
         if shift_steepness is None:
-            shift_steepness = np.random.uniform(1.5, 3.0)
+            shift_steepness = rng.uniform(1.5, 3.0)
         if shift_magnitude is None:
-            shift_magnitude = np.random.uniform(0.95, 1.05)
-        if sigma_time is None:
-            sigma_time = 1.0  # Sharp shift
+            shift_magnitude = rng.uniform(0.95, 1.05)
         if central_time is None:
-            central_time_rel = np.random.uniform(0, 1)
+            central_time_rel = rng.uniform(0, 1)
             self.central_time_rel = central_time_rel
 
-        self.sigma_time = sigma_time
         self.shift_steepness = shift_steepness
         self.shift_magnitude = shift_magnitude
-        self.random_seed = random_seed
         self.central_time = central_time
-        self.random_seed = random_seed
+        self.shift_seed = shift_seed
 
         self.param_dict = {
             "shift_type": SIGMOID,
             "central_time": central_time,
-            "sigma_time": sigma_time,
             "shift_steepness": shift_steepness,
             "shift_magnitude": shift_magnitude,
-            "random_seed": random_seed,
+            "shift_seed": shift_seed,
         }
 
     def make_shift(
         self,
-        time,
+        time_arr,
+        time_offset: int = 0,
     ):
         """
         Generate a shift in the time series data using a sigmoid function.
 
         Args:
-            time (np.ndarray): Time array.
-            shift_time (int): Time step at which the shift occurs.
+            time_arr (np.ndarray): Time array.
+            time_offset (int): Time offset for the shift.
         Returns:
             tuple: A tuple containing the shift effect (np.ndarray) and the actual
             shift time (int; central_time +/- perturbation).
         """
         if self.central_time is None:
             # Calculate the actual shift time based on the relative shift time
-            self.central_time = int(np.round(self.central_time_rel * (len(time) - 1)))
+            self.central_time = int(
+                np.round(self.central_time_rel * (len(time_arr) - 1))
+            )
             self.param_dict["central_time"] = self.central_time
 
         # get actual shift time for this cell -> shift_time +/- noise
-        t_shift = int(
-            np.round(
-                self.central_time + np.random.uniform(-self.sigma_time, self.sigma_time)
-            )
-        )
+        t_shift = self.central_time + time_offset
+
         # Ensure t_shift is within bounds
-        t_shift = max(0, min(t_shift, len(time) - 1))
+        t_shift = max(0, min(t_shift, len(time_arr) - 1))
         shift_effect = self.shift_magnitude * sigmoid(
-            time, time[t_shift], self.shift_steepness
+            time_arr, time_arr[t_shift], self.shift_steepness
         )
 
         return shift_effect, t_shift

@@ -8,7 +8,6 @@ Things to Test:
     - Custom sigmoid shift
         - check if custom parameters are used
             x central_time
-            x sigma_time
             - shift_steepness
             - shift_magnitude
         - check if the correct shift parameters are stored as attributes on the DataArray Level
@@ -39,18 +38,18 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
     time = np.arange(0, 20, 1)  # Example time array
 
     for _ in range(R):
-        random_seed = np.random.randint(0, 1000)
+        shift_seed = np.random.randint(0, 1000)
 
         # 2) call function
         sigmoid1 = SIGMOID(
-            random_seed=random_seed
+            shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect1, _ = sigmoid1.make_shift(
             time,
         )
 
         sigmoid2 = SIGMOID(
-            random_seed=random_seed
+            shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
         shift_effect2, _ = sigmoid2.make_shift(
             time,
@@ -81,7 +80,7 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     time = np.arange(0, 20, 1)  # Example time array
 
     central_time = 5
-    custom_sigma_time = 3.0
+    # custom_sigma_time = 3.0
     custom_steepness = 5.0
     custom_magnitude = 2.0
 
@@ -89,7 +88,7 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     t_shifts = np.zeros((lat_size, lon_size))
     sigmoid_shift = SIGMOID(
         central_time=central_time,
-        sigma_time=custom_sigma_time,
+        # sigma_time=custom_sigma_time,
         shift_steepness=custom_steepness,
         shift_magnitude=custom_magnitude,
     )
@@ -106,13 +105,13 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
     )
 
     # -- sigma_time
-    t0_std = np.std(t_shifts.flatten())
-    t0_std_expected = (
-        custom_sigma_time * 2 / np.sqrt(12)
-    )  # for a uniform distribution, the standard deviation is (b-a)/sqrt(12), where a and b are the bounds of the distribution
-    assert np.isclose(t0_std, t0_std_expected, atol=err_tol), (
-        f"Expected standard deviation {t0_std_expected} not used, got {t0_std}."
-    )
+    # t0_std = np.std(t_shifts.flatten())
+    # t0_std_expected = (
+    #    custom_sigma_time * 2 / np.sqrt(12)
+    # )  # for a uniform distribution, the standard deviation is (b-a)/sqrt(12), where a and b are the bounds of the distribution
+    # assert np.isclose(t0_std, t0_std_expected, atol=err_tol), (
+    #    f"Expected standard deviation {t0_std_expected} not used, got {t0_std}."
+    # )
 
     # -- shift_steepness
 
