@@ -21,18 +21,18 @@ class MockShape:
         return mask
 
 
-class MockPerturbation:
+class MockBackground:
     """
     This is a mock implementation for testing purposes.
-    It simulates the behavior of a perturbation generator that creates
-    a perturbation for a pond.
+    It simulates the behavior of a background generator that creates
+    a background for a pond.
     """
 
     def __init__(self):
-        self.param_dict = {"perturbation_type": MockPerturbation}
+        self.param_dict = {"background_type": MockBackground}
 
-    def make_perturbation(self, time_size):
-        return np.zeros(time_size)  # Fixed perturbation value
+    def make_background(self, time_size):
+        return np.zeros(time_size)  # Fixed background value
 
 
 class MockShift:
@@ -84,8 +84,8 @@ def mock_shape():
 
 
 @pytest.fixture
-def mock_perturbation():
-    return MockPerturbation
+def mock_background():
+    return MockBackground
 
 
 @pytest.fixture

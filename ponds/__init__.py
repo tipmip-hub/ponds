@@ -1,7 +1,7 @@
 from ponds.core import PONDS
 from ponds.shapegen import ShapeMethod, SINGLE, ELLIPSIS, CUSTOM, BLOB
 from ponds.shiftgen import ShiftMethod, SIGMOID
-from ponds.perturbationgen import PerturbationMethod, WhiteNoise, Trend
+from ponds.backgroundgen import BackgroundMethod, WhiteNoise, Trend
 from ponds.correlationgen import CorrelationMethod, NoCorr, Noise, Gauss, Custom
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     "BLOB",
     "ShiftMethod",
     "SIGMOID",
-    "PerturbationMethod",
+    "BackgroundMethod",
     "WhiteNoise",
     "Trend",
     "CorrelationMethod",

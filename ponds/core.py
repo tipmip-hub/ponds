@@ -7,7 +7,7 @@ from ponds import (
 )
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
-from ponds.perturbationgen import PerturbationMethod
+from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
 
 
@@ -43,7 +43,7 @@ class PONDS:
         lon_size: int = 1,
         time_size: int = 100,
         cluster_key: str = "c",
-        perturbation_key: str = "p",
+        background_key: str = "b",
     ):
         """
         Generate spatial grid and seed with time series generator parameters.
@@ -76,34 +76,34 @@ class PONDS:
             coords={"time": self.time, "lat": self.lats, "lon": self.lons},
             attrs={
                 "cluster_key": cluster_key,
-                "perturbation_key": perturbation_key,
+                "background_key": background_key,
             },
         )
 
-    def add_perturbation(
+    def add_background(
         self,
-        perturbation_method: PerturbationMethod,
+        background_method: BackgroundMethod,
         shape_method: ShapeMethod = SINGLE(),
     ):
         """
-        Adds a perturbation to the time series data.
+        Adds a background to the time series data.
 
-        Perturbation Methods:
-            - "WhiteNoise": Adds white noise perturbation to the time series.
+        Background Methods:
+            - "WhiteNoise": Adds white noise background to the time series.
             - "Trend": Adds a linear trend to the time series.
 
         Args:
-            perturbation_method (PerturbationMethod): Method to generate the perturbation.
+            background_method (BackgroundMethod): Method to generate the background.
         """
-        # set seed for reproducibility in case perturbation_method uses a random process
+        # set seed for reproducibility in case background_method uses a random process
         try:
-            rng = np.random.RandomState(perturbation_method.random_seed)
-            perturbation_args = {
+            rng = np.random.RandomState(background_method.random_seed)
+            background_args = {
                 "time_size": len(self.time),
                 "rng": rng,
             }
         except AttributeError:
-            perturbation_args = {
+            background_args = {
                 "time_size": len(self.time),
             }
 
@@ -129,22 +129,22 @@ class PONDS:
         )
         shape_dict = shape_method.param_dict
 
-        # 2) Generate perturbation data and add to time series
+        # 2) Generate background data and add to time series
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
-                    perturbation_effect = perturbation_method.make_perturbation(
-                        **perturbation_args,
+                    background_effect = background_method.make_background(
+                        **background_args,
                         # time_size=len(self.time),
                         # rng=rng,
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
-                    self.data.ts.values[:, i, j] += perturbation_effect
+                    self.data.ts.values[:, i, j] += background_effect
 
-        # 3) store perturbation metadata
-        self._add_perturbation_to_ds(
-            perturbation_dict=perturbation_method.param_dict,
+        # 3) store background metadata
+        self._add_background_to_ds(
+            background_dict=background_method.param_dict,
             shape_dict=shape_dict,
         )
 
@@ -255,14 +255,14 @@ class PONDS:
             correlation_dict=correlation_method.param_dict,
         )
 
-    def _get_new_perturbation_key(self):
+    def _get_new_background_key(self):
         """
-        Generate a new perturbation key based on the current number of perturbations.
+        Generate a new background key based on the current number of backgrounds.
         """
 
         # get all the attribute keys in the ts DataArray
         variable_names = list(self.data.ts.attrs.keys())
-        # filter the keys that start with the perturbation_key
+        # filter the keys that start with the background_key
         variable_names = [
             name
             for name in variable_names
@@ -270,8 +270,8 @@ class PONDS:
         ]
         # get the last variable index
         last_variable_index = int(len(variable_names))
-        # return the new perturbation key
-        return f"{self.data.attrs['perturbation_key']}{last_variable_index + 1}"
+        # return the new background key
+        return f"{self.data.attrs['background_key']}{last_variable_index + 1}"
 
     def _get_new_cluster_key(self):
         """
@@ -287,28 +287,28 @@ class PONDS:
         last_variable_index = int(len(variable_names))
         return f"{self.data.attrs['cluster_key']}{last_variable_index + 1}"
 
-    def _add_perturbation_to_ds(
+    def _add_background_to_ds(
         self,
-        perturbation_dict: dict,
+        background_dict: dict,
         shape_dict: dict,
     ):
         """
         Appends metadata to the attributes of the time series DataArray.
 
         Args:
-            perturbation_dict (dict): Dictionary containing parameters used to generate the perturbation.
-            shape_dict (dict): Dictionary containing parameters used to generate the shape of the perturbation.
+            background_dict (dict): Dictionary containing parameters used to generate the background.
+            shape_dict (dict): Dictionary containing parameters used to generate the shape of the background.
         """
-        # get variable name for new perturbation
-        new_perturbation_name = self._get_new_perturbation_key()
-        # add perturbation attributes to the ts DataArray
-        self.data.ts.attrs[new_perturbation_name] = "### HEADER ###"
-        # - add perturbation attributes
-        for k, v in perturbation_dict.items():
-            self.data.ts.attrs[f"{new_perturbation_name}_{k}"] = v
+        # get variable name for new background
+        new_background_name = self._get_new_background_key()
+        # add background attributes to the ts DataArray
+        self.data.ts.attrs[new_background_name] = "### HEADER ###"
+        # - add background attributes
+        for k, v in background_dict.items():
+            self.data.ts.attrs[f"{new_background_name}_{k}"] = v
         # - add shape attributes
         for k, v in shape_dict.items():
-            self.data.ts.attrs[f"{new_perturbation_name}_{k}"] = v
+            self.data.ts.attrs[f"{new_background_name}_{k}"] = v
 
     def _add_shift_to_ds(
         self,
@@ -469,29 +469,29 @@ class PONDS:
         }
         return params
 
-    def get_perturbation_instance(self, perturbation_key: str):
+    def get_background_instance(self, background_key: str):
         """
-        Extracts the perturbation parameters from the ponds object ts DataArray.
+        Extracts the background parameters from the ponds object ts DataArray.
         Args:
-            ponds (PONDS): The ponds object containing the perturbation data.
-            perturbation_key (str): The key for the perturbation in the ponds data.
+            ponds (PONDS): The ponds object containing the background data.
+            background_key (str): The key for the background in the ponds data.
 
         Returns:
-            instance1: The perturbation instance with its parameters.
+            instance1: The background instance with its parameters.
             instance2: The shape instance with its parameters.
         """
         # get list of keys in order of appearance
         keys = list(self.data.ts.attrs.keys())
-        # filter keys that start with the perturbation_key
-        # keys = [key for key in keys if key.startswith(perturbation_key)]
-        # get index of "perturbation_type" and "shape_type"
-        p_index = keys.index(perturbation_key + "_perturbation_type")
-        s_index = keys.index(perturbation_key + "_shape_type")
+        # filter keys that start with the background_key
+        # keys = [key for key in keys if key.startswith(background_key)]
+        # get index of "background_type" and "shape_type"
+        p_index = keys.index(background_key + "_background_type")
+        s_index = keys.index(background_key + "_shape_type")
 
         p_specs = {"class": self.data.ts.attrs[keys[p_index]], "params": {}}
         for key in keys[p_index + 1 : s_index]:
             # remove prefix from key
-            key_parts = key.split(perturbation_key + "_")
+            key_parts = key.split(background_key + "_")
             # save the parameters in the dictionary
             p_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
         p_instance = p_specs["class"](**p_specs["params"])
@@ -499,13 +499,13 @@ class PONDS:
         s_specs = {"class": self.data.ts.attrs[keys[s_index]], "params": {}}
         for key in keys[s_index + 1 :]:
             # remove prefix from key
-            key_parts = key.split(perturbation_key + "_")
+            key_parts = key.split(background_key + "_")
             # save the parameters in the dictionary
             try:
                 s_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
             except AttributeError:
                 print(
-                    f"Warning: Key 'params' not found in shape attributes of {perturbation_key}."
+                    f"Warning: Key 'params' not found in shape attributes of {background_key}."
                 )
 
         s_instance = s_specs["class"](**s_specs["params"])
@@ -573,13 +573,13 @@ class PONDS:
         """
         # make a copy of the data which can be altered for saving
         data_copy = self.data.copy(deep=True)
-        # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
+        # locate all the attributes in every variable which key contains "shape_type" or "background_type" or "shift_type"
         for var in data_copy.data_vars:
             keys = [
                 key
                 for key in data_copy[var].attrs.keys()
                 if "shape_type" in key
-                or "perturbation_type" in key
+                or "background_type" in key
                 or "shift_type" in key
                 or "correlation_type" in key
             ]
@@ -617,13 +617,13 @@ class PONDS:
         with xr.open_dataset(filename, engine="netcdf4") as ds:
             data = ds.load()  # Detach from file completely
 
-        # locate all the attributes in every variable which key contains "shape_type" or "perturbation_type" or "shift_type"
+        # locate all the attributes in every variable which key contains "shape_type" or "background_type" or "shift_type"
         for var in data.data_vars:
             keys = [
                 key
                 for key in data[var].attrs.keys()
                 if "shape_type" in key
-                or "perturbation_type" in key
+                or "background_type" in key
                 or "shift_type" in key
                 or "correlation_type" in key
             ]

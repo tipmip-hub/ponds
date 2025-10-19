@@ -25,7 +25,7 @@ Legend:
 ###################################################################################################
 
 
-def test_save_and_load(mock_shape, mock_shift, mock_perturbation, mock_corr):
+def test_save_and_load(mock_shape, mock_shift, mock_background, mock_corr):
     # Create dummy PONDS instance
     ponds = PONDS(
         lat_size=4,
@@ -34,13 +34,13 @@ def test_save_and_load(mock_shape, mock_shift, mock_perturbation, mock_corr):
         # background_trend=1.0,
         # background_noise=0.5,
         cluster_key="custom_key",
-        perturbation_key="custom_p_key",
+        background_key="custom_b_key",
         # random_seed=5,
     )
 
-    # Add perturbation
-    ponds.add_perturbation(
-        perturbation_method=mock_perturbation(),
+    # Add background
+    ponds.add_background(
+        background_method=mock_background(),
         shape_method=mock_shape(),
     )
 
@@ -66,7 +66,7 @@ def test_save_and_load(mock_shape, mock_shift, mock_perturbation, mock_corr):
             filepath,
             type_dict={
                 "MockShape": mock_shape,
-                "MockPerturbation": mock_perturbation,
+                "MockBackground": mock_background,
                 "MockShift": mock_shift,
                 "MockCorrelation": mock_corr,
             },
