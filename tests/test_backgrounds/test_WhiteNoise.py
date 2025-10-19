@@ -7,7 +7,7 @@ Testing the PONDS core class and its methods.
 Things to Test:
     x does the magnitude work
     x does the random seed work
-    x does the perturbation time work
+    x does the background time work
 
 
 Legend:
@@ -26,8 +26,8 @@ def test_magnitude(err_tol=1e-2):
         lon_size=2,
         time_size=10000,
     )
-    ponds.add_perturbation(
-        perturbation_method=WhiteNoise(magnitude=magnitude),
+    ponds.add_background(
+        background_method=WhiteNoise(magnitude=magnitude),
     )
 
     # 3) check results
@@ -62,8 +62,8 @@ def test_random_seed(R=5):
             lon_size=1,
             time_size=100,
         )
-        ponds1.add_perturbation(
-            perturbation_method=WhiteNoise(
+        ponds1.add_background(
+            background_method=WhiteNoise(
                 random_seed=seed1,  # <- benchmark
             ),
         )
@@ -73,8 +73,8 @@ def test_random_seed(R=5):
             lon_size=1,
             time_size=100,
         )
-        ponds2.add_perturbation(
-            perturbation_method=WhiteNoise(
+        ponds2.add_background(
+            background_method=WhiteNoise(
                 random_seed=seed1,  # <- same seed as benchmark
             ),
         )
@@ -84,8 +84,8 @@ def test_random_seed(R=5):
             lon_size=1,
             time_size=100,
         )
-        ponds3.add_perturbation(
-            perturbation_method=WhiteNoise(
+        ponds3.add_background(
+            background_method=WhiteNoise(
                 random_seed=seed2,  # <- different seed
             ),
         )
@@ -99,16 +99,16 @@ def test_random_seed(R=5):
         )
 
 
-def test_perturbation_time():
+def test_background_time():
     """
-    - check if perturbation is applied only at the specified times
+    - check if background is applied only at the specified times
         - expected values at specified times: non-zero values
         - expected values at non-specified times: zero values
     """
 
     # 1) setup variables
     time_size = 10
-    perturbation_time = np.array([3, 4, 5, 6, 7])
+    background_time = np.array([3, 4, 5, 6, 7])
     magnitude = 1
 
     # 2) call function
@@ -117,19 +117,19 @@ def test_perturbation_time():
         lon_size=1,
         time_size=time_size,
     )
-    ponds.add_perturbation(
-        perturbation_method=WhiteNoise(
+    ponds.add_background(
+        background_method=WhiteNoise(
             magnitude=magnitude,
-            perturbation_time=perturbation_time,
+            background_time=background_time,
         ),
     )
 
     # 3) check results
-    # - Check that the perturbation is applied only at the specified times
+    # - Check that the background is applied only at the specified times
     assert ~np.array_equal(
-        ponds.data.ts[perturbation_time, 0, 0].values, np.zeros(len(perturbation_time))
-    ), "Perturbation values do not match expected values at specified times."
-    ix = np.setdiff1d(np.arange(time_size), perturbation_time)
+        ponds.data.ts[background_time, 0, 0].values, np.zeros(len(background_time))
+    ), "Background values do not match expected values at specified times."
+    ix = np.setdiff1d(np.arange(time_size), background_time)
     assert np.array_equal(
-        ponds.data.ts[ix, 0, 0].values, np.zeros(time_size - len(perturbation_time))
-    ), "Unexpected perturbation values at non-specified times."
+        ponds.data.ts[ix, 0, 0].values, np.zeros(time_size - len(background_time))
+    ), "Unexpected background values at non-specified times."

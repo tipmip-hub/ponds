@@ -72,7 +72,7 @@ class SIGMOID(ShiftMethod):
             time_offset (int): Time offset for the shift.
         Returns:
             tuple: A tuple containing the shift effect (np.ndarray) and the actual
-            shift time (int; central_time +/- perturbation).
+            shift time (int; central_time +/- offset).
         """
         if self.central_time is None:
             # Calculate the actual shift time based on the relative shift time

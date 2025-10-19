@@ -3,20 +3,20 @@ import numpy as np
 
 
 # Abstract class
-class PerturbationMethod(ABC):
+class BackgroundMethod(ABC):
     @abstractmethod
-    def make_perturbation(
+    def make_background(
         self,
         time_size: int,
     ) -> np.ndarray:
         """
-        Generates the perturbation effect for the time series.
+        Generates the background effect for the time series.
 
         Parameters:
-            time_size (int): The size of the time dimension for which the perturbation is generated.
+            time_size (int): The size of the time dimension for which the background is generated.
 
         Returns:
-            np.ndarray: The generated perturbation effect that shall be added to the PONDS ts.
+            np.ndarray: The generated background effect that shall be added to the PONDS ts.
         """
         pass
 
@@ -26,42 +26,42 @@ class PerturbationMethod(ABC):
 ###################################################################################################
 
 
-class WhiteNoise(PerturbationMethod):
+class WhiteNoise(BackgroundMethod):
     def __init__(
         self,
         magnitude: float = 0.05,  # Magnitude of the white noise
         random_seed: int = 1,
-        perturbation_time: np.ndarray[int] = None,
+        background_time: np.ndarray[int] = None,
     ):
         """
-        Initializes the WhiteNoise perturbation method.
+        Initializes the WhiteNoise background method.
 
         Parameters:
             random_seed (int): Random seed for reproducibility.
-            perturbation_time (np.ndarray[int]): Indices in the time series where the perturbation is applied.
+            background_time (np.ndarray[int]): Indices in the time series where the background is applied.
         """
         self.magnitude = magnitude
         self.random_seed = random_seed
-        self.perturbation_time = perturbation_time
+        self.background_time = background_time
 
         self.param_dict = {
-            "perturbation_type": WhiteNoise,
+            "background_type": WhiteNoise,
             "magnitude": magnitude,
             "random_seed": random_seed,
-            "perturbation_time": perturbation_time,
+            "background_time": background_time,
         }
 
-    def make_perturbation(
+    def make_background(
         self,
         time_size: int,
         rng: np.random.RandomState,
     ) -> np.ndarray:
-        if self.perturbation_time is None:
-            self.perturbation_time = np.arange(time_size)
+        if self.background_time is None:
+            self.background_time = np.arange(time_size)
 
         noise = np.zeros(time_size)
-        noise[self.perturbation_time] = self.magnitude * rng.normal(
-            size=len(self.perturbation_time)
+        noise[self.background_time] = self.magnitude * rng.normal(
+            size=len(self.background_time)
         )
         return noise
 
@@ -71,44 +71,42 @@ class WhiteNoise(PerturbationMethod):
 ####################################################################################################
 
 
-class Trend(PerturbationMethod):
+class Trend(BackgroundMethod):
     def __init__(
         self,
         slope: float = 0.01,  # Slope of the trend
         intercept: float = 0.0,  # Intercept of the trend at start (t=0)
-        perturbation_time: np.ndarray[int] = None,
+        background_time: np.ndarray[int] = None,
     ):
         """
-        Initializes the Trend perturbation method.
+        Initializes the Trend background method.
 
         Parameters:
             slope (float): Slope of the linear trend.
             intercept (float): Intercept of the trend at the start of the time series.
-            perturbation_time (np.ndarray[int]): Indices in the time series where the perturbation is applied.
+            background_time (np.ndarray[int]): Indices in the time series where the background is applied.
         """
 
         self.slope = slope
         self.intercept = intercept
-        if perturbation_time is not None:
-            self.perturbation_time = np.array(perturbation_time)
+        if background_time is not None:
+            self.background_time = np.array(background_time)
         else:
-            self.perturbation_time = None
+            self.background_time = None
 
         self.param_dict = {
-            "perturbation_type": Trend,
+            "background_type": Trend,
             "slope": slope,
-            "perturbation_time": perturbation_time,
+            "background_time": background_time,
         }
 
-    def make_perturbation(
+    def make_background(
         self,
         time_size: int,
     ) -> np.ndarray:
-        if self.perturbation_time is None:
-            self.perturbation_time = np.arange(time_size)
+        if self.background_time is None:
+            self.background_time = np.arange(time_size)
 
         trend = np.zeros(time_size)
-        trend[self.perturbation_time] = (
-            self.perturbation_time * self.slope + self.intercept
-        )
+        trend[self.background_time] = self.background_time * self.slope + self.intercept
         return trend
