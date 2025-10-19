@@ -243,7 +243,7 @@ def test_reproducibility(R=5):
         )
         # - extract all parameters from the Dataset
         ponds_dict_ex = ponds.get_ponds_dict()
-        background_instance_ex, shape_instance_p_ex = ponds.get_background_instance(
+        background_instance_ex, shape_instance_b_ex = ponds.get_background_instance(
             "b1"
         )
         shift_instance_ex, shape_instance_s_ex, correlation_instance_ex = (
@@ -256,7 +256,7 @@ def test_reproducibility(R=5):
         ponds_rep = PONDS(**ponds_dict_ex)
         ponds_rep.add_background(
             background_method=background_instance_ex,
-            shape_method=shape_instance_p_ex,
+            shape_method=shape_instance_b_ex,
         )
         # - add a shift using the stored parameters
         ponds_rep.add_shift(

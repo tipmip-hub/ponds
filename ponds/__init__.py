@@ -3,6 +3,7 @@ from ponds.shapegen import ShapeMethod, SINGLE, ELLIPSIS, CUSTOM, BLOB
 from ponds.shiftgen import ShiftMethod, SIGMOID
 from ponds.backgroundgen import BackgroundMethod, WhiteNoise, Trend
 from ponds.correlationgen import CorrelationMethod, NoCorr, Noise, Gauss, Custom
+from typing import Any, Dict
 
 __all__ = [
     "PONDS",
@@ -22,8 +23,7 @@ __all__ = [
     "Gauss",
     "Custom",
 ]
-
-type_dict = {
+type_dict: Dict[str, Any] = {
     "SINGLE": SINGLE,
     "ELLIPSIS": ELLIPSIS,
     "CUSTOM": CUSTOM,

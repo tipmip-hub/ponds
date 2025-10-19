@@ -23,7 +23,9 @@ class ShapeMethod(ABC):
 
 
 class SINGLE(ShapeMethod):
-    def __init__(self):
+    def __init__(
+            self
+    ) -> None:
         """
         A placeholder for a single shape method. This is used when no specific shape method is defined.
         """
@@ -55,7 +57,7 @@ class ELLIPSIS(ShapeMethod):
         ecc_lat=None,  # standard deviation in latitude degrees
         ecc_lon=None,  # standard deviation in longitude degrees
         shape_seed=None,
-    ):
+    ) -> None:
         if shape_seed is not None:
             # np.random.seed(random_seed)
             rng = np.random.RandomState(shape_seed)
@@ -125,7 +127,10 @@ class ELLIPSIS(ShapeMethod):
 
 
 class CUSTOM(ShapeMethod):
-    def __init__(self, shape_mask: np.ndarray):
+    def __init__(
+            self,
+            shape_mask: np.ndarray
+    ) -> None:
         """
         Custom shape method that uses a pre-defined mask.
 
@@ -175,7 +180,7 @@ class BLOB(ShapeMethod):
         max_bellys=None,
         goo=None,
         shape_seed=None,
-    ):
+    ) -> None:
         """
         Creates a shape using the following algorithm:
             - place `max_bellys` points in proximity to the center point
@@ -228,7 +233,7 @@ class BLOB(ShapeMethod):
         self,
         lats,
         lons,
-    ):
+    ) -> np.ndarray:
         """Create a metaball mask in lat/lon space."""
 
         if self.random_seed is not None:
@@ -284,7 +289,10 @@ class BLOB(ShapeMethod):
 
         return shape_mask
 
-    def _mask_connected(self, mask):
+    def _mask_connected(
+            self,
+            mask
+    ) -> bool:
         """
         Check if all TRUE values of the mask are connected to each other.
         """
@@ -336,14 +344,24 @@ class _Metaball:
         self.goo = goo
         self.threshold = threshold
 
-    def _distance(self, lat1, lon1, lat2, lon2):
+    def _distance(
+            self,
+            lat1,
+            lon1,
+            lat2,
+            lon2
+    ) -> np.ndarray:
         """Euclidean distance in lat/lon degrees, with lon wrapping."""
         # Wrap longitudes to [-180, 180]
         dlon = ((lon1 - lon2 + 180) % 360) - 180
         dlat = lat1 - lat2
         return np.sqrt(dlat**2 + dlon**2)
 
-    def field_mask(self, lats, lons):
+    def field_mask(
+            self,
+            lats,
+            lons
+    ) -> np.ndarray:
         """Compute boolean mask for the metaball field."""
         LAT, LON = np.meshgrid(lats, lons, indexing="ij")  # shape (lat_size, lon_size)
         field = np.zeros_like(LAT, dtype=float)

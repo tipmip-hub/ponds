@@ -32,7 +32,7 @@ class SIGMOID(ShiftMethod):
         shift_steepness: float = None,
         shift_magnitude: float = None,
         shift_seed: int = None,
-    ):
+    ) -> None:
         if shift_seed is not None:
             rng = np.random.RandomState(shift_seed)
         else:
@@ -63,7 +63,7 @@ class SIGMOID(ShiftMethod):
         self,
         time_arr,
         time_offset: int = 0,
-    ):
+    ) -> tuple[np.ndarray, int]:
         """
         Generate a shift in the time series data using a sigmoid function.
 
@@ -98,7 +98,11 @@ class SIGMOID(ShiftMethod):
 ###################################################################################################
 
 
-def sigmoid(t, t0, k: float = 1.0) -> np.ndarray:
+def sigmoid(
+        t,
+        t0,
+        k: float = 1.0
+) -> np.ndarray:
     """
     Sigmoid transition function
 

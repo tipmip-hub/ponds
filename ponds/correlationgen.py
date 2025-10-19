@@ -56,7 +56,7 @@ class Noise(CorrelationMethod):
         self,
         max_offset: int = 5,
         corr_seed: int = None,
-    ):
+    ) -> None:
         self.max_offset = max_offset
         self.corr_seed = corr_seed
 
@@ -103,7 +103,7 @@ class Gauss(CorrelationMethod):
         sigma_lat=10,
         sigma_lon=10,
         max_offset=10,
-    ):
+    ) -> None:
         self.corr_center_lat = corr_center_lat
         self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
@@ -169,7 +169,7 @@ class Custom(CorrelationMethod):
     def __init__(
         self,
         offset_mask: np.ndarray,
-    ):
+    ) -> None:
         self.offset_mask = offset_mask
         self.param_dict = {
             "correlation_type": Custom,

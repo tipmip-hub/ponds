@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
-
+from typing import Optional, Any, Dict
+from numpy.typing import NDArray
 
 # Abstract class
 class BackgroundMethod(ABC):
@@ -8,7 +9,7 @@ class BackgroundMethod(ABC):
     def make_background(
         self,
         time_size: int,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         """
         Generates the background effect for the time series.
 
@@ -16,7 +17,7 @@ class BackgroundMethod(ABC):
             time_size (int): The size of the time dimension for which the background is generated.
 
         Returns:
-            np.ndarray: The generated background effect that shall be added to the PONDS ts.
+            NDArray[np.float64]: The generated background effect that shall be added to the PONDS ts.
         """
         pass
 
@@ -31,8 +32,8 @@ class WhiteNoise(BackgroundMethod):
         self,
         magnitude: float = 0.05,  # Magnitude of the white noise
         random_seed: int = 1,
-        background_time: np.ndarray[int] = None,
-    ):
+        background_time: Optional[NDArray[np.int_]] = None,
+    ) -> None:
         """
         Initializes the WhiteNoise background method.
 
@@ -44,7 +45,7 @@ class WhiteNoise(BackgroundMethod):
         self.random_seed = random_seed
         self.background_time = background_time
 
-        self.param_dict = {
+        self.param_dict: Dict[str, Any] = {
             "background_type": WhiteNoise,
             "magnitude": magnitude,
             "random_seed": random_seed,
@@ -55,7 +56,7 @@ class WhiteNoise(BackgroundMethod):
         self,
         time_size: int,
         rng: np.random.RandomState,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         if self.background_time is None:
             self.background_time = np.arange(time_size)
 
@@ -76,8 +77,8 @@ class Trend(BackgroundMethod):
         self,
         slope: float = 0.01,  # Slope of the trend
         intercept: float = 0.0,  # Intercept of the trend at start (t=0)
-        background_time: np.ndarray[int] = None,
-    ):
+        background_time: Optional[NDArray[np.int_]] = None,
+    ) -> None:
         """
         Initializes the Trend background method.
 
@@ -94,19 +95,20 @@ class Trend(BackgroundMethod):
         else:
             self.background_time = None
 
-        self.param_dict = {
+        self.param_dict: Dict[str, Any] = {
             "background_type": Trend,
             "slope": slope,
+            "intercept": intercept,
             "background_time": background_time,
         }
 
     def make_background(
         self,
         time_size: int,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         if self.background_time is None:
             self.background_time = np.arange(time_size)
 
-        trend = np.zeros(time_size)
+        trend = np.zeros(time_size, dtype=np.float64)
         trend[self.background_time] = self.background_time * self.slope + self.intercept
         return trend

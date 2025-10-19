@@ -17,7 +17,7 @@ def worldmap(
     show_cells: bool = False,
     shift_type: bool = False,
     title: str = "Cluster Masks",
-):
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot the PONDS data on a world map using lat/lon as axis ticks.
 
     Args:
@@ -180,8 +180,12 @@ def worldmap(
     return fig, ax
 
 
-def _get_grid_edges(coords: np.ndarray):
+def _get_grid_edges(coords: np.ndarray) -> np.ndarray:
     """Helper to calculate grid edges from 1D coordinate centers."""
+
+    # Handle trivial case of a single coordinate
+    if coords.size < 2:
+        return coords.copy()
 
     # Calculate edge positions
     step = (coords[-1] - coords[0]) / (len(coords))
@@ -194,7 +198,7 @@ def plot_all_ts(
     alpha: float = 0.5,
     figsize: tuple = (16, 4),
     title: str = "Time Series for All Cells",
-):
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Plots the time series of every grid cell from the PONDS dataset.
     """
