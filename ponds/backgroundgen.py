@@ -108,7 +108,5 @@ class Trend(BackgroundMethod):
             self.background_time = np.arange(time_size)
 
         trend = np.zeros(time_size)
-        trend[self.background_time] = (
-            self.background_time * self.slope + self.intercept
-        )
+        trend[self.background_time] = self.background_time * self.slope + self.intercept
         return trend
