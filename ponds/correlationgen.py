@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import warnings
+from typing import Any
 
 # for Gauss
 from scipy.stats import multivariate_normal
@@ -11,8 +12,8 @@ class CorrelationMethod(ABC):
     @abstractmethod
     def make_time_offsets(
         self,
-        shape_mask,
-    ) -> np.ndarray:
+        shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """
         Generate time offsets for the time of the shift. An offset value for each grid cell of the
         spatial grid is created at once.
@@ -39,8 +40,8 @@ class NoCorr(CorrelationMethod):
 
     def make_time_offsets(
         self,
-        shape_mask,
-    ) -> np.ndarray:
+        shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         offsets = np.zeros(shape_mask.shape, dtype=int)
 
         return offsets
@@ -55,7 +56,7 @@ class Noise(CorrelationMethod):
     def __init__(
         self,
         max_offset: int = 5,
-        corr_seed: int = None,
+        corr_seed: int | None = None,
     ) -> None:
         self.max_offset = max_offset
         self.corr_seed = corr_seed
@@ -68,8 +69,9 @@ class Noise(CorrelationMethod):
 
     def make_time_offsets(
         self,
-        shape_mask,
-    ) -> np.ndarray:
+        shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
+        
         if self.corr_seed is not None:
             rng = np.random.RandomState(self.corr_seed)
         else:
@@ -98,12 +100,13 @@ class Gauss(CorrelationMethod):
 
     def __init__(
         self,
-        corr_center_lat=None,
-        corr_center_lon=None,
-        sigma_lat=10,
-        sigma_lon=10,
-        max_offset=10,
+        corr_center_lat: int | None = None,
+        corr_center_lon: int | None = None,
+        sigma_lat: int = 10,
+        sigma_lon: int = 10,
+        max_offset: int = 10,
     ) -> None:
+        
         self.corr_center_lat = corr_center_lat
         self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
@@ -121,8 +124,8 @@ class Gauss(CorrelationMethod):
 
     def make_time_offsets(
         self,
-        shape_mask,
-    ) -> np.ndarray:
+        shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         # Create lat/lon grid
         lats = np.linspace(-90, 90, shape_mask.shape[0])
         lons = np.linspace(-180, 180, shape_mask.shape[1])
@@ -167,7 +170,7 @@ class Custom(CorrelationMethod):
 
     def __init__(
         self,
-        offset_mask: np.ndarray,
+        offset_mask: np.ndarray[Any, Any],
     ) -> None:
         self.offset_mask = offset_mask
         self.param_dict = {
@@ -176,8 +179,8 @@ class Custom(CorrelationMethod):
 
     def make_time_offsets(
         self,
-        shape_mask,
-    ) -> np.ndarray:
+        shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         # check if the offset_mask is of the correct shape
         if shape_mask.shape != self.offset_mask.shape:
             raise ValueError(
@@ -199,4 +202,83 @@ class Cascading(CorrelationMethod):
     
     """
 
-    ...
+    def __init__(
+            self,
+            n_cells: int,
+            max_offset: int = 5,
+            corr_seed: int | None = None,
+    ) -> None:
+        self.n_cells = n_cells
+        self.max_offset = max_offset
+        self.corr_seed = corr_seed
+
+        self.param_dict = {
+            "correlation_type": Cascading,
+            "n_cells": n_cells,
+            "max_offset": max_offset,
+            "corr_seed": corr_seed,
+        }
+
+    def make_time_offsets(
+            self,
+            shape_mask: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
+        """
+        y = latitudes
+        x = longitudes
+        """
+
+        if self.corr_seed is not None:
+            rng = np.random.RandomState(self.corr_seed)
+        else:
+            rng = np.random
+            warnings.warn(
+                "No random seed set for PONDS Correlation Method. Results will not be reproducible."
+            )
+
+        if self.n_cells > np.sum(shape_mask):
+            raise ValueError(f"Can not fit {self.n_cells=} cell centers into shape mask with {shape_mask.sum()} cells.")
+        if self.n_cells > np.sum(shape_mask)*0.5:
+            print(f"Warning: Trying to draw {self.n_cells=} unique cell centers out of {shape_mask.sum()} possible cells. This may take a some time.")
+
+        # get bounding box of shape_mask True values
+        latmin_ix, latmax_ix = np.where(np.any(shape_mask, axis=0))[0][[0, -1]]
+        lonmin_ix, lonmax_ix = np.where(np.any(shape_mask, axis=1))[0][[0, -1]]
+
+        # draw random unique cell centers within shape_mask
+        sx = np.full(self.n_cells, -1, dtype=int)
+        sy = np.full(self.n_cells, -1, dtype=int)
+        # - draw cell centers
+        for i in range(self.n_cells):
+            sx[i] = rng.randint(lonmin_ix, lonmax_ix + 1, size=1)
+            sy[i] = rng.randint(latmin_ix, latmax_ix + 1, size=1)
+            pairs = np.column_stack((sx[:i+1],sy[:i+1]))
+            # - 1) check if drawn cell centers are not unique; 2) check if drawn cell center is not in shape_mask
+            while np.unique(pairs, axis=0).shape[0] < (i+1) or not(shape_mask[sx[i],sy[i]]):
+                # - re-draw cell center
+                sx[i] = rng.randint(lonmin_ix, lonmax_ix + 1, size=1)
+                sy[i] = rng.randint(latmin_ix, latmax_ix + 1, size=1)
+                pairs = np.column_stack((sx[:i+1],sy[:i+1]))
+
+        # assign each seed a threshold value spanning the max_offset range
+        offset_val = rng.randint(
+            0, self.max_offset, size=self.n_cells
+        )
+        offset_mesh = np.array([np.full(shape_mask.shape, offset_val[i]) for i in range(self.n_cells)])
+
+
+        # compute distance of each grid cell to each center
+        yy, xx = np.mgrid[0:len(shape_mask), 0:len(shape_mask[0])]
+        d2 = np.stack(
+            [(yy - sx[i]) ** 2 + (xx - sy[i]) ** 2 for i in range(self.n_cells)], axis=0
+        )
+        mask_offset_ix = np.argmin(d2, axis=0)
+        # construct mask_offset array: use offset values at the indices of the closest cell centers
+        mask_offset = np.array(
+            [
+                [offset_mesh[mask_offset_ix[i,j],i,j] for j in range(len(mask_offset_ix[0]))] 
+                for i in range(len(mask_offset_ix))
+            ]
+            )
+
+        return mask_offset

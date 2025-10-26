@@ -2,7 +2,7 @@ from ponds.core import PONDS
 from ponds.shapegen import ShapeMethod, SINGLE, ELLIPSIS, CUSTOM, BLOB
 from ponds.shiftgen import ShiftMethod, SIGMOID
 from ponds.backgroundgen import BackgroundMethod, WhiteNoise, Trend
-from ponds.correlationgen import CorrelationMethod, NoCorr, Noise, Gauss, Custom
+from ponds.correlationgen import CorrelationMethod, NoCorr, Noise, Gauss, Custom, Cascading
 from typing import Any, Dict
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "Noise",
     "Gauss",
     "Custom",
+    "Cascading",
 ]
 type_dict: Dict[str, Any] = {
     "SINGLE": SINGLE,
@@ -35,4 +36,5 @@ type_dict: Dict[str, Any] = {
     "Noise": Noise,
     "Gauss": Gauss,
     "Custom": Custom,
+    "Cascading": Cascading,
 }
