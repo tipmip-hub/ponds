@@ -194,12 +194,16 @@ class Custom(CorrelationMethod):
 
 
 ###################################################################################################
-############################################ Cascading ############################################
+########################################## Propagating ############################################
 ###################################################################################################
 
-class Cascading(CorrelationMethod):
+class Propagating(CorrelationMethod):
     """
+    Mimics a propagating tipping event as proposed in Fig. 1 of [Loriani et al., 2025].
     
+    Cluster mask is divided into Voronoi cells (VC). A random starting VC is picked, where the tipping event
+    occurs first (offset=0). The further away a VC is from the starting VC, the later the tipping event occurs
+    (larger offset value). The maximum offset value is determined by `max_offset`.
     """
 
     def __init__(
@@ -213,7 +217,7 @@ class Cascading(CorrelationMethod):
         self.corr_seed = corr_seed
 
         self.param_dict = {
-            "correlation_type": Cascading,
+            "correlation_type": Propagating,
             "n_cells": n_cells,
             "max_offset": max_offset,
             "corr_seed": corr_seed,
@@ -259,18 +263,17 @@ class Cascading(CorrelationMethod):
                 sx[i] = rng.randint(lonmin_ix, lonmax_ix + 1, size=1)
                 sy[i] = rng.randint(latmin_ix, latmax_ix + 1, size=1)
                 pairs = np.column_stack((sx[:i+1],sy[:i+1]))
+        self.cell_centers = pairs
 
         # assign each seed a threshold value spanning the max_offset range
-        offset_val = rng.randint(
-            0, self.max_offset, size=self.n_cells
-        )
+        offset_val = self._offset_val_cells(rng)
         offset_mesh = np.array([np.full(shape_mask.shape, offset_val[i]) for i in range(self.n_cells)])
 
 
         # compute distance of each grid cell to each center
         yy, xx = np.mgrid[0:len(shape_mask), 0:len(shape_mask[0])]
         d2 = np.stack(
-            [(yy - sx[i]) ** 2 + (xx - sy[i]) ** 2 for i in range(self.n_cells)], axis=0
+            [(yy - self.cell_centers[i, 0]) ** 2 + (xx - self.cell_centers[i, 1]) ** 2 for i in range(self.n_cells)], axis=0
         )
         mask_offset_ix = np.argmin(d2, axis=0)
         # construct mask_offset array: use offset values at the indices of the closest cell centers
@@ -282,3 +285,28 @@ class Cascading(CorrelationMethod):
             )
 
         return mask_offset
+
+    def _offset_val_cells(
+            self,
+            rng: np.random.RandomState,
+    ) -> np.ndarray[Any]:
+        """
+        Determines the offset values for each of the cells.
+        
+        Chose a random starting Voronoi cell, then assign offset values based on distance to that cell center.
+        The further away from the starting cell center, the larger the offset value.
+        """
+
+        # chose a random index which will determine where the first tipping event occurs
+        start_ix = rng.randint(0, self.n_cells, size=1)
+        # compute how close each cell center is to the starting index
+        distance_to_start = np.array(
+            [(self.cell_centers[i, 0] - self.cell_centers[start_ix, 0]) ** 2 + (self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]) ** 2 for i in range(self.n_cells)]
+        )
+
+        # assign offset values linearly increasing with distance to starting index
+        offset_val = np.array(
+            [int(distance_to_start[i] / distance_to_start.max() * self.max_offset) for i in range(self.n_cells)]
+        )
+
+        return offset_val
