@@ -42,6 +42,51 @@ class SINGLE(ShapeMethod):
         return np.ones(
             (len(lats), len(lons)), dtype=bool
         )  # Single shape covering the entire grid
+    
+###################################################################################################
+############################################### CELL ##############################################
+###################################################################################################
+
+class CELL(ShapeMethod):
+    def __init__(
+            self,
+            center_lat=None,
+            center_lon=None,
+    ) -> None:
+        
+        if center_lat is None:
+            center_lat = np.random.randint(-80, 80)
+        if center_lon is None:
+            center_lon = np.random.randint(-180, 180)
+
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+
+        print(f"Cell Shape Center at lat: {self.center_lat}, lon: {self.center_lon}")
+
+        self.param_dict = {
+            "shape_type": CELL,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+        }
+
+    def make_shape(
+        self,
+        lats,
+        lons,
+    ) -> np.ndarray:
+        """
+        Generates a 2D spatial cell shape. Given are the central latitude and longitude.
+        The function returns a mask of the same shape as the grid, where only the cell at the specified
+        latitude and longitude is True, and all other values are False.
+        """
+
+        lat_idx = np.argmin(np.abs(lats - self.center_lat))
+        lon_idx = np.argmin(np.abs(lons - self.center_lon))
+        shape_mask = np.zeros((len(lats), len(lons)), dtype=bool)
+        shape_mask[lat_idx, lon_idx] = True
+
+        return shape_mask
 
 
 ###################################################################################################
@@ -373,3 +418,91 @@ class _Metaball:
             field += ball.size / (dist**self.goo)
 
         return field >= self.threshold
+    
+
+###################################################################################################
+######################################### CLUSTER #################################################
+###################################################################################################
+
+class CLUSTER(ShapeMethod):
+
+    def __init__(
+        self,
+        center_lat=None,
+        center_lon=None,
+        size_lat=None,
+        size_lon=None,
+        n=None,
+        mode=CELL(),
+        shape_seed=None,
+    ) -> None:
+
+        if shape_seed is not None:
+            rng = np.random.RandomState(shape_seed)
+        else:
+            rng = np.random.RandomState()
+        
+        if center_lat is None:
+            center_lat = 0
+        if center_lon is None:
+            center_lon = 0
+        if size_lat is None:
+            size_lat = 180
+        if size_lon is None:
+            size_lon = 360
+        if n is None:
+            n = rng.randint(3, 10)
+
+        self.center_lat = center_lat
+        self.center_lon = center_lon
+        self.size_lat = size_lat
+        self.size_lon = size_lon
+        self.n = n
+        self.mode = mode
+        self.shape_seed = shape_seed
+    
+        self.param_dict = {
+            "shape_type": CLUSTER,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "size_lat": size_lat,
+            "size_lon": size_lon,
+            "n": n,
+            "mode": mode,
+            "shape_seed": shape_seed,
+        }
+    
+    def make_shape(
+        self,
+        lats,
+        lons,
+    ) -> np.ndarray:
+        
+        if self.shape_seed is not None:
+            rng = np.random.RandomState(self.shape_seed)
+        else:
+            rng = np.random.RandomState()
+        
+        lat_min = self.center_lat - self.size_lat / 2
+        lat_max = self.center_lat + self.size_lat / 2
+        lon_min = self.center_lon - self.size_lon / 2
+        lon_max = self.center_lon + self.size_lon / 2
+
+        lat_indices = np.where((lats >= lat_min) & (lats <= lat_max))[0]
+        lon_indices = np.where((lons >= lon_min) & (lons <= lon_max))[0]
+
+        shape_mask = np.zeros((len(lats), len(lons)), dtype=bool)
+        shape_gen = self.mode
+
+        for _ in range(self.n):
+            rand_lat_idx = rng.choice(lat_indices)
+            rand_lon_idx = rng.choice(lon_indices)
+            shape_gen.center_lat = lats[rand_lat_idx]
+            shape_gen.center_lon = lons[rand_lon_idx]
+
+            mask_temp = shape_gen.make_shape(lats, lons)
+            shape_mask = shape_mask | mask_temp
+
+            #shape_mask[rand_lat_idx, rand_lon_idx] = True
+
+        return shape_mask

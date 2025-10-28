@@ -1,5 +1,5 @@
 from ponds.core import PONDS
-from ponds.shapegen import ShapeMethod, SINGLE, ELLIPSIS, CUSTOM, BLOB
+from ponds.shapegen import ShapeMethod, SINGLE, CELL, ELLIPSIS, CUSTOM, BLOB, CLUSTER
 from ponds.shiftgen import ShiftMethod, SIGMOID
 from ponds.backgroundgen import BackgroundMethod, WhiteNoise, Trend
 from ponds.correlationgen import CorrelationMethod, NoCorr, Noise, Gauss, Custom, Propagating
@@ -9,9 +9,11 @@ __all__ = [
     "PONDS",
     "ShapeMethod",
     "SINGLE",
+    "CELL",
     "ELLIPSIS",
     "CUSTOM",
     "BLOB",
+    "CLUSTER",
     "ShiftMethod",
     "SIGMOID",
     "BackgroundMethod",
@@ -26,9 +28,11 @@ __all__ = [
 ]
 type_dict: Dict[str, Any] = {
     "SINGLE": SINGLE,
+    "CELL": CELL,
     "ELLIPSIS": ELLIPSIS,
     "CUSTOM": CUSTOM,
     "BLOB": BLOB,
+    "CLUSTER": CLUSTER,
     "SIGMOID": SIGMOID,
     "WhiteNoise": WhiteNoise,
     "Trend": Trend,
