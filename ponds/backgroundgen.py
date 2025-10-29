@@ -1,10 +1,15 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import warnings
+
 from typing import Optional, Any, Dict
 from numpy.typing import NDArray
 
 # Abstract class
 class BackgroundMethod(ABC):
+    # explicit annotation so subclasses' self.param_dict has a known type
+    param_dict: dict[str, Any]
+    
     @abstractmethod
     def make_background(
         self,
@@ -31,32 +36,40 @@ class WhiteNoise(BackgroundMethod):
     def __init__(
         self,
         magnitude: float = 0.05,  # Magnitude of the white noise
-        random_seed: int = 1,
+        background_seed: Optional[int] = None,  # Random seed for reproducibility
         background_time: Optional[NDArray[np.int_]] = None,
     ) -> None:
         """
         Initializes the WhiteNoise background method.
 
         Parameters:
-            random_seed (int): Random seed for reproducibility.
+            background_seed (int): Random seed for reproducibility.
             background_time (np.ndarray[int]): Indices in the time series where the background is applied.
         """
         self.magnitude = magnitude
-        self.random_seed = random_seed
+        self.background_seed = background_seed
         self.background_time = background_time
 
         self.param_dict: Dict[str, Any] = {
             "background_type": WhiteNoise,
             "magnitude": magnitude,
-            "random_seed": random_seed,
+            "background_seed": background_seed,
             "background_time": background_time,
         }
 
     def make_background(
         self,
         time_size: int,
-        rng: np.random.RandomState,
     ) -> NDArray[np.float64]:
+        
+        if self.background_seed is not None:
+            rng = np.random.default_rng(self.background_seed)
+        else:
+            rng = np.random.default_rng()
+            warnings.warn(
+                "No random seed set for PONDS Shape Method. Results will not be reproducible."
+            )
+
         if self.background_time is None:
             self.background_time = np.arange(time_size)
 

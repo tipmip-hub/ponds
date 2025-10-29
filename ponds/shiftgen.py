@@ -1,9 +1,15 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
+from typing import Optional, Any
+from numpy.typing import NDArray
+
 
 # Abstract class
 class ShiftMethod(ABC):
+    # explicit annotation so subclasses' self.param_dict has a known type
+    param_dict: dict[str, Any]
+
     @abstractmethod
     def __init__(
         self,
@@ -14,9 +20,9 @@ class ShiftMethod(ABC):
     @abstractmethod
     def make_shift(
         self,
-        time_arr,
-        time_offset,
-    ) -> tuple[np.ndarray, dict]:
+        time_arr: NDArray[np.float64],
+        time_offset: int = 0,
+    ) -> tuple[NDArray[np.float64], int]:
         pass
 
 
@@ -28,15 +34,15 @@ class ShiftMethod(ABC):
 class SIGMOID(ShiftMethod):
     def __init__(
         self,
-        central_time: int = None,
-        shift_steepness: float = None,
-        shift_magnitude: float = None,
-        shift_seed: int = None,
+        central_time: Optional[int] = None,
+        shift_steepness: Optional[float] = None,
+        shift_magnitude: Optional[float] = None,
+        shift_seed: Optional[int] = None,
     ) -> None:
         if shift_seed is not None:
-            rng = np.random.RandomState(shift_seed)
+            rng = np.random.default_rng(shift_seed)
         else:
-            rng = np.random
+            rng = np.random.default_rng()
 
         if shift_steepness is None:
             shift_steepness = rng.uniform(1.5, 3.0)
@@ -61,9 +67,9 @@ class SIGMOID(ShiftMethod):
 
     def make_shift(
         self,
-        time_arr,
+        time_arr: NDArray[np.float64],
         time_offset: int = 0,
-    ) -> tuple[np.ndarray, int]:
+    ) -> tuple[NDArray[np.float64], int]:
         """
         Generate a shift in the time series data using a sigmoid function.
 
@@ -99,10 +105,10 @@ class SIGMOID(ShiftMethod):
 
 
 def sigmoid(
-        t,
-        t0,
+        t: NDArray[np.float64],
+        t0: float,
         k: float = 1.0
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """
     Sigmoid transition function
 
