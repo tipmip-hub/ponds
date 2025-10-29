@@ -6,7 +6,7 @@ from typing import Optional, Any
 from numpy.typing import NDArray
 
 # for Gauss
-from scipy.stats import multivariate_normal # type: ignore
+from scipy.stats import multivariate_normal  # type: ignore
 
 
 # Abstract class
@@ -76,7 +76,6 @@ class Noise(CorrelationMethod):
         self,
         shape_mask: NDArray[Any],
     ) -> NDArray[Any]:
-        
         if self.corr_seed is not None:
             rng = np.random.default_rng(self.corr_seed)
         else:
@@ -90,7 +89,7 @@ class Noise(CorrelationMethod):
             -self.max_offset, self.max_offset, size=shape_mask.shape, dtype=int
         )
 
-        return offsets # type: ignore
+        return offsets  # type: ignore
 
 
 ###################################################################################################
@@ -112,7 +111,6 @@ class Gauss(CorrelationMethod):
         sigma_lon: int = 10,
         max_offset: int = 10,
     ) -> None:
-        
         self.corr_center_lat = corr_center_lat
         self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
@@ -145,9 +143,10 @@ class Gauss(CorrelationMethod):
         # Calculate Gaussian over the whole extended grid
         cov = np.array([[self.sigma_lat**2, 0], [0, self.sigma_lon**2]])
         rv = multivariate_normal(
-            mean=[self.corr_center_lat, self.corr_center_lon], cov=cov # type: ignore
+            mean=[self.corr_center_lat, self.corr_center_lon],
+            cov=cov,  # type: ignore
         )
-        extended_gauss = rv.pdf(pos_extended) # type: ignore
+        extended_gauss = rv.pdf(pos_extended)  # type: ignore
         extended_gauss_scaled = (
             extended_gauss / np.max(extended_gauss) * self.max_offset
         )
@@ -168,6 +167,7 @@ class Gauss(CorrelationMethod):
 ###################################################################################################
 ############################################# Custom ##############################################
 ###################################################################################################
+
 
 class Custom(CorrelationMethod):
     """
@@ -203,20 +203,21 @@ class Custom(CorrelationMethod):
 ########################################## Propagating ############################################
 ###################################################################################################
 
+
 class Propagating(CorrelationMethod):
     """
     Mimics a propagating tipping event as proposed in Fig. 1 of [Loriani et al., 2025].
-    
+
     Cluster mask is divided into Voronoi cells (VC). A random starting VC is picked, where the tipping event
     occurs first (offset=0). The further away a VC is from the starting VC, the later the tipping event occurs
     (larger offset value). The maximum offset value is determined by `max_offset`.
     """
 
     def __init__(
-            self,
-            n_cells: int,
-            max_offset: int = 5,
-            corr_seed: int | None = None,
+        self,
+        n_cells: int,
+        max_offset: int = 5,
+        corr_seed: int | None = None,
     ) -> None:
         self.n_cells = n_cells
         self.max_offset = max_offset
@@ -230,8 +231,8 @@ class Propagating(CorrelationMethod):
         }
 
     def make_time_offsets(
-            self,
-            shape_mask: np.ndarray[Any, Any],
+        self,
+        shape_mask: np.ndarray[Any, Any],
     ) -> np.ndarray[Any, Any]:
         """
         y = latitudes
@@ -247,9 +248,13 @@ class Propagating(CorrelationMethod):
             )
 
         if self.n_cells > np.sum(shape_mask):
-            raise ValueError(f"Can not fit {self.n_cells=} cell centers into shape mask with {shape_mask.sum()} cells.")
-        if self.n_cells > np.sum(shape_mask)*0.5:
-            print(f"Warning: Trying to draw {self.n_cells=} unique cell centers out of {shape_mask.sum()} possible cells. This may take a some time.")
+            raise ValueError(
+                f"Can not fit {self.n_cells=} cell centers into shape mask with {shape_mask.sum()} cells."
+            )
+        if self.n_cells > np.sum(shape_mask) * 0.5:
+            print(
+                f"Warning: Trying to draw {self.n_cells=} unique cell centers out of {shape_mask.sum()} possible cells. This may take a some time."
+            )
 
         # get bounding box of shape_mask True values
         latmin_ix, latmax_ix = np.where(np.any(shape_mask, axis=0))[0][[0, -1]]
@@ -264,31 +269,43 @@ class Propagating(CorrelationMethod):
         for i in range(self.n_cells):
             sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)
             sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)
-            pairs = np.column_stack((sx[:i+1],sy[:i+1]))
+            pairs = np.column_stack((sx[: i + 1], sy[: i + 1]))
             # - 1) check if drawn cell centers are not unique; 2) check if drawn cell center is not in shape_mask
-            while np.unique(pairs, axis=0).shape[0] < (i+1) or not(shape_mask[sx[i],sy[i]]):
+            while (
+                np.unique(pairs, axis=0).shape[0] < (i + 1)
+                or not (shape_mask[sx[i], sy[i]])
+            ):
                 # - re-draw cell center
                 sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)
                 sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)
-                pairs = np.column_stack((sx[:i+1],sy[:i+1]))
+                pairs = np.column_stack((sx[: i + 1], sy[: i + 1]))
         self.cell_centers = pairs
 
         # assign each seed a threshold value spanning the max_offset range
         offset_val = self._offset_val_cells(rng)
-        offset_mesh = np.array([np.full(shape_mask.shape, offset_val[i]) for i in range(self.n_cells)])
-
+        offset_mesh = np.array(
+            [np.full(shape_mask.shape, offset_val[i]) for i in range(self.n_cells)]
+        )
 
         # compute distance of each grid cell to each center
-        yy, xx = np.mgrid[0:shape_mask.shape[0], 0:shape_mask.shape[1]]
+        yy, xx = np.mgrid[0 : shape_mask.shape[0], 0 : shape_mask.shape[1]]
         # compute squared distances for each cell center and ensure an explicit integer dtype
         d2: NDArray[np.int_] = np.stack(
-            [(yy - self.cell_centers[i, 0]) ** 2 + (xx - self.cell_centers[i, 1]) ** 2 for i in range(self.n_cells)], axis=0
+            [
+                (yy - self.cell_centers[i, 0]) ** 2
+                + (xx - self.cell_centers[i, 1]) ** 2
+                for i in range(self.n_cells)
+            ],
+            axis=0,
         ).astype(int)
         mask_offset_ix = np.argmin(d2, axis=0)
         # construct mask_offset array: use offset values at the indices of the closest cell centers
         mask_offset = np.array(
             [
-                [offset_mesh[mask_offset_ix[i, j], i, j] for j in range(mask_offset_ix.shape[1])]
+                [
+                    offset_mesh[mask_offset_ix[i, j], i, j]
+                    for j in range(mask_offset_ix.shape[1])
+                ]
                 for i in range(mask_offset_ix.shape[0])
             ]
         )
@@ -296,26 +313,33 @@ class Propagating(CorrelationMethod):
         return mask_offset
 
     def _offset_val_cells(
-            self,
-            rng: np.random.Generator,
+        self,
+        rng: np.random.Generator,
     ) -> NDArray[Any]:
         """
         Determines the offset values for each of the cells.
-        
+
         Chose a random starting Voronoi cell, then assign offset values based on distance to that cell center.
         The further away from the starting cell center, the larger the offset value.
         """
 
         # chose a random index which will determine where the first tipping event occurs
-        start_ix = rng.integers(0, self.n_cells-1, size=1)
+        start_ix = rng.integers(0, self.n_cells - 1, size=1)
         # compute how close each cell center is to the starting index
         distance_to_start = np.array(
-            [(self.cell_centers[i, 0] - self.cell_centers[start_ix, 0]) ** 2 + (self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]) ** 2 for i in range(self.n_cells)]
+            [
+                (self.cell_centers[i, 0] - self.cell_centers[start_ix, 0]) ** 2
+                + (self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]) ** 2
+                for i in range(self.n_cells)
+            ]
         )
 
         # assign offset values linearly increasing with distance to starting index
         offset_val = np.array(
-            [int(distance_to_start[i] / distance_to_start.max() * self.max_offset) for i in range(self.n_cells)]
+            [
+                int(distance_to_start[i] / distance_to_start.max() * self.max_offset)
+                for i in range(self.n_cells)
+            ]
         )
 
         return offset_val

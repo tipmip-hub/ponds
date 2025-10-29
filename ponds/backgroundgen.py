@@ -5,11 +5,12 @@ import warnings
 from typing import Optional, Any, Dict
 from numpy.typing import NDArray
 
+
 # Abstract class
 class BackgroundMethod(ABC):
     # explicit annotation so subclasses' self.param_dict has a known type
     param_dict: dict[str, Any]
-    
+
     @abstractmethod
     def make_background(
         self,
@@ -61,7 +62,6 @@ class WhiteNoise(BackgroundMethod):
         self,
         time_size: int,
     ) -> NDArray[np.float64]:
-        
         if self.background_seed is not None:
             rng = np.random.default_rng(self.background_seed)
         else:

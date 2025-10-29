@@ -7,7 +7,7 @@ from typing import Any, Optional, Union
 from numpy.typing import NDArray
 
 # for BLOB
-from scipy.ndimage import label # type: ignore
+from scipy.ndimage import label  # type: ignore
 
 
 # Abstract class
@@ -30,9 +30,7 @@ class ShapeMethod(ABC):
 
 
 class SINGLE(ShapeMethod):
-    def __init__(
-            self
-    ) -> None:
+    def __init__(self) -> None:
         """
         A placeholder for a single shape method. This is used when no specific shape method is defined.
         """
@@ -40,6 +38,7 @@ class SINGLE(ShapeMethod):
         self.param_dict = {
             "shape_type": SINGLE,
         }
+
     def make_shape(
         self,
         lats: NDArray[np.float64],
@@ -48,18 +47,19 @@ class SINGLE(ShapeMethod):
         return np.ones(
             (len(lats), len(lons)), dtype=bool
         )  # Single shape covering the entire grid
-    
+
+
 ###################################################################################################
 ############################################### CELL ##############################################
 ###################################################################################################
 
+
 class CELL(ShapeMethod):
     def __init__(
-            self,
-            center_lat: Optional[float] = None,
-            center_lon: Optional[float] = None,
+        self,
+        center_lat: Optional[float] = None,
+        center_lon: Optional[float] = None,
     ) -> None:
-        
         if center_lat is None:
             center_lat = np.random.randint(-80, 80)
         if center_lon is None:
@@ -75,6 +75,7 @@ class CELL(ShapeMethod):
             "center_lat": center_lat,
             "center_lon": center_lon,
         }
+
     def make_shape(
         self,
         lats: NDArray[np.float64],
@@ -135,6 +136,7 @@ class ELLIPSIS(ShapeMethod):
             "ecc_lat": ecc_lat,
             "ecc_lon": ecc_lon,
         }
+
     def make_shape(
         self,
         lats: NDArray[np.float64],
@@ -175,11 +177,9 @@ class ELLIPSIS(ShapeMethod):
 ########################################### CUSTOM ################################################
 ###################################################################################################
 
+
 class CUSTOM(ShapeMethod):
-    def __init__(
-            self,
-            shape_mask: NDArray[np.bool_]
-    ) -> None:
+    def __init__(self, shape_mask: NDArray[np.bool_]) -> None:
         """
         Custom shape method that uses a pre-defined mask.
 
@@ -192,6 +192,7 @@ class CUSTOM(ShapeMethod):
         self.param_dict = {
             "shape_type": CUSTOM,
         }
+
     def make_shape(
         self,
         lats: NDArray[np.float64],
@@ -278,6 +279,7 @@ class BLOB(ShapeMethod):
             "goo": goo,
             "shape_seed": shape_seed,
         }
+
     def make_shape(
         self,
         lats: NDArray[np.float64],
@@ -340,8 +342,8 @@ class BLOB(ShapeMethod):
         return shape_mask
 
     def _mask_connected(
-            self,
-            mask: NDArray[np.bool_],
+        self,
+        mask: NDArray[np.bool_],
     ) -> bool:
         """
         Check if all TRUE values of the mask are connected to each other.
@@ -366,7 +368,7 @@ class BLOB(ShapeMethod):
             ]  # keep only the middle section
 
             # Label connected components in extended mask
-            _, num_features = label( # type: ignore
+            _, num_features = label(  # type: ignore
                 extended_mask, structure=structure
             )  # type: ignore # use scipy.ndimage function
 
@@ -381,10 +383,10 @@ class _Ball:
     """Single metaball."""
 
     def __init__(
-            self,
-            lat: float,
-            lon: float,
-            size: float,
+        self,
+        lat: float,
+        lon: float,
+        size: float,
     ) -> None:
         self.lat = lat
         self.lon = lon
@@ -395,21 +397,21 @@ class _Metaball:
     """Metaball system in lat/lon space with longitude wrapping."""
 
     def __init__(
-            self,
-            balls: list[_Ball],
-            goo: float = 2.0,
-            threshold: float = 0.0004,
+        self,
+        balls: list[_Ball],
+        goo: float = 2.0,
+        threshold: float = 0.0004,
     ) -> None:
         self.balls = balls
         self.goo = goo
         self.threshold = threshold
 
     def _distance(
-            self,
-            lat1: NDArray[np.float64],
-            lon1: NDArray[np.float64],
-            lat2: Union[float, NDArray[np.float64]],
-            lon2: Union[float, NDArray[np.float64]],
+        self,
+        lat1: NDArray[np.float64],
+        lon1: NDArray[np.float64],
+        lat2: Union[float, NDArray[np.float64]],
+        lon2: Union[float, NDArray[np.float64]],
     ) -> NDArray[np.float64]:
         """Euclidean distance in lat/lon degrees, with lon wrapping."""
         # Allow lat2/lon2 to be scalars or arrays; numpy broadcasting will handle operations.
@@ -417,11 +419,11 @@ class _Metaball:
         dlon = ((lon1 - lon2 + 180) % 360) - 180
         dlat = lat1 - lat2
         return np.sqrt(dlat**2 + dlon**2)
-    
+
     def field_mask(
-            self,
-            lats: NDArray[Any],
-            lons: NDArray[Any],
+        self,
+        lats: NDArray[Any],
+        lons: NDArray[Any],
     ) -> NDArray[Any]:
         """Compute boolean mask for the metaball field."""
         LAT, LON = np.meshgrid(lats, lons, indexing="ij")  # shape (lat_size, lon_size)
@@ -434,14 +436,14 @@ class _Metaball:
             field += ball.size / (dist**self.goo)
 
         return field >= self.threshold
-    
+
 
 ###################################################################################################
 ######################################### CLUSTER #################################################
 ###################################################################################################
 
-class CLUSTER(ShapeMethod):
 
+class CLUSTER(ShapeMethod):
     def __init__(
         self,
         center_lat: Optional[float] = None,
@@ -452,12 +454,11 @@ class CLUSTER(ShapeMethod):
         mode: Optional[ShapeMethod] = None,
         shape_seed: Optional[int] = None,
     ) -> None:
-
         if shape_seed is not None:
             rng = np.random.default_rng(shape_seed)
         else:
             rng = np.random.default_rng()
-        
+
         if center_lat is None:
             center_lat = 0
         if center_lon is None:
@@ -480,7 +481,7 @@ class CLUSTER(ShapeMethod):
         self.n = n
         self.mode = mode
         self.shape_seed = shape_seed
-    
+
         self.param_dict = {
             "shape_type": CLUSTER,
             "center_lat": center_lat,
@@ -497,7 +498,6 @@ class CLUSTER(ShapeMethod):
         lats: NDArray[np.float64],
         lons: NDArray[np.float64],
     ) -> NDArray[np.bool_]:
-
         if self.shape_seed is not None:
             rng = np.random.default_rng(self.shape_seed)
         else:
@@ -531,6 +531,6 @@ class CLUSTER(ShapeMethod):
             mask_temp = shape_gen.make_shape(lats, lons)
             shape_mask = shape_mask | mask_temp
 
-            #shape_mask[rand_lat_idx, rand_lon_idx] = True
+            # shape_mask[rand_lat_idx, rand_lon_idx] = True
 
         return shape_mask
