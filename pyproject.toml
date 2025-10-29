@@ -40,9 +40,6 @@ dependencies = [
         "netCDF4",
         "cartopy",
         "scipy",
-        "copy",
-        "typing",
-        "warnings",
 ]
 
 [project.optional-dependencies]
