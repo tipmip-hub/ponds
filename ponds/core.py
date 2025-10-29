@@ -617,7 +617,6 @@ class PONDS:
         if type_dict is None:
             # if type_dict is not set, use the default type_dict from ponds/__init__.py
             from ponds import type_dict
-        # from ponds import type_dict
 
         with xr.open_dataset(filename, engine="netcdf4") as ds: # type: ignore
             data = ds.load()  # type: ignore # Detach from file completely
