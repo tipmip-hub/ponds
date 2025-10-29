@@ -12,7 +12,8 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
@@ -248,9 +249,7 @@ class PONDS:
             correlation_dict=correlation_method.param_dict,
         )
 
-    def _get_new_background_key(
-            self
-    ) -> str:
+    def _get_new_background_key(self) -> str:
         """
         Generate a new background key based on the current number of backgrounds.
         """
@@ -268,9 +267,7 @@ class PONDS:
         # return the new background key
         return f"{self.data.attrs['background_key']}{last_variable_index + 1}"
 
-    def _get_new_cluster_key(
-            self
-    ) -> str:
+    def _get_new_cluster_key(self) -> str:
         """
         Generate a new cluster key based on the current number of shifts.
         The cluster key is used to name the variables in the Dataset.
@@ -433,26 +430,24 @@ class PONDS:
         for name, da in self.data.data_vars.items():
             if name.startswith(cluster_key):
                 # get shift_id: cast values to numeric type to ensure a known dtype for comparisons
-                da_vals = da.values.astype(np.float64)   # type: ignore
+                da_vals = da.values.astype(np.float64)  # type: ignore
                 ids = np.unique(da_vals)
                 if len(ids[ids >= 0]) > 1:
                     warnings.warn(
                         "More than one shift-id found in cluster mask."
                         "Smallest shift-id chosen to proceed..."
                     )
-                shift_ids.append(ids[ids >= 0][0])   # type: ignore
+                shift_ids.append(ids[ids >= 0][0])  # type: ignore
 
                 # convert shift_id-mask to boolean mask
                 da_mask = np.zeros(da.shape, dtype=bool)
                 mask_ix = np.argwhere(da_vals >= 0)
                 da_mask[mask_ix[:, 0], mask_ix[:, 1], mask_ix[:, 2]] = True
-                masks.append(da_mask)   # type: ignore
+                masks.append(da_mask)  # type: ignore
 
         return np.array(masks), np.array(shift_ids)
 
-    def get_ponds_dict(
-            self
-    ) -> dict[str, Any]:
+    def get_ponds_dict(self) -> dict[str, Any]:
         """
         Extracts the metadata from the PONDS instance neccessary to initialize
         a PONDS replica and returns it as a dictionary.
@@ -469,8 +464,7 @@ class PONDS:
         return params
 
     def get_background_instance(
-            self,
-            background_key: str
+        self, background_key: str
     ) -> tuple[BackgroundMethod, ShapeMethod]:
         """
         Extracts the background parameters from the ponds object ts DataArray.
@@ -490,7 +484,10 @@ class PONDS:
         b_index = keys.index(background_key + "_background_type")
         s_index = keys.index(background_key + "_shape_type")
 
-        b_specs: dict[str, Any] = {"class": self.data.ts.attrs[keys[b_index]], "params": {}}
+        b_specs: dict[str, Any] = {
+            "class": self.data.ts.attrs[keys[b_index]],
+            "params": {},
+        }
         for key in keys[b_index + 1 : s_index]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
@@ -498,7 +495,10 @@ class PONDS:
             b_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
         b_instance = b_specs["class"](**b_specs["params"])
 
-        s_specs: dict[str, Any] = {"class": self.data.ts.attrs[keys[s_index]], "params": {}}
+        s_specs: dict[str, Any] = {
+            "class": self.data.ts.attrs[keys[s_index]],
+            "params": {},
+        }
         for key in keys[s_index + 1 :]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
@@ -515,8 +515,7 @@ class PONDS:
         return b_instance, s_instance
 
     def get_cluster_instance(
-            self,
-            cluster: str
+        self, cluster: str
     ) -> tuple[ShiftMethod, ShapeMethod, CorrelationMethod]:
         """
         Extracts the shift, shape and correlation metadata from a given cluster mask.
@@ -537,14 +536,20 @@ class PONDS:
 
         # split keys into shift, shape and correlation dicts
         # - shift dict contains all keys before "shape_type"
-        shift_dict: dict[str, Any] = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
+        shift_dict: dict[str, Any] = {
+            "class": self.data[cluster].attrs["shift_type"],
+            "params": {},
+        }
         for key in keys[1:shape_type_index]:
             shift_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
 
         # - shape dict contains all keys between "shape_type" and "correlation_type"
-        shape_dict: dict[str, Any] = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
+        shape_dict: dict[str, Any] = {
+            "class": self.data[cluster].attrs["shape_type"],
+            "params": {},
+        }
         for key in keys[shape_type_index + 1 : correlation_type_index]:
             shape_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shape instance
@@ -568,7 +573,7 @@ class PONDS:
 
     def save(
         self,
-        filename: str="ponds_data.nc",
+        filename: str = "ponds_data.nc",
     ) -> None:
         """
         Save the ponds data to a NetCDF file.
@@ -598,15 +603,15 @@ class PONDS:
                 if data_copy[var].attrs[key] is None:
                     data_copy[var].attrs[key] = "None"
 
-        data_copy.to_netcdf(    # type: ignore
+        data_copy.to_netcdf(  # type: ignore
             filename,
             engine="netcdf4",
         )
 
     @staticmethod
     def load(
-        filename: str="ponds_data.nc",
-        type_dict: Optional[dict[str, Any]]=None,
+        filename: str = "ponds_data.nc",
+        type_dict: Optional[dict[str, Any]] = None,
     ) -> "PONDS":
         """
         Read the ponds data from a NetCDF file.
@@ -618,7 +623,7 @@ class PONDS:
             # if type_dict is not set, use the default type_dict from ponds/__init__.py
             from ponds import type_dict
 
-        with xr.open_dataset(filename, engine="netcdf4") as ds: # type: ignore
+        with xr.open_dataset(filename, engine="netcdf4") as ds:  # type: ignore
             data = ds.load()  # type: ignore # Detach from file completely
 
         # locate all the attributes in every variable which key contains "shape_type" or "background_type" or "shift_type"
@@ -644,9 +649,9 @@ class PONDS:
 
         pd = PONDS.__new__(PONDS)
         pd.data = data
-        pd.lats = data.coords["lat"].values     # type: ignore
-        pd.lons = data.coords["lon"].values     # type: ignore
-        pd.time = data.coords["time"].values    # type: ignore
+        pd.lats = data.coords["lat"].values  # type: ignore
+        pd.lons = data.coords["lon"].values  # type: ignore
+        pd.time = data.coords["time"].values  # type: ignore
         return pd
 
     ###################################################################################################

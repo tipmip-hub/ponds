@@ -104,11 +104,7 @@ class SIGMOID(ShiftMethod):
 ###################################################################################################
 
 
-def sigmoid(
-        t: NDArray[np.float64],
-        t0: float,
-        k: float = 1.0
-) -> NDArray[np.float64]:
+def sigmoid(t: NDArray[np.float64], t0: float, k: float = 1.0) -> NDArray[np.float64]:
     """
     Sigmoid transition function
 
