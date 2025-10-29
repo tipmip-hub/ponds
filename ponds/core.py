@@ -2,6 +2,9 @@ import numpy as np
 import xarray as xr
 import warnings
 
+from typing import Optional, Any
+from numpy.typing import NDArray
+
 from ponds import (
     plotter,
 )
@@ -9,7 +12,9 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 
 
 class PONDS:
@@ -96,17 +101,6 @@ class PONDS:
         Args:
             background_method (BackgroundMethod): Method to generate the background.
         """
-        # set seed for reproducibility in case background_method uses a random process
-        try:
-            rng = np.random.RandomState(background_method.random_seed)
-            background_args = {
-                "time_size": len(self.time),
-                "rng": rng,
-            }
-        except AttributeError:
-            background_args = {
-                "time_size": len(self.time),
-            }
 
         # 1) Generate shape mask if shape_method is provided
         # - warn users to make sure that shape is handled correctly
@@ -135,9 +129,7 @@ class PONDS:
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     background_effect = background_method.make_background(
-                        **background_args,
-                        # time_size=len(self.time),
-                        # rng=rng,
+                        time_size=len(self.time),
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
@@ -294,8 +286,8 @@ class PONDS:
 
     def _add_background_to_ds(
         self,
-        background_dict: dict,
-        shape_dict: dict,
+        background_dict: dict[str, Any],
+        shape_dict: dict[str, Any],
     ) -> None:
         """
         Appends metadata to the attributes of the time series DataArray.
@@ -317,10 +309,10 @@ class PONDS:
 
     def _add_shift_to_ds(
         self,
-        mask: np.ndarray,
-        shift_dict: dict,
-        shape_dict: dict,
-        correlation_dict: dict,
+        mask: NDArray[np.bool_],
+        shift_dict: dict[str, Any],
+        shape_dict: dict[str, Any],
+        correlation_dict: dict[str, Any],
     ) -> None:
         """
         Append a xr.DataArray to the ponds Dataset in form of a boolean mask. It identifies
@@ -375,28 +367,30 @@ class PONDS:
 
         # check latitudes
         if hasattr(correlation_method, "corr_center_lat"):
-            if correlation_method.corr_center_lat is None:
+            if getattr(correlation_method, "corr_center_lat", None) is None:
                 if hasattr(shape_method, "center_lat"):
-                    correlation_method.corr_center_lat = shape_method.center_lat
-                    correlation_method.param_dict["corr_center_lat"] = (
-                        shape_method.center_lat
-                    )
+                    val: float = getattr(shape_method, "center_lat")
+                    setattr(correlation_method, "corr_center_lat", val)
+                    correlation_method.param_dict["corr_center_lat"] = val
                 else:
-                    val = np.random.uniform(self.lats.min(), self.lats.max())
-                    correlation_method.corr_center_lat = val
+                    low = float(self.lats.min())
+                    high = float(self.lats.max())
+                    val: float = float(np.random.uniform(low, high))
+                    setattr(correlation_method, "corr_center_lat", val)
                     correlation_method.param_dict["corr_center_lat"] = val
 
         # check longitudes
         if hasattr(correlation_method, "corr_center_lon"):
-            if correlation_method.corr_center_lon is None:
+            if getattr(correlation_method, "corr_center_lon", None) is None:
                 if hasattr(shape_method, "center_lon"):
-                    correlation_method.corr_center_lon = shape_method.center_lon
-                    correlation_method.param_dict["corr_center_lon"] = (
-                        shape_method.center_lon
-                    )
+                    val: float = getattr(shape_method, "center_lon")
+                    setattr(correlation_method, "corr_center_lon", val)
+                    correlation_method.param_dict["corr_center_lon"] = val
                 else:
-                    val = np.random.uniform(self.lons.min(), self.lons.max())
-                    correlation_method.corr_center_lon = val
+                    low = float(self.lons.min())
+                    high = float(self.lons.max())
+                    val: float = float(np.random.uniform(low, high))
+                    setattr(correlation_method, "corr_center_lon", val)
                     correlation_method.param_dict["corr_center_lon"] = val
 
     ###################################################################################################
@@ -406,7 +400,7 @@ class PONDS:
     def get_ts(
         self,
         single: bool = False,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         """
         Retrieve all time series data as a numpy array.
 
@@ -425,7 +419,7 @@ class PONDS:
     def get_cluster_masks(
         self,
         cluster_key: str = "c",
-    ) -> np.ndarray:
+    ) -> tuple[NDArray[np.bool_], NDArray[np.float64]]:
         """
         Returns all the variables that start with 'cluster_key'. These arrays are
         the masks that identify if a shift happened in a given space-time-coordinate.
@@ -434,30 +428,31 @@ class PONDS:
             cluster_key (str):
         """
 
-        masks = []
-        shift_ids = []
+        masks: list[NDArray[np.bool_]] = []
+        shift_ids: list[float] = []
         for name, da in self.data.data_vars.items():
             if name.startswith(cluster_key):
-                # get shift_id
-                ids = np.unique(da.values)
+                # get shift_id: cast values to numeric type to ensure a known dtype for comparisons
+                da_vals = da.values.astype(np.float64)   # type: ignore
+                ids = np.unique(da_vals)
                 if len(ids[ids >= 0]) > 1:
                     warnings.warn(
                         "More than one shift-id found in cluster mask."
                         "Smallest shift-id chosen to proceed..."
                     )
-                shift_ids.append(ids[ids >= 0][0])
+                shift_ids.append(ids[ids >= 0][0])   # type: ignore
 
                 # convert shift_id-mask to boolean mask
                 da_mask = np.zeros(da.shape, dtype=bool)
-                mask_ix = np.argwhere(da.values >= 0)
+                mask_ix = np.argwhere(da_vals >= 0)
                 da_mask[mask_ix[:, 0], mask_ix[:, 1], mask_ix[:, 2]] = True
-                masks.append(da_mask)
+                masks.append(da_mask)   # type: ignore
 
         return np.array(masks), np.array(shift_ids)
 
     def get_ponds_dict(
             self
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Extracts the metadata from the PONDS instance neccessary to initialize
         a PONDS replica and returns it as a dictionary.
@@ -465,14 +460,11 @@ class PONDS:
         Returns:
             dict: Dictionary containing the metadata of the PONDS instance.
         """
-        params = {
+        params: dict[str, Any] = {
             "lat_size": self.data.sizes["lat"],
             "lon_size": self.data.sizes["lon"],
             "time_size": self.data.sizes["time"],
-            # "background_trend": self.data.ts.attrs["background_trend"],
-            # "background_noise": self.data.ts.attrs["background_noise"],
             "cluster_key": self.data.attrs["cluster_key"],
-            # "random_seed": self.data.ts.attrs["random_seed"],
         }
         return params
 
@@ -498,7 +490,7 @@ class PONDS:
         b_index = keys.index(background_key + "_background_type")
         s_index = keys.index(background_key + "_shape_type")
 
-        b_specs = {"class": self.data.ts.attrs[keys[b_index]], "params": {}}
+        b_specs: dict[str, Any] = {"class": self.data.ts.attrs[keys[b_index]], "params": {}}
         for key in keys[b_index + 1 : s_index]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
@@ -506,7 +498,7 @@ class PONDS:
             b_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
         b_instance = b_specs["class"](**b_specs["params"])
 
-        s_specs = {"class": self.data.ts.attrs[keys[s_index]], "params": {}}
+        s_specs: dict[str, Any] = {"class": self.data.ts.attrs[keys[s_index]], "params": {}}
         for key in keys[s_index + 1 :]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
@@ -545,21 +537,21 @@ class PONDS:
 
         # split keys into shift, shape and correlation dicts
         # - shift dict contains all keys before "shape_type"
-        shift_dict = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
+        shift_dict: dict[str, Any] = {"class": self.data[cluster].attrs["shift_type"], "params": {}}
         for key in keys[1:shape_type_index]:
             shift_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
 
         # - shape dict contains all keys between "shape_type" and "correlation_type"
-        shape_dict = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
+        shape_dict: dict[str, Any] = {"class": self.data[cluster].attrs["shape_type"], "params": {}}
         for key in keys[shape_type_index + 1 : correlation_type_index]:
             shape_dict["params"][key] = self.data[cluster].attrs[key]
         # - create shape instance
         shape_instance = shape_dict["class"](**shape_dict["params"])
 
         # - correlation dict contains all keys after "correlation_type"
-        correlation_dict = {
+        correlation_dict: dict[str, Any] = {
             "class": self.data[cluster].attrs["correlation_type"],
             "params": {},
         }
@@ -576,7 +568,7 @@ class PONDS:
 
     def save(
         self,
-        filename="ponds_data.nc",
+        filename: str="ponds_data.nc",
     ) -> None:
         """
         Save the ponds data to a NetCDF file.
@@ -606,15 +598,15 @@ class PONDS:
                 if data_copy[var].attrs[key] is None:
                     data_copy[var].attrs[key] = "None"
 
-        data_copy.to_netcdf(
+        data_copy.to_netcdf(    # type: ignore
             filename,
             engine="netcdf4",
         )
 
     @staticmethod
     def load(
-        filename="ponds_data.nc",
-        type_dict=None,
+        filename: str="ponds_data.nc",
+        type_dict: Optional[dict[str, Any]]=None,
     ) -> "PONDS":
         """
         Read the ponds data from a NetCDF file.
@@ -625,10 +617,9 @@ class PONDS:
         if type_dict is None:
             # if type_dict is not set, use the default type_dict from ponds/__init__.py
             from ponds import type_dict
-        # from ponds import type_dict
 
-        with xr.open_dataset(filename, engine="netcdf4") as ds:
-            data = ds.load()  # Detach from file completely
+        with xr.open_dataset(filename, engine="netcdf4") as ds: # type: ignore
+            data = ds.load()  # type: ignore # Detach from file completely
 
         # locate all the attributes in every variable which key contains "shape_type" or "background_type" or "shift_type"
         for var in data.data_vars:
@@ -653,25 +644,23 @@ class PONDS:
 
         pd = PONDS.__new__(PONDS)
         pd.data = data
-        pd.lats = data.coords["lat"].values
-        pd.lons = data.coords["lon"].values
-        pd.time = data.coords["time"].values
+        pd.lats = data.coords["lat"].values     # type: ignore
+        pd.lons = data.coords["lon"].values     # type: ignore
+        pd.time = data.coords["time"].values    # type: ignore
         return pd
 
     ###################################################################################################
     #################################### Plotting Functions ###########################################
-    ###################################################################################################
-
     def worldmap(
         self,
         verbose: bool = False,
-        figsize: tuple = (16, 8),
+        figsize: tuple[float, float] = (16, 8),
         borders: bool = True,
         coastline: bool = True,
         show_cells: bool = False,
         shift_type: bool = False,
         title: str = "Cluster Masks",
-    ) -> tuple[plt.Figure, plt.Axes]:
+    ) -> tuple[Figure, Axes]:
         """
         Plot the cluster masks on a world map using Cartopy.
 
@@ -700,9 +689,9 @@ class PONDS:
     def plot_all_ts(
         self,
         alpha: float = 0.5,
-        figsize: tuple = (16, 2),
+        figsize: tuple[float, float] = (16, 2),
         title: str = "Time Series for All Cells",
-    ) -> tuple[plt.Figure, plt.Axes]:
+    ) -> tuple[Figure, Axes]:
         """
         Plots the time series of every grid cell from the PONDS dataset.
         """
