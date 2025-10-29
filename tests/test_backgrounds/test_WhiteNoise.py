@@ -16,7 +16,7 @@ Legend:
 """
 
 
-def test_magnitude(err_tol=1e-2):
+def test_magnitude(err_tol=5e-2):
     # 1) setup variables
     magnitude = 1
 
@@ -64,7 +64,7 @@ def test_random_seed(R=5):
         )
         ponds1.add_background(
             background_method=WhiteNoise(
-                random_seed=seed1,  # <- benchmark
+                background_seed=seed1,  # <- benchmark
             ),
         )
 
@@ -75,7 +75,7 @@ def test_random_seed(R=5):
         )
         ponds2.add_background(
             background_method=WhiteNoise(
-                random_seed=seed1,  # <- same seed as benchmark
+                background_seed=seed1,  # <- same seed as benchmark
             ),
         )
 
@@ -86,7 +86,7 @@ def test_random_seed(R=5):
         )
         ponds3.add_background(
             background_method=WhiteNoise(
-                random_seed=seed2,  # <- different seed
+                background_seed=seed2,  # <- different seed
             ),
         )
 

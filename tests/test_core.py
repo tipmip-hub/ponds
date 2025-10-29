@@ -234,7 +234,10 @@ def test_reproducibility(R=5):
         )
         # - add two backgrounds using WhiteNoise
         ponds.add_background(
-            background_method=WhiteNoise(magnitude=noise, random_seed=rs1),
+            background_method=WhiteNoise(
+                magnitude=noise,
+                background_seed=rs1,
+            ),
         )
         # - add a shift using SIGMOID and ELLIPSIS
         ponds.add_shift(
