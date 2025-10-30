@@ -27,7 +27,7 @@ class ShiftMethod(ABC):
 
 
 ###################################################################################################
-###################################################################################################
+############################################ SIGMOID ##############################################
 ###################################################################################################
 
 
@@ -92,19 +92,13 @@ class SIGMOID(ShiftMethod):
 
         # Ensure t_shift is within bounds
         t_shift = max(0, min(t_shift, len(time_arr) - 1))
-        shift_effect = self.shift_magnitude * sigmoid(
+        shift_effect = self.shift_magnitude * _sigmoid(
             time_arr, time_arr[t_shift], self.shift_steepness
         )
 
         return shift_effect, t_shift
-
-
-###################################################################################################
-################################### Helper Functions ##############################################
-###################################################################################################
-
-
-def sigmoid(t: NDArray[np.float64], t0: float, k: float = 1.0) -> NDArray[np.float64]:
+    
+def _sigmoid(t: NDArray[np.float64], t0: float, k: float = 1.0) -> NDArray[np.float64]:
     """
     Sigmoid transition function
 
@@ -116,3 +110,99 @@ def sigmoid(t: NDArray[np.float64], t0: float, k: float = 1.0) -> NDArray[np.flo
         np.ndarray: Sigmoid values for the input time array.
     """
     return 1 / (1 + np.exp(-k * (t - t0)))
+    
+
+
+###################################################################################################
+############################################ BIMODAL ##############################################
+###################################################################################################
+
+class BIMODAL(ShiftMethod):
+    def __init__(
+            self,
+            central_time: Optional[int] = None,
+            interval_length: Optional[int] = None,
+            duration: Optional[int] = None,
+            magnitude: Optional[float] = None,
+            shift_seed: Optional[int] = None,
+    ) -> None:
+        
+        if shift_seed is not None:
+            rng = np.random.default_rng(shift_seed)
+        else:
+            rng = np.random.default_rng()
+        
+        if central_time is None:
+            central_time_rel = rng.uniform(0, 1)
+            self.central_time_rel = central_time_rel
+        if interval_length is None:
+            interval_length = 10
+        if magnitude is None:
+            magnitude = rng.uniform(0.2, 1.8)
+
+        self.central_time = central_time
+        self.interval_length = interval_length
+        self.duration = duration
+        self.magnitude = magnitude
+        #self.shift_seed = shift_seed
+
+        self.param_dict = {
+            "shift_type": BIMODAL,
+            "central_time": central_time,
+            "interval_length": interval_length,
+            "duration": duration,
+            "magnitude": magnitude,
+            #"shift_seed": shift_seed,
+        }
+
+    def make_shift(
+            self,
+            time_arr: NDArray[np.float64],
+            time_offset: int = 0,
+    ) -> tuple[NDArray[np.float64], int]:
+        """
+        Generate a bimodal shift in the time series data.
+
+        Args:
+            time_arr (np.ndarray): Time array.
+            time_offset (int): Time offset for the shift.
+        Returns:
+            tuple: A tuple containing the shift effect (np.ndarray) and the actual
+            shift time (int; central_time +/- offset).
+        """
+
+        if self.interval_length == 0:
+            raise ValueError("interval_length cannot be zero for BIMODAL shift.")
+        
+        if self.central_time is None:
+            # Calculate the actual shift time based on the relative shift time
+            self.central_time = int(
+                np.round(self.central_time_rel * (len(time_arr) - 1))
+            )
+            self.param_dict["central_time"] = self.central_time
+
+        t_shift = self.central_time + time_offset
+        shift_effect = np.zeros_like(time_arr)
+        final_time = len(time_arr)
+        start_time = 0
+
+        # bootstrap loop
+        start = int(self.central_time)
+        j = 0
+
+        if self.duration is not None:
+            if self.interval_length > 0:
+                final_time = self.central_time + self.duration - 1
+            else:
+                start_time = self.central_time - self.duration
+
+        while not(start > final_time) and not(start <= start_time):
+            if self.interval_length > 0:         # Forward
+                shift_effect[start+1:] = self.magnitude * abs(j % 2 - 1)
+            else:                           # Backward
+                shift_effect[:start] = self.magnitude * abs(j % 2 - 1)
+
+            j += 1
+            start = int(self.central_time + j * self.interval_length)
+
+        return shift_effect, t_shift
