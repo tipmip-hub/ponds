@@ -67,7 +67,7 @@ class WhiteNoise(BackgroundMethod):
         else:
             rng = np.random.default_rng()
             warnings.warn(
-                "No random seed set for PONDS Shape Method. Results will not be reproducible."
+                "No random seed set for PONDS Background Method. Results will not be reproducible."
             )
 
         if self.background_time is None:
