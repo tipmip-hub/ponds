@@ -78,6 +78,28 @@ class MockCorrelation:
         return offsets
 
 
+class MockDynamicalSystem:
+    """
+    Always returns an array that is the input parameter array multiplied by 2.
+    This is a mock implementation for testing purposes.
+    It simulates the behavior of a nonlinear system that can be integrated based 
+    on an input parameter array.
+    """
+    def __init__(self, forced_parameter='param'):
+        self.forced_parameter = forced_parameter
+        self.state_dict = {
+            'param': {
+                'state1': 42,
+            }
+        }
+
+    def integrate(self, parameter_array, dt, sampling_factor):
+        return 2*parameter_array
+    
+    def get_parameter_value(self, state='state1'):
+        return self.state_dict[state]
+
+
 @pytest.fixture
 def mock_shape():
     return MockShape
@@ -96,3 +118,8 @@ def mock_shift():
 @pytest.fixture
 def mock_corr():
     return MockCorrelation
+
+
+@pytest.fixture
+def mock_dynamical_system():
+    return MockDynamicalSystem
