@@ -24,7 +24,7 @@ def test_Lorenz_integrate():
     system = Lorenz()
 
     N = 100
-    param_value = Lorenz().get_parameter_value(state="c1")
+    param_value = Lorenz().get_parameter_value(state="chaotic_1")
     param_array = np.full(N, param_value)
 
     timeseries = system.integrate(parameter_array=param_array)

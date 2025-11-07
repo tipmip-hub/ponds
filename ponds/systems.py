@@ -54,9 +54,10 @@ class Lorenz(DynamicalSystem):
         
         # create dictionary of supported dynamical states (to be extended)
         self.state_dict = {
-            "beta": {"c1": 0.6,     # chaotic state
-                    "c2": 0.8,      # chaotic state
-                    "p1": 0.7       # periodic state
+            "beta": {
+                "chaotic_1": 0.6,       # chaotic state
+                "chaotic_2": 0.8,       # chaotic state
+                "periodic_1": 0.7       # periodic state
             }
         }
 

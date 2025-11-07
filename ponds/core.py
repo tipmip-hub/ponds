@@ -12,7 +12,7 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
-from ponds.systems import DynamicalSystem, Lorenz
+from ponds.systems import DynamicalSystem
 
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -393,10 +393,11 @@ class PONDS:
 
     def apply_transformation(
             self,
-            system: DynamicalSystem = Lorenz(),
+            system: DynamicalSystem,
             dt: float = 1e-4,
-            sampling_factor: int = 500
-        ):
+            sampling_factor: int = 500,
+            output_label: str | None = None,
+        ) -> None:
         """
         Apply a transformation to the time series data.
 
@@ -405,12 +406,15 @@ class PONDS:
                           Currently only "Lorenz" is supported.
             dt (float): Time step for the integration of the nonlinear system.
             sampling_factor (int): Number of intermediate integration steps to take for each stored timestep.
+            output_label (str | None): Label to use for the new variable in the Dataset.
         """
         # apply the transformation to each grid cell
         system_ts = xr.apply_ufunc(system.integrate, self.data.ts, dt, sampling_factor)
 
         # Append the nonlinear DataArray to the Dataset
-        self.data['system_ts'] = system_ts
+        if output_label is None:
+            output_label = "system_ts"
+        self.data[output_label] = system_ts
 
     ###################################################################################################
     ######################################### Get Functions ###########################################

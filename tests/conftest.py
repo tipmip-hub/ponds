@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from ponds.systems import DynamicalSystem
 
 class MockShape:
     """
@@ -114,11 +113,6 @@ def mock_background():
 @pytest.fixture
 def mock_shift():
     return MockShift
-
-
-@pytest.fixture
-def mock_corr():
-    return MockCorrelation
 
 
 @pytest.fixture
