@@ -392,12 +392,12 @@ class PONDS:
                     correlation_method.param_dict["corr_center_lon"] = val
 
     def apply_transformation(
-            self,
-            system: DynamicalSystem,
-            dt: float = 1e-4,
-            sampling_factor: int = 500,
-            output_label: str | None = None,
-        ) -> None:
+        self,
+        system: DynamicalSystem,
+        dt: float = 1e-4,
+        sampling_factor: int = 500,
+        output_label: str | None = None,
+    ) -> None:
         """
         Apply a transformation to the time series data.
 

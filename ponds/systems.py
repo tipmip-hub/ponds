@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 
 ######################## Abstract base class for dynamical systems ###############################
 
+
 class DynamicalSystem(ABC):
     @abstractmethod
     def integrate(self, parameter_array: np.ndarray) -> np.ndarray:
@@ -32,45 +33,40 @@ class DynamicalSystem(ABC):
             float: The value of the specified parameter.
         """
 
+
 ###################################### Dynamical Systems #########################################
+
 
 class Lorenz(DynamicalSystem):
     def __init__(
-            self,
-            forced_parameter: str = "beta",
-            sigma: float = 10.0,
-            rho: float = 28.0,
-            beta: float = 8/3
+        self,
+        forced_parameter: str = "beta",
+        sigma: float = 10.0,
+        rho: float = 28.0,
+        beta: float = 8 / 3,
     ):
         # store parameters
-        self.parameters = {
-            "sigma": sigma,
-            "rho": rho,
-            "beta": beta
-        }
+        self.parameters = {"sigma": sigma, "rho": rho, "beta": beta}
         self.forced_parameter = forced_parameter
         if self.forced_parameter not in self.parameters:
             raise ValueError(f"Unsupported parameter: {self.forced_parameter}")
-        
+
         # create dictionary of supported dynamical states (to be extended)
         self.state_dict = {
             "beta": {
-                "chaotic_1": 0.6,       # chaotic state
-                "chaotic_2": 0.8,       # chaotic state
-                "periodic_1": 0.7       # periodic state
+                "chaotic_1": 0.6,  # chaotic state
+                "chaotic_2": 0.8,  # chaotic state
+                "periodic_1": 0.7,  # periodic state
             }
         }
 
     def integrate(
-            self,
-            parameter_array,
-            dt: float = 1e-4,
-            sampling_factor: int = 500
-        ) -> np.ndarray:
+        self, parameter_array, dt: float = 1e-4, sampling_factor: int = 500
+    ) -> np.ndarray:
         """
         Generate a Lorenz time series.
 
-        Uses the Lorenz equations to generate a timeseries on the Lorenz attractor. That is, it 
+        Uses the Lorenz equations to generate a timeseries on the Lorenz attractor. That is, it
         takes an array of the chosen bifurcation parameter as input, takes intermediate integration
         steps to reduce the resolution of the timeseries, and returns a 1D timeseries (i.e. only
         the first coordinate of the 3D Lorenz timeseries).
@@ -91,30 +87,32 @@ class Lorenz(DynamicalSystem):
             1D Lorenz timeseries
         """
         # set initial values
-        x0, y0, z0 = [.1, .1, .1]
+        x0, y0, z0 = [0.1, 0.1, 0.1]
 
         # spinup to get rid of transient
-        spinup = int(10/dt)  # number of steps to spin up
-        self.parameters[self.forced_parameter] = parameter_array[0]  # use first value for spinup
+        spinup = int(10 / dt)  # number of steps to spin up
+        self.parameters[self.forced_parameter] = parameter_array[
+            0
+        ]  # use first value for spinup
         for _ in range(spinup):
-            x0, y0, z0 = self.integrate_step(
-                x0, y0, z0, dt=dt, **self.parameters)
+            x0, y0, z0 = self.integrate_step(x0, y0, z0, dt=dt, **self.parameters)
 
         # initialize timeseries with spun-up initial values
         timeseries = [[x0, y0, z0]]
 
         # calculate timeseries, but only store every sampling_factor-th value
         x, y, z = (x0, y0, z0)
-        for n in tqdm(range(1, (len(parameter_array))),
-                      desc="Integrating Lorenz system",
-                      unit=" timesteps"
-                      ):
+        for n in tqdm(
+            range(1, (len(parameter_array))),
+            desc="Integrating Lorenz system",
+            unit=" timesteps",
+        ):
             # get current values
             for m in range(sampling_factor):
                 # linearly interpolate beta value for the next step
-                self.parameters[self.forced_parameter] = \
-                    parameter_array[n-1] + (parameter_array[n] - parameter_array[n-1]) \
-                        * (m / sampling_factor)
+                self.parameters[self.forced_parameter] = parameter_array[n - 1] + (
+                    parameter_array[n] - parameter_array[n - 1]
+                ) * (m / sampling_factor)
                 # calculate next timestep values
                 x, y, z = self.integrate_step(x, y, z, dt, **self.parameters)
             # store the last value of the sampling_factor steps

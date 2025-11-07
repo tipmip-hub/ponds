@@ -7,6 +7,7 @@ from ponds.systems import Lorenz
 
 # tests for the Lorenz system
 
+
 def test_Lorenz_get_parameter_value():
     system = Lorenz()
 
@@ -19,6 +20,7 @@ def test_Lorenz_get_parameter_value():
     made_up_state = "b3"
     with pytest.raises(ValueError, match=f"Unsupported state: {made_up_state}"):
         system.get_parameter_value(state=made_up_state)
+
 
 def test_Lorenz_integrate():
     system = Lorenz()
