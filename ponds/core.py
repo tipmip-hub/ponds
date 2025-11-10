@@ -6,7 +6,7 @@ from typing import Optional, Any
 from numpy.typing import NDArray
 
 from ponds import (
-    plotter,
+    visualization,
 )
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
@@ -125,6 +125,19 @@ class PONDS:
         )
         shape_dict = shape_method.param_dict
 
+        # check for seed for random process
+        if hasattr(background_method, "background_seed"):
+            if getattr(background_method, "background_seed", None) is not None:
+                rng = np.random.default_rng(
+                    getattr(background_method, "background_seed")
+                )
+            else:
+                rng = np.random.default_rng()
+                warnings.warn(
+                    "No random seed set for PONDS Background Method. Results will not be reproducible."
+                )
+            setattr(background_method, "rng", rng)
+
         # 2) Generate background data and add to time series
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
@@ -154,10 +167,13 @@ class PONDS:
         Shape Methods:
             - "ELLIPSIS": Adds a shift in the shape of an eliptic blob.
             - "BLOB": Adds a shift in the shape of a random blob.
+            - "CELL": Adds a shift in a single grid cell.
+            - "CLUSTER": Adds several cluster shapes at various locations.
             - "CUSTOM": Adds a shift in a user-defined shape.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
+            - "BIMODAL": Adds a shift switching between two levels.
             - ...
         Correlation Methods:
             - "Noise": Adds random time offsets to the shift times.
@@ -656,6 +672,8 @@ class PONDS:
 
     ###################################################################################################
     #################################### Plotting Functions ###########################################
+    ###################################################################################################
+
     def worldmap(
         self,
         verbose: bool = False,
@@ -678,7 +696,7 @@ class PONDS:
             title (str): Title of the plot.
         """
 
-        fig, ax = plotter.worldmap(
+        fig, ax = visualization.worldmap(
             ponds=self,
             verbose=verbose,
             figsize=figsize,
@@ -693,6 +711,7 @@ class PONDS:
 
     def plot_all_ts(
         self,
+        linewidth: float = 0.5,
         alpha: float = 0.5,
         figsize: tuple[float, float] = (16, 2),
         title: str = "Time Series for All Cells",
@@ -701,8 +720,9 @@ class PONDS:
         Plots the time series of every grid cell from the PONDS dataset.
         """
 
-        fig, ax = plotter.plot_all_ts(
+        fig, ax = visualization.plot_all_ts(
             ponds=self,
+            linewidth=linewidth,
             alpha=alpha,
             figsize=figsize,
             title=title,

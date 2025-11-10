@@ -62,19 +62,20 @@ class WhiteNoise(BackgroundMethod):
         self,
         time_size: int,
     ) -> NDArray[np.float64]:
-        if self.background_seed is not None:
-            rng = np.random.default_rng(self.background_seed)
-        else:
-            rng = np.random.default_rng()
-            warnings.warn(
-                "No random seed set for PONDS Background Method. Results will not be reproducible."
-            )
+        
+        #if self.background_seed is not None:
+        #    rng = np.random.default_rng(self.background_seed)
+        #else:
+        #    rng = np.random.default_rng()
+        #    warnings.warn(
+        #        "No random seed set for PONDS Background Method. Results will not be reproducible."
+        #    )
 
         if self.background_time is None:
             self.background_time = np.arange(time_size)
 
         noise = np.zeros(time_size)
-        noise[self.background_time] = self.magnitude * rng.normal(
+        noise[self.background_time] = self.magnitude * self.rng.normal(
             size=len(self.background_time)
         )
         return noise

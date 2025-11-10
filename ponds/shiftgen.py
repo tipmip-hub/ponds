@@ -124,7 +124,7 @@ class BIMODAL(ShiftMethod):
         central_time: Optional[int] = None,
         interval_length: Optional[int] = None,
         duration: Optional[int] = None,
-        magnitude: Optional[float] = None,
+        shift_magnitude: Optional[float] = None,
         shift_seed: Optional[int] = None,
     ) -> None:
         if shift_seed is not None:
@@ -137,13 +137,13 @@ class BIMODAL(ShiftMethod):
             self.central_time_rel = central_time_rel
         if interval_length is None:
             interval_length = 10
-        if magnitude is None:
-            magnitude = rng.uniform(0.2, 1.8)
+        if shift_magnitude is None:
+            shift_magnitude = rng.uniform(0.95, 1.05)
 
         self.central_time = central_time
         self.interval_length = interval_length
         self.duration = duration
-        self.magnitude = magnitude
+        self.shift_magnitude = shift_magnitude
         # self.shift_seed = shift_seed
 
         self.param_dict = {
@@ -151,7 +151,7 @@ class BIMODAL(ShiftMethod):
             "central_time": central_time,
             "interval_length": interval_length,
             "duration": duration,
-            "magnitude": magnitude,
+            "shift_magnitude": shift_magnitude,
             # "shift_seed": shift_seed,
         }
 
@@ -198,9 +198,9 @@ class BIMODAL(ShiftMethod):
 
         while not (start > final_time) and not (start <= start_time):
             if self.interval_length > 0:  # Forward
-                shift_effect[start + 1 :] = self.magnitude * abs(j % 2 - 1)
+                shift_effect[start + 1 :] = self.shift_magnitude * abs(j % 2 - 1)
             else:  # Backward
-                shift_effect[:start] = self.magnitude * abs(j % 2 - 1)
+                shift_effect[:start] = self.shift_magnitude * abs(j % 2 - 1)
 
             j += 1
             start = int(self.central_time + j * self.interval_length)

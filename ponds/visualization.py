@@ -13,6 +13,10 @@ from numpy.typing import NDArray
 # import ponds
 
 
+###################################################################################################
+############################################ Plot Maps ############################################
+###################################################################################################
+
 def worldmap(
     ponds: Any,
     verbose: bool = False,
@@ -121,6 +125,9 @@ def worldmap(
 
     # Add optional grid lines based on lat/lon spacing
     if show_cells:
+        lat = ponds.data.coords["lat"].values  # type: ignore
+        lon = ponds.data.coords["lon"].values  # type: ignore
+
         if verbose:
             print("Drawing grid lines based on xarray resolution...")
         # Compute midpoints and deltas
@@ -200,10 +207,91 @@ def _get_grid_edges(
     )
     return edges
 
+###################################################################################################
+######################################## Plot Time Series #########################################
+###################################################################################################
+
+def plot_single_ts(
+    ponds: Any,
+    lat: float,
+    lon: float,
+    alpha: float = 0.5,
+    linewidth: float = 0.5,
+    figsize: tuple[float, float] = (16, 4),
+    title: str = "Time Series for Single Cell",
+) -> tuple[Figure, Axes]:
+    """
+    Plots time series of some exemplary grid cell from the PONDS dataset.
+    """
+
+    fig, ax = plt.subplots(  # type: ignore
+        figsize=figsize,
+    )
+
+    # find nearest grid cell
+    latitudes = ponds.data.coords["lat"].values  # type: ignore
+    longitudes = ponds.data.coords["lon"].values  # type: ignore
+    lat_idx = (np.abs(latitudes - lat)).argmin()
+    lon_idx = (np.abs(longitudes - lon)).argmin()
+
+    ax.plot(  # type: ignore
+        ponds.data.ts[:, lat_idx, lon_idx],
+        linestyle="-",
+        linewidth=linewidth,
+        marker=None,
+        color="grey",
+        alpha=alpha,
+    )
+
+    # eyecandy
+    ax.set_title(title+f"\n(Lat: {lat}, Lon: {lon})")  # type: ignore
+    ax.set_xlabel("Time")  # type: ignore
+    ax.set_ylabel("Value")  # type: ignore
+
+    return fig, ax
+
+
+def plot_some_ts(
+    ponds: Any,
+    ratio: float = 0.1,
+    alpha: float = 0.5,
+    linewidth: float = 0.5,
+    figsize: tuple[float, float] = (16, 4),
+    title: str = "Time Series for Some Example Cells",
+) -> tuple[Figure, Axes]:
+    """
+    Plots time series of some exemplary grid cell from the PONDS dataset.
+    """
+
+    fig, ax = plt.subplots(  # type: ignore
+        figsize=figsize,
+    )
+
+    for i in range(ponds.data.sizes["lat"]):
+        for j in range(ponds.data.sizes["lon"]):
+            if np.random.rand() > ratio:
+                continue
+            ax.plot(  # type: ignore
+                ponds.data.ts[:, i, j],
+                linestyle="-",
+                linewidth=linewidth,
+                marker=None,
+                color="grey",
+                alpha=alpha,
+            )
+
+    # eyecandy
+    ax.set_title(title)  # type: ignore
+    ax.set_xlabel("Time")  # type: ignore
+    ax.set_ylabel("Value")  # type: ignore
+
+    return fig, ax
+
 
 def plot_all_ts(
     ponds: Any,
     alpha: float = 0.5,
+    linewidth: float = 0.5,
     figsize: tuple[float, float] = (16, 4),
     title: str = "Time Series for All Cells",
 ) -> tuple[Figure, Axes]:
@@ -220,7 +308,7 @@ def plot_all_ts(
             ax.plot(  # type: ignore
                 ponds.data.ts[:, i, j],
                 linestyle="-",
-                linewidth=0.5,
+                linewidth=linewidth,
                 marker=None,
                 color="grey",
                 alpha=alpha,
@@ -232,3 +320,112 @@ def plot_all_ts(
     ax.set_ylabel("Value")  # type: ignore
 
     return fig, ax
+
+
+###################################################################################################
+####################################### Plot Correlations #########################################
+###################################################################################################
+
+def barplot_3D(
+    mask: NDArray[np.bool_],
+    xarray: NDArray[np.float64],
+    yarray: NDArray[np.float64],
+    time_values: NDArray[np.float64],
+    alpha: float = 1.0,
+    cmap: str = "viridis",
+    linewidth: float = 0.3,
+    elev: float = 40.0,
+    azim: float = 120.0,
+) -> tuple[Figure, Axes]:
+    """
+    Create an interactive 3D bar plot of values on a masked grid.
+    Bars are colored based on their height using a colormap.
+    """
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Create grid
+    x, y = np.meshgrid(xarray, yarray)
+    z_base = time_values[mask].min() - 0.5
+    z = np.full_like(time_values, z_base)
+    dx = np.abs(xarray[1] - xarray[0])
+    dy = np.abs(yarray[1] - yarray[0])
+    dz = time_values[mask] - z_base
+
+    # Normalize values to [0,1] for colormap
+    norm = plt.Normalize(time_values[mask].min(), time_values[mask].max())
+    colors = plt.colormaps[cmap](norm(time_values[mask]))  # updated line
+
+    # Plot bars with color-mapped heights
+    ax.bar3d(
+        x[mask],
+        y[mask],
+        z[mask],
+        dx,
+        dy,
+        dz,  # time_values[mask],
+        zsort="max",
+        alpha=alpha,
+        color=colors,
+        edgecolor="black",
+        linewidth=linewidth,
+    )
+
+    # eye candy
+    ax.view_init(elev=elev, azim=azim)
+    ax.grid(True)
+    ax.set_zlim(z_base, time_values[mask].max() + 0.1)
+    ax.set_xlabel("Longitude [°]")
+    ax.set_ylabel("Latitude [°]")
+    ax.set_zlabel("Shift Time Offset [time steps]")
+    if np.abs(elev) >= 80:
+        ax.set_zticks([])
+        ax.set_zticklabels([])
+        ax.set_zlabel("")
+
+    # Add a colorbar
+    mappable = cm.ScalarMappable(cmap=plt.colormaps[cmap], norm=norm)
+    mappable.set_array([])
+    cbar = fig.colorbar(
+        mappable,
+        ax=ax,
+        shrink=0.5,
+        aspect=10,
+        pad=0.1,
+        label="Shift Time Offset [time steps]",
+    )
+    # Set colorbar ticks to integers only
+    cbar.set_ticks(
+        np.arange(int(time_values[mask].min()), int(time_values[mask].max()) + 1, 2)
+    )
+    cbar.ax.set_yticklabels([str(int(t)) for t in cbar.get_ticks()])
+
+    # Add an inset axes for a head-up view
+    inset_ax = fig.add_axes([0.65, 0.65, 0.3, 0.3], projection="3d")
+    inset_ax.set_position([0.05, 0.65, 0.3, 0.3])
+    inset_ax.set_facecolor((0, 0, 0, 0))
+
+    inset_ax.bar3d(
+        x[mask],
+        y[mask],
+        z[mask],
+        dx,
+        dy,
+        dz,
+        zsort="max",
+        alpha=alpha,
+        color=colors,
+        edgecolor="black",
+        linewidth=linewidth,
+    )
+
+    # Set a custom view angle for the inset
+    inset_ax.view_init(elev=-90, azim=-90)
+    inset_ax.set_xticks([])
+    inset_ax.set_yticks([])
+    inset_ax.set_title("Bird View", fontsize=8)
+
+    return fig, ax
+
+
