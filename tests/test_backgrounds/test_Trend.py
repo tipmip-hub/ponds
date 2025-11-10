@@ -90,8 +90,8 @@ def test_background_time():
     # 2) call function
     # - (2x2) grid, check trend in all 4 time series
     ponds = PONDS(
-        lat_size=1,
-        lon_size=1,
+        lat_size=2,
+        lon_size=2,
         time_size=time_size,
     )
     ponds.add_background(

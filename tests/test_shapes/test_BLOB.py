@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from ponds import PONDS, BLOB
 
@@ -92,13 +93,17 @@ def test_blob_center_coordinates(err=10):
 
     for clat in centers_lat:
         for clon in centers_lon:
+
             blob = BLOB(
                 center_lat=clat,
                 center_lon=clon,
                 size=8,
                 max_bellys=1,
             )
-            mask = blob.make_shape(lats=lats, lons=lons)
+            
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                mask = blob.make_shape(lats=lats, lons=lons)
 
             # Find center of mass in index space
             lat_indices = np.where(mask.any(axis=1))[0]
@@ -146,13 +151,17 @@ def test_blob_wraps_around_dateline():
     lon_size = 120
     ponds = PONDS(lat_size=lat_size, lon_size=lon_size)
 
+
     blob = BLOB(
         center_lat=0,
         center_lon=179,
         size=10,
         max_bellys=1,
     )
-    mask = blob.make_shape(lats=ponds.lats, lons=ponds.lons)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        mask = blob.make_shape(lats=ponds.lats, lons=ponds.lons)
 
     # Check that some True cells appear on both ends of longitude axis
     left_edge = mask[:, 0].any()
