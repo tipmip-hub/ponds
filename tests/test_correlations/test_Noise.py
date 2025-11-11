@@ -103,6 +103,7 @@ def test_noise_param_dict():
         f"Expected corr_seed={corr_seed}, got {pdict['corr_seed']}"
     )
 
+
 def test_reproducibility():
     """
     Check if same seed produces same offsets.
@@ -117,4 +118,6 @@ def test_reproducibility():
     offsets1 = noise1.make_time_offsets(shape_mask)
     offsets2 = noise2.make_time_offsets(shape_mask)
 
-    assert np.array_equal(offsets1, offsets2), "Offsets should be identical for the same seed."
+    assert np.array_equal(offsets1, offsets2), (
+        "Offsets should be identical for the same seed."
+    )

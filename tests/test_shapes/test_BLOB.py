@@ -93,14 +93,13 @@ def test_blob_center_coordinates(err=10):
 
     for clat in centers_lat:
         for clon in centers_lon:
-
             blob = BLOB(
                 center_lat=clat,
                 center_lon=clon,
                 size=8,
                 max_bellys=1,
             )
-            
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 mask = blob.make_shape(lats=lats, lons=lons)
@@ -150,7 +149,6 @@ def test_blob_wraps_around_dateline():
     lat_size = 60
     lon_size = 120
     ponds = PONDS(lat_size=lat_size, lon_size=lon_size)
-
 
     blob = BLOB(
         center_lat=0,

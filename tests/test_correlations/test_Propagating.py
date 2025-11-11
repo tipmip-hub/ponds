@@ -13,6 +13,7 @@ Legend:
     x : done
 """
 
+
 def test_max_offset():
     """
     - Check that all offsets are within the specified max_offset range
@@ -25,12 +26,15 @@ def test_max_offset():
         n_cells=5,
         max_offset=max_offset,
         corr_seed=123,
-        )
+    )
 
     offsets = corr_instance.make_time_offsets(shape_mask)
 
-    assert np.all(offsets <= max_offset), "Some offsets exceed the maximum allowed value."
+    assert np.all(offsets <= max_offset), (
+        "Some offsets exceed the maximum allowed value."
+    )
     assert np.all(offsets >= 0), "Some offsets are negative, which is not allowed."
+
 
 def test_number_of_cells():
     """
@@ -48,9 +52,12 @@ def test_number_of_cells():
     offsets = corr_instance.make_time_offsets(shape_mask)
 
     non_zero_offsets = np.count_nonzero(np.unique(offsets))
-    assert non_zero_offsets == (corr_instance.n_cells - 1), (       # -1 as starting offset is zero
+    assert non_zero_offsets == (
+        corr_instance.n_cells - 1
+    ), (  # -1 as starting offset is zero
         f"Expected {corr_instance.n_cells - 1} non-zero offsets, but got {non_zero_offsets}."
     )
+
 
 def test_reproducibility(R=5):
     """
@@ -75,6 +82,6 @@ def test_reproducibility(R=5):
         offsets1 = corr_instance1.make_time_offsets(shape_mask)
         offsets2 = corr_instance2.make_time_offsets(shape_mask)
 
-        assert np.array_equal(
-            offsets1, offsets2
-        ), f"Offsets differ for the same seed {seed}."
+        assert np.array_equal(offsets1, offsets2), (
+            f"Offsets differ for the same seed {seed}."
+        )
