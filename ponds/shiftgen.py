@@ -182,7 +182,7 @@ class BIMODAL(ShiftMethod):
             self.param_dict["central_time"] = self.central_time
 
         t_shift = self.central_time + time_offset
-        shift_effect = np.zeros_like(time_arr)
+        shift_effect = np.zeros_like(time_arr, dtype=np.float64)
         final_time = len(time_arr)
         start_time = 0
 
