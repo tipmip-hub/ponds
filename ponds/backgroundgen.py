@@ -37,7 +37,7 @@ class WhiteNoise(BackgroundMethod):
     def __init__(
         self,
         magnitude: float = 0.05,  # Magnitude of the white noise
-        background_seed: Optional[int] = None,  # Random seed for reproducibility
+        background_seed: int = 1,  # Random seed for reproducibility
         background_time: Optional[NDArray[np.int_]] = None,
     ) -> None:
         """

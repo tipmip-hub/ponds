@@ -55,14 +55,14 @@ class SIGMOID(ShiftMethod):
         self.shift_steepness = shift_steepness
         self.shift_magnitude = shift_magnitude
         self.central_time = central_time
-        self.shift_seed = shift_seed
+        #self.shift_seed = shift_seed
 
         self.param_dict = {
             "shift_type": SIGMOID,
             "central_time": central_time,
             "shift_steepness": shift_steepness,
             "shift_magnitude": shift_magnitude,
-            "shift_seed": shift_seed,
+            #"shift_seed": shift_seed,
         }
 
     def make_shift(
