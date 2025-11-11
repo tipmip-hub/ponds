@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import warnings
 
 from typing import Optional, Any, Dict
 from numpy.typing import NDArray
@@ -62,10 +61,9 @@ class WhiteNoise(BackgroundMethod):
         self,
         time_size: int,
     ) -> NDArray[np.float64]:
-        
-        #if self.background_seed is not None:
+        # if self.background_seed is not None:
         #    rng = np.random.default_rng(self.background_seed)
-        #else:
+        # else:
         #    rng = np.random.default_rng()
         #    warnings.warn(
         #        "No random seed set for PONDS Background Method. Results will not be reproducible."

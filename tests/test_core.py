@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise, Trend
+from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise
 
 """
 Testing the PONDS core class and its methods.
@@ -291,6 +291,7 @@ def test_reproducibility(R=5):
 ############################################ Deletion #############################################
 ###################################################################################################
 
+
 def test_delete_background():
     """
     - check if a background can be deleted and if the attributes are removed correctly
@@ -337,15 +338,15 @@ def test_delete_background():
     )
     ponds2.add_background(
         background_method=WhiteNoise(
-            background_seed=43,         # <- needs to be the same as in ponds1, b2
+            background_seed=43,  # <- needs to be the same as in ponds1, b2
         ),
     )
 
     # 2) check results
     # - check if the time series of both ponds objects are identical
-    assert np.all(np.isclose(ponds1.data.ts.values, ponds2.data.ts.values, rtol=1e-05, atol=1e-08)), (
-        "Time series after deleting background do not match the expected time series."
-    )
+    assert np.all(
+        np.isclose(ponds1.data.ts.values, ponds2.data.ts.values, rtol=1e-05, atol=1e-08)
+    ), "Time series after deleting background do not match the expected time series."
     # - check if the attributes related to the deleted background are removed
     assert "b1_background_type" not in ponds1.data.ts.attrs, (
         "Attributes related to deleted background 'b1' were not removed."
@@ -353,6 +354,7 @@ def test_delete_background():
     assert "b1_shape_type" not in ponds1.data.ts.attrs, (
         "Attributes related to deleted background 'b1' were not removed."
     )
+
 
 def test_delete_shift():
     """
@@ -406,9 +408,9 @@ def test_delete_shift():
 
     # 2) check results
     # - check if the time series of both ponds objects are identical
-    assert np.all(np.isclose(ponds1.data.ts.values, ponds2.data.ts.values, rtol=1e-05, atol=1e-08)), (
-        "Time series after deleting shift do not match the expected time series."
-    )
+    assert np.all(
+        np.isclose(ponds1.data.ts.values, ponds2.data.ts.values, rtol=1e-05, atol=1e-08)
+    ), "Time series after deleting shift do not match the expected time series."
     # - check if the attributes related to the deleted shift are removed
     assert "c1" not in ponds1.data.data_vars, (
         "Attributes related to deleted shift 'c1' were not removed."

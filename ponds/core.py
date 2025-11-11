@@ -460,9 +460,7 @@ class PONDS:
                         self.data.ts.values[:, i, j] -= background_effect
             # delete background attributes from the ts DataArray
             keys_to_delete = [
-                key
-                for key in self.data.ts.attrs.keys()
-                if key.startswith(background)
+                key for key in self.data.ts.attrs.keys() if key.startswith(background)
             ]
             for key in keys_to_delete:
                 del self.data.ts.attrs[key]
@@ -479,7 +477,7 @@ class PONDS:
 
         This function deletes a shift by reconstructing the shift event, using the stored meta data.
         Instead of adding the corresponding shift effect, it is subtracted.
-        
+
         Args:
             cluster (str): The cluster to delete (e.g. "c1", "c2", ...).
         """
@@ -523,7 +521,6 @@ class PONDS:
             self.data = self.data.drop_vars(cluster)
         else:
             warnings.warn(f"Cluster {cluster} does not exist in the Dataset.")
-    
 
     ###################################################################################################
     ######################################### Get Functions ###########################################
@@ -619,9 +616,7 @@ class PONDS:
         s_index = keys.index(background_key + "_shape_type")
         # - get index of last entry with the background_key prefix
         last_index = max(
-            i
-            for i, key in enumerate(keys)
-            if key.startswith(background_key + "_")
+            i for i, key in enumerate(keys) if key.startswith(background_key + "_")
         )
 
         b_specs: dict[str, Any] = {

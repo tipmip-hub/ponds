@@ -337,7 +337,7 @@ class Propagating(CorrelationMethod):
         # assign offset values linearly increasing with distance to starting index
         offset_val = np.array(
             [
-                int(distance_to_start[i,0] / distance_to_start.max() * self.max_offset)
+                int(distance_to_start[i, 0] / distance_to_start.max() * self.max_offset)
                 for i in range(self.n_cells)
             ]
         )

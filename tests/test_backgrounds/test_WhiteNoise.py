@@ -102,6 +102,7 @@ def test_random_seed(R=5):
             "PONDS data is reproducible with different random seeds."
         )
 
+
 def test_reproducibility(R=5):
     """
     - check if same input parameters produces the same data
@@ -139,6 +140,7 @@ def test_reproducibility(R=5):
             "PONDS data is not reproducible with the same random seed."
         )
 
+
 def test_different_cells():
     """
     - check that noise is not exact same in different cells
@@ -166,12 +168,24 @@ def test_different_cells():
     ts3 = ponds.data.ts[:, 1, 0].values
     ts4 = ponds.data.ts[:, 1, 1].values
 
-    assert not np.array_equal(ts1, ts2), "Background noise is identical in different cells."
-    assert not np.array_equal(ts1, ts3), "Background noise is identical in different cells."
-    assert not np.array_equal(ts1, ts4), "Background noise is identical in different cells."
-    assert not np.array_equal(ts2, ts3), "Background noise is identical in different cells."
-    assert not np.array_equal(ts2, ts4), "Background noise is identical in different cells."
-    assert not np.array_equal(ts3, ts4), "Background noise is identical in different cells."
+    assert not np.array_equal(ts1, ts2), (
+        "Background noise is identical in different cells."
+    )
+    assert not np.array_equal(ts1, ts3), (
+        "Background noise is identical in different cells."
+    )
+    assert not np.array_equal(ts1, ts4), (
+        "Background noise is identical in different cells."
+    )
+    assert not np.array_equal(ts2, ts3), (
+        "Background noise is identical in different cells."
+    )
+    assert not np.array_equal(ts2, ts4), (
+        "Background noise is identical in different cells."
+    )
+    assert not np.array_equal(ts3, ts4), (
+        "Background noise is identical in different cells."
+    )
 
 
 def test_background_time():
@@ -203,9 +217,11 @@ def test_background_time():
 
     # 3) check results
     # - Check that the background is applied only at the specified times
-    assert not(np.array_equal(
-        ponds.data.ts[background_time, 0, 0].values, np.zeros(len(background_time))
-    )), "Background values do not match expected values at specified times."
+    assert not (
+        np.array_equal(
+            ponds.data.ts[background_time, 0, 0].values, np.zeros(len(background_time))
+        )
+    ), "Background values do not match expected values at specified times."
     ix = np.setdiff1d(np.arange(time_size), background_time)
     assert np.array_equal(
         ponds.data.ts[ix, 0, 0].values, np.zeros(time_size - len(background_time))

@@ -11,6 +11,7 @@ Legend:
     x : done
 """
 
+
 def test_custom_mask_usage():
     """
     - Check that the Custom correlation uses the provided custom mask correctly
@@ -38,5 +39,9 @@ def test_custom_mask_usage():
     offsets = corr_instance.make_time_offsets(shape_mask)
 
     # Check that offsets are only applied where custom_mask is True
-    assert np.all(offsets[~shape_mask] == 0), "Offsets should be zero where custom_mask is 0."
-    assert np.all(offsets[shape_mask] != 0), "Offsets should be non-zero where custom_mask has a non-zero value."
+    assert np.all(offsets[~shape_mask] == 0), (
+        "Offsets should be zero where custom_mask is 0."
+    )
+    assert np.all(offsets[shape_mask] != 0), (
+        "Offsets should be non-zero where custom_mask has a non-zero value."
+    )

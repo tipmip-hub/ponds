@@ -177,10 +177,7 @@ class ELLIPSIS(ShapeMethod):
 
 
 class CUSTOM(ShapeMethod):
-    def __init__(
-        self,
-        shape_mask: NDArray[np.bool_]
-    ) -> None:
+    def __init__(self, shape_mask: NDArray[np.bool_]) -> None:
         """
         Custom shape method that uses a pre-defined mask.
 
