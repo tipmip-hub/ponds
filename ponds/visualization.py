@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib import cm
 
 from typing import Any
 from numpy.typing import NDArray

@@ -267,8 +267,8 @@ class Propagating(CorrelationMethod):
         pairs = np.empty((0, 2), dtype=int)
         # - draw cell centers
         for i in range(self.n_cells):
-            sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)
-            sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)
+            sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)[0]
+            sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)[0]
             pairs = np.column_stack((sx[: i + 1], sy[: i + 1]))
             # - 1) check if drawn cell centers are not unique; 2) check if drawn cell center is not in shape_mask
             while (
@@ -276,8 +276,8 @@ class Propagating(CorrelationMethod):
                 or not (shape_mask[sx[i], sy[i]])
             ):
                 # - re-draw cell center
-                sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)
-                sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)
+                sx[i] = rng.integers(lonmin_ix, lonmax_ix, size=1)[0]
+                sy[i] = rng.integers(latmin_ix, latmax_ix, size=1)[0]
                 pairs = np.column_stack((sx[: i + 1], sy[: i + 1]))
         self.cell_centers = pairs
 
@@ -337,7 +337,7 @@ class Propagating(CorrelationMethod):
         # assign offset values linearly increasing with distance to starting index
         offset_val = np.array(
             [
-                int(distance_to_start[i] / distance_to_start.max() * self.max_offset)
+                int(distance_to_start[i,0] / distance_to_start.max() * self.max_offset)
                 for i in range(self.n_cells)
             ]
         )

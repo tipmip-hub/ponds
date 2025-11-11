@@ -8,7 +8,7 @@ Things to Test:
     x test if the same seed produces the same offsets
     x test if offsets are within the specified range
     x check dict entries
-    - check reproducibility
+    x check reproducibility
 
 Legend:
     - : to do
@@ -102,3 +102,19 @@ def test_noise_param_dict():
     assert pdict["corr_seed"] == corr_seed, (
         f"Expected corr_seed={corr_seed}, got {pdict['corr_seed']}"
     )
+
+def test_reproducibility():
+    """
+    Check if same seed produces same offsets.
+    """
+
+    lat_size, lon_size = 25, 35
+    shape_mask = np.ones((lat_size, lon_size), dtype=bool)
+    seed = 1234
+    noise1 = Noise(max_offset=7, corr_seed=seed)
+    noise2 = Noise(max_offset=7, corr_seed=seed)
+
+    offsets1 = noise1.make_time_offsets(shape_mask)
+    offsets2 = noise2.make_time_offsets(shape_mask)
+
+    assert np.array_equal(offsets1, offsets2), "Offsets should be identical for the same seed."
