@@ -10,6 +10,7 @@ from ponds.correlationgen import (
     Custom,
     Propagating,
 )
+from ponds.systems import DynamicalSystem, Lorenz
 
 from typing import Any, Dict
 
@@ -34,6 +35,8 @@ __all__ = [
     "Gauss",
     "Custom",
     "Propagating",
+    "DynamicalSystem",
+    "Lorenz",
 ]
 type_dict: Dict[str, Any] = {
     "SINGLE": SINGLE,
@@ -51,4 +54,5 @@ type_dict: Dict[str, Any] = {
     "Gauss": Gauss,
     "Custom": Custom,
     "Propagating": Propagating,
+    "Lorenz": Lorenz,
 }

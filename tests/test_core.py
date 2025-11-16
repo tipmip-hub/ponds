@@ -198,6 +198,30 @@ def test_add_shift_parameter_storage(mock_shape, mock_shift):
 
 
 ###################################################################################################
+#################################### Apply transformation #########################################
+###################################################################################################
+
+
+def test_apply_transformation(mock_dynamical_system):
+    # 1) setup variables
+    # - basic parameters
+    lat_size = 100
+    lon_size = 100
+    time_size = 100
+
+    ponds = PONDS(
+        lat_size=lat_size,
+        lon_size=lon_size,
+        time_size=time_size,
+    )
+
+    ponds.apply_transformation(system=mock_dynamical_system())
+
+    assert "system_ts" in ponds.data.keys()
+    assert isinstance(ponds.data.system_ts.values, np.ndarray)
+
+
+###################################################################################################
 ####################################### Reproducibility ###########################################
 ###################################################################################################
 
