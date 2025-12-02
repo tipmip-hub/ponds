@@ -848,3 +848,26 @@ class PONDS:
         )
 
         return fig, ax
+
+    def plot_some_ts(
+        self,
+        ratio: float = 0.1,
+        alpha: float = 0.5,
+        linewidth: float = 0.5,
+        figsize: tuple[float, float] = (16, 4),
+        title: str = "Time Series for Some Example Cells",
+    ) -> tuple[Figure, Axes]:
+        """
+        Plots time series of some exemplary grid cell from the PONDS dataset.
+        """
+
+        fig, ax = visualization.plot_some_ts(
+            ponds=self,
+            ratio=ratio,
+            alpha=alpha,
+            linewidth=linewidth,
+            figsize=figsize,
+            title=title,
+        )
+
+        return fig, ax
