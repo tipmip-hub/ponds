@@ -45,7 +45,7 @@ class NoCorr(CorrelationMethod):
 
     def __init__(
         self,
-        feature_name: str = None,
+        feature_name: str = "central_time",
     ) -> None:
         self.feature_name = feature_name
         self.param_dict = {
@@ -71,7 +71,7 @@ class Noise(CorrelationMethod):
     def __init__(
         self,
         feature_name: str,
-        max_offset: int = 5,
+        max_offset: int | float = 5,
         corr_seed: int | None = None,
     ) -> None:
         self.feature_name = feature_name

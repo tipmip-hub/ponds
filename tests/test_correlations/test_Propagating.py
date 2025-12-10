@@ -23,12 +23,13 @@ def test_max_offset():
     shape_mask = np.ones((lat_size, lon_size), dtype=bool)
     max_offset = 10
     corr_instance = Propagating(
+        feature_name="central_time",
         n_cells=5,
         max_offset=max_offset,
         corr_seed=123,
     )
 
-    offsets = corr_instance.make_time_offsets(shape_mask)
+    offsets = corr_instance.make_feature_offsets(shape_mask)
 
     assert np.all(offsets <= max_offset), (
         "Some offsets exceed the maximum allowed value."
@@ -44,12 +45,13 @@ def test_number_of_cells():
     shape_mask = np.ones((lat_size, lon_size), dtype=bool)
     max_offset = 100
     corr_instance = Propagating(
+        feature_name="central_time",
         n_cells=5,
         max_offset=max_offset,
         corr_seed=14,
     )
 
-    offsets = corr_instance.make_time_offsets(shape_mask)
+    offsets = corr_instance.make_feature_offsets(shape_mask)
 
     non_zero_offsets = np.count_nonzero(np.unique(offsets))
     assert non_zero_offsets == (
@@ -69,18 +71,20 @@ def test_reproducibility(R=5):
     for _ in range(R):
         seed = np.random.randint(0, 10000)
         corr_instance1 = Propagating(
+            feature_name="central_time",
             n_cells=7,
             max_offset=50,
             corr_seed=seed,
         )
         corr_instance2 = Propagating(
+            feature_name="central_time",
             n_cells=7,
             max_offset=50,
             corr_seed=seed,
         )
 
-        offsets1 = corr_instance1.make_time_offsets(shape_mask)
-        offsets2 = corr_instance2.make_time_offsets(shape_mask)
+        offsets1 = corr_instance1.make_feature_offsets(shape_mask)
+        offsets2 = corr_instance2.make_feature_offsets(shape_mask)
 
         assert np.array_equal(offsets1, offsets2), (
             f"Offsets differ for the same seed {seed}."

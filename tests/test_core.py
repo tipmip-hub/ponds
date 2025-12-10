@@ -1,5 +1,5 @@
 import numpy as np
-from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise
+from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise, Noise
 
 """
 Testing the PONDS core class and its methods.
@@ -359,7 +359,7 @@ def test_delete_background():
 def test_delete_shift():
     """
     - check if a shift can be deleted and if the attributes are removed correctly
-        -> use SIGMOID as shift method
+        -> use SIGMOID as shift method and Noise as correlation method
         -> doing this by creating two ponds objects
             > - first ponds object: add two shifts and delete the first one
             > - second ponds object: add only the second shift
@@ -384,10 +384,18 @@ def test_delete_shift():
         shift_method=SIGMOID(
             shift_seed=42,
         ),
+        correlation_method=Noise(
+            feature_name="shift_magnitude",
+            corr_seed=101,
+        ),
     )
     ponds1.add_shift(
         shift_method=SIGMOID(
             shift_seed=43,
+        ),
+        correlation_method=Noise(
+            feature_name="shift_magnitude",
+            corr_seed=102,
         ),
     )
 
@@ -403,6 +411,10 @@ def test_delete_shift():
     ponds2.add_shift(
         shift_method=SIGMOID(
             shift_seed=43,
+        ),
+        correlation_method=Noise(
+            feature_name="shift_magnitude",
+            corr_seed=102,
         ),
     )
 

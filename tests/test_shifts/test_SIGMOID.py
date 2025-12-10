@@ -44,16 +44,18 @@ def test_sigmoid_same_seed_produces_same_shift(R=5):
         sigmoid1 = SIGMOID(
             shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
-        shift_effect1, _ = sigmoid1.make_shift(
+        make_shift1 = sigmoid1.prepare_shift(
             time,
         )
+        shift_effect1, _ = make_shift1()
 
         sigmoid2 = SIGMOID(
             shift_seed=shift_seed
         )  # <- testing this: no shift parameters provided, so random values are used
-        shift_effect2, _ = sigmoid2.make_shift(
+        make_shift2 = sigmoid2.prepare_shift(
             time,
         )
+        shift_effect2, _ = make_shift2()
 
         # 3) check results
         assert np.array_equal(shift_effect1, shift_effect2), (
@@ -92,9 +94,12 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
         shift_steepness=custom_steepness,
         shift_magnitude=custom_magnitude,
     )
+    make_shift = sigmoid_shift.prepare_shift(
+        time,
+    )
     for i in range(lat_size):
         for j in range(lon_size):
-            _, t_shifts[i, j] = sigmoid_shift.make_shift(time)
+            _, t_shifts[i, j] = make_shift()
 
     # 3) check results
     # - extract the shift parameters from the generated data

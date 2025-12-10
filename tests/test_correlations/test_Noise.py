@@ -16,24 +16,26 @@ Legend:
 """
 
 
-def test_noise_output_shape_and_type():
+def test_noise_output_shape():
     """
-    - Check that the Noise.make_time_offsets() returns a numpy array
+    - Check that the Noise.make_feature_offsets() returns a numpy array
     - Check that the output has the same shape as the input grid (mask)
-    - Check dtype (should be integer)
     """
     # 1) setup
     lat_size, lon_size = 10, 20
     shape_mask = np.ones((lat_size, lon_size), dtype=bool)
-    corr_instance = Noise(max_offset=5, corr_seed=42)
+    corr_instance = Noise(
+        feature_name="central_time",
+        max_offset=5,
+        corr_seed=42,
+    )
 
     # 2) call
-    offsets = corr_instance.make_time_offsets(shape_mask)
+    offsets = corr_instance.make_feature_offsets(shape_mask)
 
     # 3) check
     assert isinstance(offsets, np.ndarray), "Offsets must be a numpy array."
     assert offsets.shape == shape_mask.shape, "Offsets must match input shape."
-    assert np.issubdtype(offsets.dtype, np.integer), "Offsets must be integer values."
 
 
 def test_noise_same_seed_produces_same_offsets(R=5):
@@ -50,13 +52,13 @@ def test_noise_same_seed_produces_same_offsets(R=5):
         seed2 = np.random.randint(0, 10000)
         while seed2 == seed1:  # re-roll to ensure different seeds
             seed2 = np.random.randint(0, 10000)
-        n1 = Noise(corr_seed=seed1)
-        n2 = Noise(corr_seed=seed1)
-        n3 = Noise(corr_seed=seed2)
+        n1 = Noise(feature_name="central_time", corr_seed=seed1)
+        n2 = Noise(feature_name="central_time", corr_seed=seed1)
+        n3 = Noise(feature_name="central_time", corr_seed=seed2)
 
-        off1 = n1.make_time_offsets(shape_mask)
-        off2 = n2.make_time_offsets(shape_mask)
-        off3 = n3.make_time_offsets(shape_mask)
+        off1 = n1.make_feature_offsets(shape_mask)
+        off2 = n2.make_feature_offsets(shape_mask)
+        off3 = n3.make_feature_offsets(shape_mask)
 
         assert np.array_equal(off1, off2), (
             "Offsets must be identical for the same seed."
@@ -76,9 +78,11 @@ def test_noise_offsets_within_range(R=5):
         max_offset = np.random.randint(1, 20)
         shape_mask = np.ones((lat_size, lon_size), dtype=bool)
         seed = np.random.randint(0, 10000)
-        noise = Noise(max_offset=max_offset, corr_seed=seed)
+        noise = Noise(
+            feature_name="central_time",
+            max_offset=max_offset, corr_seed=seed)
 
-        offsets = noise.make_time_offsets(shape_mask)
+        offsets = noise.make_feature_offsets(shape_mask)
 
         assert offsets.min() >= -max_offset, f"Offsets below -{max_offset} detected."
         assert offsets.max() < max_offset, (
@@ -92,7 +96,8 @@ def test_noise_param_dict():
     """
     max_offset = 3
     corr_seed = 101
-    noise = Noise(max_offset=max_offset, corr_seed=corr_seed)
+    noise = Noise(feature_name="central_time",
+                  max_offset=max_offset, corr_seed=corr_seed)
 
     pdict = noise.param_dict
     assert pdict["correlation_type"] == Noise, "Wrong correlation_type stored."
@@ -112,12 +117,15 @@ def test_reproducibility():
     lat_size, lon_size = 25, 35
     shape_mask = np.ones((lat_size, lon_size), dtype=bool)
     seed = 1234
-    noise1 = Noise(max_offset=7, corr_seed=seed)
-    noise2 = Noise(max_offset=7, corr_seed=seed)
+    noise1 = Noise(
+        feature_name="central_time",
+        max_offset=7, corr_seed=seed)
+    noise2 = Noise(
+        feature_name="central_time",
+        max_offset=7, corr_seed=seed)
 
-    offsets1 = noise1.make_time_offsets(shape_mask)
-    offsets2 = noise2.make_time_offsets(shape_mask)
-
+    offsets1 = noise1.make_feature_offsets(shape_mask)
+    offsets2 = noise2.make_feature_offsets(shape_mask)
     assert np.array_equal(offsets1, offsets2), (
         "Offsets should be identical for the same seed."
     )

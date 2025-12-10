@@ -74,7 +74,7 @@ class SIGMOID(ShiftMethod):
     def prepare_shift(
         self,
         time_arr: NDArray[np.float64],
-        feature_name: str,
+        feature_name: str = "central_time",
     ) -> object:
         """
         Generate a shift in the time series data using a sigmoid function.
@@ -98,7 +98,7 @@ class SIGMOID(ShiftMethod):
 
         # bind the feature_name for fast access when called repeatedly
         def make_shift(
-                feature_offset: float = 0.0,
+                feature_offset: int | float = 0,
                 ) -> tuple[NDArray[np.float64], int]:
             original_val = getattr(self, feature_name)
             # temporary change the feature value by the offset
@@ -185,7 +185,7 @@ class BIMODAL(ShiftMethod):
     def prepare_shift(
         self,
         time_arr: NDArray[np.float64],
-        feature_name: str,
+        feature_name: str = "central_time",
     ) -> tuple[NDArray[np.float64], int]:
         """
         Generate a bimodal shift in the time series data.
@@ -213,7 +213,7 @@ class BIMODAL(ShiftMethod):
 
         # bind the feature_name for fast access when called repeatedly
         def make_shift(
-                feature_offset: float = 0.0,
+                feature_offset: int | float = 0,
                 ) -> tuple[NDArray[np.float64], int]:
             original_val = getattr(self, feature_name)
             # temporary change the feature value by the offset

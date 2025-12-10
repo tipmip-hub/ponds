@@ -514,19 +514,23 @@ class PONDS:
             if not shape_mask.any():
                 raise ValueError("Shape mask is empty. Please check the shape method.")
 
-            # 2) generate time offsets according to correlation method
-            time_offsets = correlation_method.make_time_offsets(
+            # 2) generate feature offsets according to correlation method
+            feature_offsets = correlation_method.make_feature_offsets(
                 shape_mask
             )  # -> generate offset values
 
             # 3) generate shift data
+            # prepare the shift-generator
+            make_shift = shift_method.prepare_shift(
+                time_arr=self.time, feature_name=correlation_method.feature_name,
+                )
             # - iterate through every cell
             for i in range(self.data.sizes["lat"]):
                 for j in range(self.data.sizes["lon"]):
                     if shape_mask[i, j]:
                         # - generate shift data using the shift method
-                        shift_effect, _ = shift_method.make_shift(
-                            time_arr=self.time, time_offset=time_offsets[i, j]
+                        shift_effect, _ = make_shift(
+                            feature_offset=feature_offsets[i, j]
                         )
 
                         # - subtract shift effect to the data in single grid cell, all time steps at once

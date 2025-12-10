@@ -41,21 +41,33 @@ class MockShift:
     It simulates the behavior of a shift generator that creates a shift
     for a pond."""
 
-    def __init__(self, random_seed=None):
+    def __init__(
+        self,
+        central_time: int = 0,
+        random_seed=None,
+    ):
         self.random_seed = random_seed
+        self.central_time = central_time
 
         self.param_dict = {"shift_type": MockShift}
 
-    def make_shift(
+    def prepare_shift(
         self,
         time_arr,
-        time_offset: int = 0,
-    ):
-        t_shift = len(time_arr) // 2 + time_offset
-        shift_effect = np.zeros_like(time_arr, dtype=float)
+        feature_name: str = "central_time",
+        #time_offset: int = 0,
+    ) -> object:
+        
+        def make_shift(
+                feature_offset: float = 0.0,
+                #time_offset: int = 0,
+        ) -> tuple[np.ndarray, int]:
+            t_shift = len(time_arr) // 2 + feature_offset
+            shift_effect = np.zeros_like(time_arr, dtype=float)
 
-        return shift_effect, t_shift
-
+            return shift_effect, t_shift
+        
+        return make_shift
 
 class MockCorrelation:
     """
@@ -64,12 +76,14 @@ class MockCorrelation:
 
     def __init__(
         self,
+        feature_name: str = "central_time",
     ):
+        self.feature_name = feature_name
         self.param_dict = {
             "correlation_type": MockCorrelation,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask,
     ) -> np.ndarray:
