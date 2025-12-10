@@ -15,13 +15,20 @@ class CorrelationMethod(ABC):
     param_dict: dict[str, Any]
 
     @abstractmethod
-    def make_time_offsets(
+    def __init__(
+        self,
+        feature_name: str,
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def make_feature_offsets(
         self,
         shape_mask: np.ndarray[Any, Any],
     ) -> np.ndarray[Any, Any]:
         """
-        Generate time offsets for the time of the shift. An offset value for each grid cell of the
-        spatial grid is created at once.
+        Generate feature offsets for the specified feature of the shift. An offset value for each
+        grid cell of the spatial grid is created at once.
         """
         pass
 
@@ -38,12 +45,15 @@ class NoCorr(CorrelationMethod):
 
     def __init__(
         self,
-    ):
+        feature_name: str = None,
+    ) -> None:
+        self.feature_name = feature_name
         self.param_dict = {
             "correlation_type": NoCorr,
+            "feature_name": feature_name,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask: NDArray[Any],
     ) -> NDArray[Any]:
@@ -60,19 +70,22 @@ class NoCorr(CorrelationMethod):
 class Noise(CorrelationMethod):
     def __init__(
         self,
+        feature_name: str,
         max_offset: int = 5,
-        corr_seed: Optional[int] = None,
+        corr_seed: int | None = None,
     ) -> None:
+        self.feature_name = feature_name
         self.max_offset = max_offset
         self.corr_seed = corr_seed
 
         self.param_dict = {
             "correlation_type": Noise,
+            "feature_name": feature_name,
             "max_offset": max_offset,
             "corr_seed": corr_seed,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask: NDArray[Any],
     ) -> NDArray[Any]:
@@ -84,10 +97,10 @@ class Noise(CorrelationMethod):
                 "No random seed set for PONDS Correlation Method. Results will not be reproducible."
             )
 
-        # generate integer offsets directly to keep types explicit for static type checkers
-        offsets = rng.integers(  # type: ignore
-            -self.max_offset, self.max_offset, size=shape_mask.shape, dtype=int
-        )
+        # generate offsets
+        offsets = rng.uniform(  # type: ignore
+            -self.max_offset, self.max_offset, size=shape_mask.shape
+        ).astype(float)
 
         return offsets  # type: ignore
 
@@ -105,12 +118,14 @@ class Gauss(CorrelationMethod):
 
     def __init__(
         self,
+        feature_name: str,
         corr_center_lat: int | None = None,
         corr_center_lon: int | None = None,
         sigma_lat: int = 10,
         sigma_lon: int = 10,
-        max_offset: int = 10,
+        max_offset: float = 10.0,
     ) -> None:
+        self.feature_name = feature_name
         self.corr_center_lat = corr_center_lat
         self.corr_center_lon = corr_center_lon
         self.sigma_lat = sigma_lat
@@ -119,6 +134,7 @@ class Gauss(CorrelationMethod):
 
         self.param_dict = {
             "correlation_type": Gauss,
+            "feature_name": feature_name,
             "corr_center_lat": corr_center_lat,
             "corr_center_lon": corr_center_lon,
             "sigma_lat": sigma_lat,
@@ -126,7 +142,7 @@ class Gauss(CorrelationMethod):
             "max_offset": max_offset,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask: np.ndarray[Any, Any],
     ) -> np.ndarray[Any, Any]:
@@ -152,7 +168,7 @@ class Gauss(CorrelationMethod):
         )
 
         # Apply shift to data
-        offsets = np.zeros(shape_mask.shape, dtype=int)
+        offsets = np.zeros(shape_mask.shape, dtype=float)
         for i in range(len(lats)):
             for j in range(len(lons)):
                 # Sum contributions from periodic longitudes
@@ -176,14 +192,18 @@ class Custom(CorrelationMethod):
 
     def __init__(
         self,
+        feature_name: str,
         offset_mask: np.ndarray[Any, Any],
     ) -> None:
+        self.feature_name = feature_name
         self.offset_mask = offset_mask
         self.param_dict = {
             "correlation_type": Custom,
+            "feature_name": feature_name,
+            "offset_mask": offset_mask,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask: np.ndarray[Any, Any],
     ) -> np.ndarray[Any, Any]:
@@ -215,22 +235,25 @@ class Propagating(CorrelationMethod):
 
     def __init__(
         self,
+        feature_name: str,
         n_cells: int,
-        max_offset: int = 5,
+        max_offset: float | int,
         corr_seed: int | None = None,
     ) -> None:
+        self.feature_name = feature_name
         self.n_cells = n_cells
         self.max_offset = max_offset
         self.corr_seed = corr_seed
 
         self.param_dict = {
             "correlation_type": Propagating,
+            "feature_name": feature_name,
             "n_cells": n_cells,
             "max_offset": max_offset,
             "corr_seed": corr_seed,
         }
 
-    def make_time_offsets(
+    def make_feature_offsets(
         self,
         shape_mask: np.ndarray[Any, Any],
     ) -> np.ndarray[Any, Any]:
@@ -289,15 +312,22 @@ class Propagating(CorrelationMethod):
 
         # compute distance of each grid cell to each center
         yy, xx = np.mgrid[0 : shape_mask.shape[0], 0 : shape_mask.shape[1]]
-        # compute squared distances for each cell center and ensure an explicit integer dtype
-        d2: NDArray[np.int_] = np.stack(
+        # compute squared distances of all grid cells from each cell center and
+        # ensure an explicit integer dtype
+        lon_dim = shape_mask.shape[1]       # grid width
+        d2: NDArray[np.float_] = np.stack(
             [
-                (yy - self.cell_centers[i, 0]) ** 2
-                + (xx - self.cell_centers[i, 1]) ** 2
+                # Δlat calculated normally
+                (yy - self.cell_centers[i, 0]) ** 2 +
+                # Δlon computed with wrap-around
+                np.minimum(     # - choose smaller distance considering lon-periodicity
+                    np.abs(xx - self.cell_centers[i, 1]),
+                    lon_dim - np.abs(xx - self.cell_centers[i, 1])
+                ) ** 2
                 for i in range(self.n_cells)
             ],
             axis=0,
-        ).astype(int)
+        )
         mask_offset_ix = np.argmin(d2, axis=0)
         # construct mask_offset array: use offset values at the indices of the closest cell centers
         mask_offset = np.array(
@@ -309,6 +339,7 @@ class Propagating(CorrelationMethod):
                 for i in range(mask_offset_ix.shape[0])
             ]
         )
+        #print(f"{mask_offset=}")
 
         return mask_offset
 
@@ -317,29 +348,43 @@ class Propagating(CorrelationMethod):
         rng: np.random.Generator,
     ) -> NDArray[Any]:
         """
-        Determines the offset values for each of the cells.
+        Determines the offset values for each of the Voronoi cells.
 
         Chose a random starting Voronoi cell, then assign offset values based on distance to that cell center.
         The further away from the starting cell center, the larger the offset value.
+
+        Args:
+            rng (np.random.Generator): Random number generator for reproducibility; needed to
+            determine the random starting Voronoi cell.
+        Returns:
+            np.ndarray: Array of offset values for each Voronoi cell as float.
         """
 
         # chose a random index which will determine where the first tipping event occurs
         start_ix = rng.integers(0, self.n_cells - 1, size=1)
         # compute how close each cell center is to the starting index
+        lon_dim = np.max(self.cell_centers[:, 1]) + 1  # grid width only relevant for wrapping masks
         distance_to_start = np.array(
             [
+                # Δlat normal
                 (self.cell_centers[i, 0] - self.cell_centers[start_ix, 0]) ** 2
-                + (self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]) ** 2
+                +
+                # Δlon wrapping
+                np.minimum(     # - choose smaller distance considering lon-periodicity
+                    abs(self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]),
+                    lon_dim - abs(self.cell_centers[i, 1] - self.cell_centers[start_ix, 1])
+                ) ** 2
                 for i in range(self.n_cells)
-            ]
+            ],
+            dtype=float
         )
 
         # assign offset values linearly increasing with distance to starting index
         offset_val = np.array(
             [
-                int(distance_to_start[i, 0] / distance_to_start.max() * self.max_offset)
+                (distance_to_start[i, 0] / distance_to_start.max() * self.max_offset)
                 for i in range(self.n_cells)
             ]
-        )
+        ).astype(float)
 
         return offset_val

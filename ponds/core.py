@@ -12,6 +12,9 @@ from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
+from ponds.utils import (
+    get_first_annotation_type,
+)
 
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -233,22 +236,34 @@ class PONDS:
         if not shape_mask.any():
             raise ValueError("Shape mask is empty. Please check the shape method.")
 
-        # 2) generate time offsets according to correlation method
-        time_offsets = correlation_method.make_time_offsets(
+        # 2) generate feature offsets according to correlation method and make sure they are in the
+        # right dtype for the shift method (e.g. time *must* be int for indexing)
+        feature_offsets = correlation_method.make_feature_offsets(
             shape_mask
-        )  # -> generate offset values
-
+        )                                               # generate offset values
+        feature_offsets = np.array(feature_offsets)     # must be numpy array for rounding function
+        dtype = get_first_annotation_type(
+            shift_method.param_dict["shift_type"],
+            correlation_method.feature_name,
+        )
+        if dtype is int:                                # round values to full integers
+            feature_offsets = feature_offsets.round(0)  # to omit value truncation
+        feature_offsets = feature_offsets.astype(dtype)
         # 3) generate shift data
         mask3d = np.zeros(
             (self.data.sizes["time"], *shape_mask.shape), dtype=bool
         )  # provide some space -> will be later added as cluster DataArray to the Dataset
+        # prepare the shift-generator
+        make_shift = shift_method.prepare_shift(
+            time_arr=self.time, feature_name=correlation_method.feature_name,
+            )
         # - iterate through every cell
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     # - generate shift data using the shift method
-                    shift_effect, t_shift = shift_method.make_shift(
-                        time_arr=self.time, time_offset=time_offsets[i, j]
+                    shift_effect, t_shift = make_shift(
+                        feature_offset=feature_offsets[i, j]
                     )
 
                     # - add shift effect to the data in single grid cell, all time steps at once
