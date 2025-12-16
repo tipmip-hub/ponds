@@ -118,11 +118,12 @@ class RedNoise(BackgroundMethod):
         a = _lag1(self.ac_time, dt=self.dt)     # lag-1 autocorrelation coefficient
         b = (1 - a**2)**0.5     # coefficient for white noise term
 
-        signal = np.random.uniform(low=-1, high=1, size=time_size)
-        for i in range(1, time_size):
-            signal[i] += a * signal[i - 1] + b * signal[i]
+        noise = np.zeros(time_size)
+        noise[self.background_time] = self.rng.uniform(low=-1, high=1, size=len(self.background_time))
+        for i in self.background_time:
+            noise[i] += a * noise[i - 1] + b * noise[i]
 
-        return signal * self.magnitude
+        return noise * self.magnitude
     
 def _lag1(
         Te: float,
