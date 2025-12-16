@@ -846,6 +846,31 @@ class PONDS:
         )
 
         return fig, ax
+    
+    def plot_single_ts(
+        self,
+        lat: float,
+        lon: float,
+        alpha: float = 0.5,
+        linewidth: float = 0.5,
+        figsize: tuple[float, float] = (16, 4),
+        title: str = "Time Series for Single Cell",
+    ) -> tuple[Figure, Axes]:
+        """
+        Plots time series of some exemplary grid cell from the PONDS dataset.
+        """
+
+        fig, ax = visualization.plot_single_ts(
+            ponds=self,
+            lat=lat,
+            lon=lon,
+            alpha=alpha,
+            linewidth=linewidth,
+            figsize=figsize,
+            title=title,
+        )
+
+        return fig, ax
 
     def plot_all_ts(
         self,
