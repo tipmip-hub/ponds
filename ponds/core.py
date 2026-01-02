@@ -128,6 +128,14 @@ class PONDS:
         )
         shape_dict = shape_method.param_dict
 
+        # check if method has magnitude attribute; if set to 0.0, skip background addition (increase performance)
+        if hasattr(background_method, "magnitude"):
+            if getattr(background_method, "magnitude") == 0.0:
+                warnings.warn(
+                    "Background method magnitude set to 0.0. Skipping background addition to increase performance."
+                )
+                return 
+
         # check for seed for random process
         if hasattr(background_method, "background_seed"):
             if getattr(background_method, "background_seed", None) is not None:
@@ -814,6 +822,7 @@ class PONDS:
 
     def worldmap(
         self,
+        ax: Axes | None = None,
         verbose: bool = False,
         figsize: tuple[float, float] = (16, 8),
         borders: bool = True,
@@ -836,6 +845,7 @@ class PONDS:
 
         fig, ax = visualization.worldmap(
             ponds=self,
+            ax=ax,
             verbose=verbose,
             figsize=figsize,
             borders=borders,

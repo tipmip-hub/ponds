@@ -18,9 +18,9 @@ from numpy.typing import NDArray
 ############################################ Plot Maps ############################################
 ###################################################################################################
 
-
 def worldmap(
     ponds: Any,
+    ax: Axes | None = None,
     verbose: bool = False,
     figsize: tuple[float, float] = (16, 8),
     coastline: bool = True,
@@ -40,6 +40,16 @@ def worldmap(
         show_cells: If True, draw grid lines based on xarray resolution.
         title: Title for the plot.
     """
+    # Create figure/axes only if not provided
+    if ax is None:
+        # Set up map with Cartopy
+        fig, ax = plt.subplots(
+            figsize=figsize,
+            subplot_kw={"projection": ccrs.PlateCarree()},
+        )
+    else:
+        figsize = None # type: ignore
+        fig = ax.figure
 
     # Extract cluster masks
     cluster_masks: list[NDArray[np.float64]] = []
@@ -70,11 +80,6 @@ def worldmap(
         "#52b788",  # soft teal
         "#6c5ce7",  # indigo
     ]
-
-    # Set up map with Cartopy
-    fig, ax = plt.subplots(  # type: ignore
-        figsize=figsize, subplot_kw={"projection": ccrs.PlateCarree()}
-    )
 
     # Add map features
     if borders:

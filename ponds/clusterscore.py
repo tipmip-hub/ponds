@@ -1,6 +1,7 @@
 import numpy as np
+from numpy.typing import NDArray
 
-def extract_G_masks(
+def extract_ponds_masks(
         pd,   # ponds object
     ):
     """
@@ -11,7 +12,7 @@ def extract_G_masks(
         G_masks[i] = pd.data[f"c{i+1}"].values
     return G_masks
 
-def extract_D_masks(
+def extract_toad_masks(
         td,   # toad object
     ):
     """
@@ -59,7 +60,7 @@ def FC_measure(
     """
     # check if GT_masks is not empty
     if len(GT_masks) == 0:
-        raise ValueError("GT_masks is empty. RC measure cannot be computed.")
+        raise ValueError("GT_masks is empty. FC measure cannot be computed.")
     
     TP = 0   # true positive: number of pairs of objects in same cluster in GT and D
     FN = 0   # false negatives: number of pairs of objects in same cluster in GT but not in D
@@ -111,7 +112,7 @@ def Frag(
     """
     # check if GT_masks is not empty
     if len(GT_masks) == 0:
-        raise ValueError("GT_masks is empty. RC measure cannot be computed.")
+        raise ValueError("GT_masks is empty. Frag measure cannot be computed.")
     # check if D_masks is not empty
     if len(D_masks) == 0:
         return np.full((len(GT_masks)), 0.0)
@@ -133,7 +134,7 @@ def Uni(
     """
     # check if GT_masks is not empty
     if len(GT_masks) == 0:
-        raise ValueError("GT_masks is empty. RC measure cannot be computed.")
+        raise ValueError("GT_masks is empty. Uni measure cannot be computed.")
     # check if D_masks is not empty
     if len(D_masks) == 0:
         return np.full(len(GT_masks), 0.0)
@@ -149,31 +150,49 @@ def Uni(
 
 ###### helper functions ######
 
+from numpy.typing import NDArray
+
 def match_time(
-        GT_masks,
-        D_masks,
-        timestep_uncertainty=0,
-    ):
+        GT_masks: dict[int, NDArray[np.bool_]],
+        D_masks: dict[int, NDArray[np.bool_]],
+        timestep_uncertainty: int = 0,
+    ) -> dict[int, NDArray[np.bool_]]:
     """
+    Shifts cells of detected masks in time to best match ground truth masks.
     """
-    # make a copy of the detected masks
-    D_masks_shifted = {}
-    for j in range(len(D_masks)):
-        D_masks_shifted[j] = D_masks[j].copy()
+    if len(GT_masks) == 0:
+        raise ValueError("GT_masks is empty. match_time cannot be computed.")
+
+    # make space for shifted detected masks
+    D_masks_shifted: dict[int, NDArray[np.bool_]] = {}
+
+    # extract dimensions
+    first_mask = GT_masks[0]
+    time_dim, lat_dim, lon_dim = first_mask.shape[0], first_mask.shape[1], first_mask.shape[2]
 
     for j in range(len(D_masks)):
-        vals = np.zeros((len(GT_masks), 2 * timestep_uncertainty + 1))    # make space to choose best match from
-        for i in range(len(GT_masks)):
-            # finde the best temporal alignment within the uncertainty range
-            for t_os in range(-timestep_uncertainty, timestep_uncertainty + 1):
-                shifted_D_mask = np.roll(D_masks[j] , shift=t_os, axis=0)      # shift in time axis
-                vals[i, t_os + timestep_uncertainty] = np.sum(np.logical_and(GT_masks[i], shifted_D_mask))   # find number of matching voxels for shifted mask
+        # make space for new detection mask
+        D_mask_shifted = np.zeros((time_dim, lat_dim, lon_dim), dtype=bool)
+        # get indices of detected cells in this D_mask
+        ix_D0 = np.where(D_masks[j])
+        for k in range(len(ix_D0[1])):  # loop over all detected cells
+            t_Ds = ix_D0[0][k]      # initialize to original position
+            lat_D0 = ix_D0[1][k]
+            lon_D0 = ix_D0[2][k]
 
-        # choose best matching D-index; with no axis specified, argmax flattens the array
-        best_ix = np.argmax(vals)%(2 * timestep_uncertainty + 1)
-        # change D_masks entry correspondingly
-        D_masks_shifted[j] = np.roll(D_masks[j], shift=best_ix - timestep_uncertainty, axis=0)
+            for i in range(len(GT_masks)):
+                ix_GT = np.where(GT_masks[i])
+                for h in range(len(ix_GT[1])): # loop over all cells in GT cluster
+                    t_GT = ix_GT[0][h]
+                    lat_GT = ix_GT[1][h]
+                    lon_GT = ix_GT[2][h]
 
+                    if (lat_GT == lat_D0) and (lon_GT == lon_D0):   # check if coordinates match
+                        if abs(t_Ds - t_GT) <= timestep_uncertainty:
+                            t_Ds = t_GT     # update time position if within unc. bounds
+        
+            D_mask_shifted[t_Ds, lat_D0, lon_D0] = 1  # assign detection value to new mask
+        D_masks_shifted[j] = D_mask_shifted
     return D_masks_shifted
 
 def overlap_score(
