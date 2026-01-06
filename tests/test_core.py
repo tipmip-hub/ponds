@@ -1,5 +1,6 @@
 import numpy as np
 from ponds import PONDS, ELLIPSIS, SIGMOID, WhiteNoise, Noise
+from conftest import MockShape, MockShift, MockBackground
 
 """
 Testing the PONDS core class and its methods.
@@ -52,7 +53,9 @@ def test_ponds_initialization_shape():
     assert ponds2.data.ts.shape == (time_size2, lat_size2, lon_size2)
 
 
-def test_ponds_reproducibility(R=5):
+def test_ponds_reproducibility(
+        R: int=5,
+    ):
     """
     - check if same input parameters produces the same data
     R: int
@@ -101,7 +104,10 @@ def test_ponds_reproducibility(R=5):
 ###################################################################################################
 
 
-def test_add_background_shape(mock_shape, mock_background):
+def test_add_background_shape(
+        mock_shape: MockShape,
+        mock_background: MockBackground,
+    ):
     """
     - check if the shape of the time series is unaltered after adding a background
     - check if the background metadata is added to the ts attributes
@@ -143,7 +149,10 @@ def test_add_background_shape(mock_shape, mock_background):
 ###################################################################################################
 
 
-def test_add_shift_shape_unaltered(mock_shape, mock_shift):
+def test_add_shift_shape_unaltered(
+        mock_shape: MockShape,
+        mock_shift: MockShift,
+    ):
     # 1) setup variables
     lat_size = 10
     lon_size = 20
@@ -161,7 +170,10 @@ def test_add_shift_shape_unaltered(mock_shape, mock_shift):
     assert ponds.data.ts.shape == original_shape
 
 
-def test_add_shift_parameter_storage(mock_shape, mock_shift):
+def test_add_shift_parameter_storage(
+        mock_shape: MockShape,
+        mock_shift: MockShift,
+    ):
     """
     - check if the shift- and shape type is stored as an attribute in the xarray DataArray
     - check if PONDS takes a custom cluster_key for the variable name
@@ -204,7 +216,9 @@ def test_add_shift_parameter_storage(mock_shape, mock_shift):
 # use SIGMOID and ELLIPSIS to benchmark reproducibility
 
 
-def test_reproducibility(R=5):
+def test_reproducibility(
+        R: int=5,
+    ):
     """
     - check if stored attributes can be used to reproduce a shift
         -> do this using SIGMOID, ELLIPSIS and WhiteNoise

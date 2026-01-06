@@ -1,9 +1,11 @@
 import numpy as np
 import xarray as xr
-import warnings
 
+import warnings
 from typing import Optional, Any
 from numpy.typing import NDArray
+import logging
+logger = logging.getLogger(__name__)
 
 from ponds import (
     visualization,
@@ -130,15 +132,19 @@ class PONDS:
 
         # check if method has magnitude attribute; if set to 0.0, skip background addition (increase performance)
         if hasattr(background_method, "magnitude"):
-            if getattr(background_method, "magnitude") == 0.0:
-                warnings.warn(
-                    "Background method magnitude set to 0.0. Skipping background addition to increase performance."
-                )
-                return 
+            #if getattr(background_method, "magnitude") == 0.0:
+            if getattr(background_method, "magnitude", None) == 0.0:
+                logger.debug("Skipping background addition (magnitude = 0.0).")
+                return
+
+                # warnings.warn(
+                #     "Background method magnitude set to 0.0. Skipping background addition to increase performance."
+                # )
+                # return
 
         # check for seed for random process
         if hasattr(background_method, "background_seed"):
-            if getattr(background_method, "background_seed", None) is not None:
+            if getattr(background_method, "background_seed") is not None:
                 rng = np.random.default_rng(
                     getattr(background_method, "background_seed")
                 )

@@ -107,8 +107,18 @@ class SIGMOID(ShiftMethod):
             # temporary change the feature value by the offset
             if feature_name == "central_time":
                 t_shift = int(shifted_value)
-            else:
+                shift_steepness = self.shift_steepness
+                shift_magnitude = self.shift_magnitude
+            elif feature_name == "shift_steepness":
+                shift_steepness = shifted_value
+                shift_magnitude = self.shift_magnitude
                 t_shift = self.central_time
+            elif feature_name == "shift_magnitude":
+                shift_magnitude = shifted_value
+                shift_steepness = self.shift_steepness
+                t_shift = self.central_time
+            else:
+                raise ValueError(f"Feature '{feature_name}' cannot be shifted in SIGMOID method.")
             # make computations with altered feature value
             # - ensure t_shift is within bounds
             t_shift = max(0, min(t_shift, len(time_arr) - 1))
@@ -117,8 +127,8 @@ class SIGMOID(ShiftMethod):
             shift_effect = _sigmoid_shift_core(
                 time_arr,
                 t_shift,
-                self.shift_steepness,
-                self.shift_magnitude,
+                shift_steepness,
+                shift_magnitude,
             )
             # -> End of core function for SIGMOID shift generation
 
