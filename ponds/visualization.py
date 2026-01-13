@@ -267,6 +267,7 @@ def plot_some_ts(
     linewidth: float = 0.5,
     figsize: tuple[float, float] = (16, 4),
     title: str = "Time Series for Some Example Cells",
+    fontsize: int = 12,
 ) -> tuple[Figure, Axes]:
     """
     Plots time series of some exemplary grid cell from the PONDS dataset.
@@ -290,9 +291,20 @@ def plot_some_ts(
             )
 
     # eyecandy
-    ax.set_title(title)  # type: ignore
-    ax.set_xlabel("Time")  # type: ignore
-    ax.set_ylabel("Value")  # type: ignore
+    ax.set_title(title, fontsize=fontsize)  # type: ignore
+    # - set x-axis
+    ax.set_xlabel("Time", fontsize=fontsize)  # type: ignore
+    x_ticks = np.arange(
+        0,
+        ponds.data.sizes["time"]+1,     # +1 to include last tick
+        step=max(1, ponds.data.sizes["time"] // 10)) # type: ignore
+    ax.set_xticks(x_ticks)  # type: ignore
+    ax.set_xticklabels(np.round(x_ticks,5), fontsize=fontsize)  # type: ignore
+    ax.set_xlim(-1, ponds.data.sizes["time"])  # type: ignore
+    # - set y-axis
+    ax.set_ylabel("Observable Value", fontsize=fontsize)  # type: ignore
+    ax.set_yticks(ax.get_yticks())  # type: ignore
+    ax.set_yticklabels(np.round(ax.get_yticks(),5), fontsize=fontsize)  # type: ignore
 
     return fig, ax
 

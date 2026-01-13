@@ -916,6 +916,7 @@ class PONDS:
         linewidth: float = 0.5,
         figsize: tuple[float, float] = (16, 4),
         title: str = "Time Series for Some Example Cells",
+        fontsize: int = 12,
     ) -> tuple[Figure, Axes]:
         """
         Plots time series of some exemplary grid cell from the PONDS dataset.
@@ -928,6 +929,7 @@ class PONDS:
             linewidth=linewidth,
             figsize=figsize,
             title=title,
+            fontsize=fontsize,
         )
 
         return fig, ax
