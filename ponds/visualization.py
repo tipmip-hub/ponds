@@ -277,17 +277,23 @@ def plot_some_ts(
         figsize=figsize,
     )
 
-    for i in range(ponds.data.sizes["lat"]):
-        for j in range(ponds.data.sizes["lon"]):
-            if np.random.rand() > ratio:
-                continue
-            ax.plot(  # type: ignore
-                ponds.data.ts[:, i, j],
-                linestyle="-",
-                linewidth=linewidth,
-                marker=None,
-                color="grey",
-                alpha=alpha,
+    ts = ponds.data.ts  # shape: (time, lat, lon)
+    # stack spatial dimensions (no copy!)
+    ts_stacked = ts.stack(cell=("lat", "lon"))
+
+    n_cells = ts_stacked.sizes["cell"]
+    n_plot = max(1, int(n_cells * ratio))
+
+    # randomly sample cells
+    cell_idx = np.random.choice(n_cells, size=n_plot, replace=False)
+
+    # plot in chunks for further speedup ( -> ---.values is expensive for large arrays)
+    for chunk in np.array_split(cell_idx, 10):
+        ax.plot(
+            ts_stacked.isel(cell=chunk).values,
+            color="grey",
+            alpha=alpha,
+            linewidth=linewidth,
             )
 
     # eyecandy
