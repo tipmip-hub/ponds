@@ -6,7 +6,7 @@ from typing import Optional, Any
 from numpy.typing import NDArray
 
 from ponds import (
-    plotter,
+    visualization,
 )
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
@@ -126,6 +126,19 @@ class PONDS:
         )
         shape_dict = shape_method.param_dict
 
+        # check for seed for random process
+        if hasattr(background_method, "background_seed"):
+            if getattr(background_method, "background_seed", None) is not None:
+                rng = np.random.default_rng(
+                    getattr(background_method, "background_seed")
+                )
+            else:
+                rng = np.random.default_rng()
+                warnings.warn(
+                    "No random seed set for PONDS Background Method. Results will not be reproducible."
+                )
+            setattr(background_method, "rng", rng)
+
         # 2) Generate background data and add to time series
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
@@ -155,10 +168,13 @@ class PONDS:
         Shape Methods:
             - "ELLIPSIS": Adds a shift in the shape of an eliptic blob.
             - "BLOB": Adds a shift in the shape of a random blob.
+            - "CELL": Adds a shift in a single grid cell.
+            - "CLUSTER": Adds several cluster shapes at various locations.
             - "CUSTOM": Adds a shift in a user-defined shape.
             - ...
         Shift Methods:
             - "SIGMOID": Adds a shift using a sigmoid function.
+            - "BIMODAL": Adds a shift switching between two levels.
             - ...
         Correlation Methods:
             - "Noise": Adds random time offsets to the shift times.
@@ -417,6 +433,122 @@ class PONDS:
         self.data[output_label] = system_ts
 
     ###################################################################################################
+    ######################################## Delete Functions #########################################
+    ###################################################################################################
+
+    def delete_background(
+        self,
+        background: str,
+    ) -> None:
+        """
+        Deletes a background cluster from the ponds Dataset.
+
+        This function deletes a background by reconstructing the background event, using the stored meta data.
+        Instead of adding the corresponding background effect, it is subtracted.
+
+        Args:
+            background (str): The background to delete (e.g. "b1", "b2", ...).
+        """
+        # check if background exists in the Dataset
+        if background in self.data.ts.attrs:
+            instances = self.get_background_instance(background)
+            background_method = instances[0]
+            shape_method = instances[1]
+
+            # 1) generate shape mask
+            shape_mask = shape_method.make_shape(
+                lats=self.lats,
+                lons=self.lons,
+            )
+
+            # check for seed for random process
+            if hasattr(background_method, "background_seed"):
+                if getattr(background_method, "background_seed", None) is not None:
+                    rng = np.random.default_rng(
+                        getattr(background_method, "background_seed")
+                    )
+                else:
+                    warnings.warn(
+                        "No random seed set for PONDS Background Method. Can not be deleted."
+                    )
+                    return
+                setattr(background_method, "rng", rng)
+
+            # 2) Generate background data and add to time series
+            for i in range(self.data.sizes["lat"]):
+                for j in range(self.data.sizes["lon"]):
+                    if shape_mask[i, j]:
+                        background_effect = background_method.make_background(
+                            time_size=len(self.time),
+                        )
+
+                        # add shift effect to the data in single grid cell, all time steps at once
+                        self.data.ts.values[:, i, j] -= background_effect
+            # delete background attributes from the ts DataArray
+            keys_to_delete = [
+                key for key in self.data.ts.attrs.keys() if key.startswith(background)
+            ]
+            for key in keys_to_delete:
+                del self.data.ts.attrs[key]
+
+        else:
+            warnings.warn(f"Background {background} does not exist in the Dataset.")
+
+    def delete_shift(
+        self,
+        cluster: str,
+    ) -> None:
+        """
+        Deletes a shift cluster from the ponds Dataset.
+
+        This function deletes a shift by reconstructing the shift event, using the stored meta data.
+        Instead of adding the corresponding shift effect, it is subtracted.
+
+        Args:
+            cluster (str): The cluster to delete (e.g. "c1", "c2", ...).
+        """
+
+        # check if cluster exists in the Dataset
+        if cluster in self.data.data_vars:
+            instances = self.get_cluster_instance(cluster)
+            shift_method = instances[0]
+            shape_method = instances[1]
+            correlation_method = instances[2]
+
+            # 1) generate shape mask
+            # - make the boolean shape mask
+            shape_mask = shape_method.make_shape(
+                lats=self.lats,
+                lons=self.lons,
+            )
+            # - check if shape_mask is valid -> raise error if no True values in it
+            if not shape_mask.any():
+                raise ValueError("Shape mask is empty. Please check the shape method.")
+
+            # 2) generate time offsets according to correlation method
+            time_offsets = correlation_method.make_time_offsets(
+                shape_mask
+            )  # -> generate offset values
+
+            # 3) generate shift data
+            # - iterate through every cell
+            for i in range(self.data.sizes["lat"]):
+                for j in range(self.data.sizes["lon"]):
+                    if shape_mask[i, j]:
+                        # - generate shift data using the shift method
+                        shift_effect, _ = shift_method.make_shift(
+                            time_arr=self.time, time_offset=time_offsets[i, j]
+                        )
+
+                        # - subtract shift effect to the data in single grid cell, all time steps at once
+                        self.data.ts.values[:, i, j] -= shift_effect
+
+            # delete the cluster DataArray from the Dataset to remove meta data
+            self.data = self.data.drop_vars(cluster)
+        else:
+            warnings.warn(f"Cluster {cluster} does not exist in the Dataset.")
+
+    ###################################################################################################
     ######################################### Get Functions ###########################################
     ###################################################################################################
 
@@ -505,10 +637,13 @@ class PONDS:
         # get list of keys in order of appearance
         keys = list(self.data.ts.attrs.keys())
         # filter keys that start with the background_key
-        # keys = [key for key in keys if key.startswith(background_key)]
-        # get index of "background_type" and "shape_type"
+        # - get index of "background_type" and "shape_type"
         b_index = keys.index(background_key + "_background_type")
         s_index = keys.index(background_key + "_shape_type")
+        # - get index of last entry with the background_key prefix
+        last_index = max(
+            i for i, key in enumerate(keys) if key.startswith(background_key + "_")
+        )
 
         b_specs: dict[str, Any] = {
             "class": self.data.ts.attrs[keys[b_index]],
@@ -517,7 +652,7 @@ class PONDS:
         for key in keys[b_index + 1 : s_index]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
-            # save the parameters in the dictionary
+            # save the parameters in ts_index + 1 :he dictionary
             b_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
         b_instance = b_specs["class"](**b_specs["params"])
 
@@ -525,7 +660,7 @@ class PONDS:
             "class": self.data.ts.attrs[keys[s_index]],
             "params": {},
         }
-        for key in keys[s_index + 1 :]:
+        for key in keys[s_index + 1 : last_index + 1]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
             # save the parameters in the dictionary
@@ -682,6 +817,8 @@ class PONDS:
 
     ###################################################################################################
     #################################### Plotting Functions ###########################################
+    ###################################################################################################
+
     def worldmap(
         self,
         verbose: bool = False,
@@ -704,7 +841,7 @@ class PONDS:
             title (str): Title of the plot.
         """
 
-        fig, ax = plotter.worldmap(
+        fig, ax = visualization.worldmap(
             ponds=self,
             verbose=verbose,
             figsize=figsize,
@@ -719,6 +856,7 @@ class PONDS:
 
     def plot_all_ts(
         self,
+        linewidth: float = 0.5,
         alpha: float = 0.5,
         figsize: tuple[float, float] = (16, 2),
         title: str = "Time Series for All Cells",
@@ -727,8 +865,9 @@ class PONDS:
         Plots the time series of every grid cell from the PONDS dataset.
         """
 
-        fig, ax = plotter.plot_all_ts(
+        fig, ax = visualization.plot_all_ts(
             ponds=self,
+            linewidth=linewidth,
             alpha=alpha,
             figsize=figsize,
             title=title,

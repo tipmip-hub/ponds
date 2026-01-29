@@ -68,8 +68,6 @@ class CELL(ShapeMethod):
         self.center_lat = center_lat
         self.center_lon = center_lon
 
-        print(f"Cell Shape Center at lat: {self.center_lat}, lon: {self.center_lon}")
-
         self.param_dict = {
             "shape_type": CELL,
             "center_lat": center_lat,
@@ -288,7 +286,6 @@ class BLOB(ShapeMethod):
         """Create a metaball mask in lat/lon space."""
 
         if self.random_seed is not None:
-            # np.random.seed(self.random_seed)
             rng = np.random.default_rng(self.random_seed)
         else:
             rng = np.random.default_rng()
@@ -502,6 +499,9 @@ class CLUSTER(ShapeMethod):
             rng = np.random.default_rng(self.shape_seed)
         else:
             rng = np.random.default_rng()
+            warnings.warn(
+                "No random seed set for PONDS Shape Method. Results will not be reproducible."
+            )
 
         lat_min = self.center_lat - self.size_lat / 2
         lat_max = self.center_lat + self.size_lat / 2
