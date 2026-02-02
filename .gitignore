@@ -5,3 +5,4 @@ build/
 .coverage
 .pytest_cache
 *dummy.nc
+data/*
