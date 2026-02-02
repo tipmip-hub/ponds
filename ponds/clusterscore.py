@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.typing import NDArray
-
 from typing import Any
 
 def extract_ponds_masks(
@@ -209,8 +208,6 @@ def Uni(
     return score
 
 ###### helper functions ######
-
-from numpy.typing import NDArray
 
 def match_time(
         GT_masks: dict[int, NDArray[np.bool_]],
