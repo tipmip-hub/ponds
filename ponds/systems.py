@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import numpy as np
+<<<<<<< HEAD
 from numpy.typing import NDArray
+=======
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
 
 from tqdm.auto import tqdm
 
@@ -10,18 +13,29 @@ from tqdm.auto import tqdm
 
 class DynamicalSystem(ABC):
     @abstractmethod
+<<<<<<< HEAD
     def integrate(
         self,
         parameter_array: NDArray[np.floating],
     ) -> NDArray[np.floating]:
+=======
+    def integrate(self, parameter_array: np.ndarray) -> np.ndarray:
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
         """
         Integrates the dynamical system over time.
 
         Parameters:
+<<<<<<< HEAD
             parameter_array (NDArray[np.floating]): Array of parameter values for the integration.
 
         Returns:
             NDArray[np.floating]: The integrated states over time.
+=======
+            parameter_array (np.ndarray): Array of parameter values for the integration.
+
+        Returns:
+            np.ndarray: The integrated states over time.
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
         """
 
     @abstractmethod
@@ -65,11 +79,16 @@ class Lorenz(DynamicalSystem):
         }
 
     def integrate(
+<<<<<<< HEAD
         self,
         parameter_array: NDArray[np.floating],
         dt: float = 1e-4,
         sampling_factor: int = 500,
     ) -> NDArray[np.floating]:
+=======
+        self, parameter_array, dt: float = 1e-4, sampling_factor: int = 500
+    ) -> np.ndarray:
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
         """
         Generate a Lorenz time series.
 
@@ -128,6 +147,7 @@ class Lorenz(DynamicalSystem):
         # return only the first dimension of the timeseries
         return np.array(timeseries)[:, 0]
 
+<<<<<<< HEAD
     def integrate_step(
             self,
             x: float,
@@ -138,6 +158,9 @@ class Lorenz(DynamicalSystem):
             rho: float,
             beta: float,
         ) -> tuple[float, float, float]:
+=======
+    def integrate_step(self, x, y, z, dt, sigma, rho, beta):
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
         """
         Returns an integration timestep X_(n+1) of the Lorenz system,
         given X_n and the bifurcation parameters.
@@ -148,10 +171,14 @@ class Lorenz(DynamicalSystem):
 
         return x_step, y_step, z_step
 
+<<<<<<< HEAD
     def get_parameter_value(
             self,
             state: str = "c1",
         ) -> float:
+=======
+    def get_parameter_value(self, state: str = "c1") -> float:
+>>>>>>> 1ffd777dbe9daaa3d7b52308c12282ff0eb7fcda
         """
         Get the parameter value for the desired type of state.
         """
