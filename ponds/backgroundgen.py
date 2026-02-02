@@ -33,6 +33,7 @@ class BackgroundMethod(ABC):
 ############################################# White Noise #########################################
 ###################################################################################################
 
+
 class WhiteNoise(BackgroundMethod):
     def __init__(
         self,
@@ -62,27 +63,30 @@ class WhiteNoise(BackgroundMethod):
         self,
         time_size: int,
     ) -> NDArray[np.float64]:
-
         if self.background_time is None:
             self.background_time = np.arange(time_size)
 
         noise = np.zeros(time_size)
-        noise[self.background_time] = self.magnitude * self.rng.uniform(low=-1, high=1,#normal(
-            size=len(self.background_time)
+        noise[self.background_time] = self.magnitude * self.rng.uniform(
+            low=-1,
+            high=1,  # normal(
+            size=len(self.background_time),
         )
         return noise
+
 
 ###################################################################################################
 ############################################## Red Noise ##########################################
 ###################################################################################################
 
+
 class RedNoise(BackgroundMethod):
     def __init__(
         self,
-        magnitude: float = 0.05,    # Magnitude of the white noise
-        ac_time: float = 1.0,       # Autocorrelation time
-        dt: float = 1.0,            # Time step size
-        background_seed: int = 1,   # Random seed for reproducibility
+        magnitude: float = 0.05,  # Magnitude of the white noise
+        ac_time: float = 1.0,  # Autocorrelation time
+        dt: float = 1.0,  # Time step size
+        background_seed: int = 1,  # Random seed for reproducibility
         background_time: Optional[NDArray[np.int_]] = None,
     ) -> None:
         """
@@ -109,36 +113,36 @@ class RedNoise(BackgroundMethod):
             "background_time": background_time,
         }
 
-    
     def make_background(
         self,
         time_size: int,
     ) -> NDArray[np.float64]:
-
         if self.background_time is None:
             background_time = np.arange(time_size, dtype=np.int64)
         else:
             background_time = self.background_time.astype(np.int64)
 
-        a = _lag1(self.ac_time, dt=self.dt)     # lag-1 autocorrelation coefficient
-        b = np.sqrt(1.0 - a*a)     # coefficient for white noise term
+        a = _lag1(self.ac_time, dt=self.dt)  # lag-1 autocorrelation coefficient
+        b = np.sqrt(1.0 - a * a)  # coefficient for white noise term
 
         noise = np.zeros(time_size)
-        noise[background_time] = self.rng.uniform(low=-1, high=1, size=len(background_time))
+        noise[background_time] = self.rng.uniform(
+            low=-1, high=1, size=len(background_time)
+        )
         noise = _red_noise_core(noise, background_time, a, b)
-        #for i in self.background_time:
+        # for i in self.background_time:
         #    noise[i] += a * noise[i - 1] + b * noise[i]
 
         return noise * self.magnitude
-    
+
+
 @njit
 def _red_noise_core(
     noise: NDArray[np.float64],
     background_time: NDArray[np.int_],
-    a: float,               # lag-1 autocorrelation coefficient
-    b: float,               # coefficient for white noise term
+    a: float,  # lag-1 autocorrelation coefficient
+    b: float,  # coefficient for white noise term
 ) -> NDArray[np.float64]:
-
     for idx in range(len(background_time)):
         i = background_time[idx]
         if i > 0:
@@ -146,13 +150,14 @@ def _red_noise_core(
         else:
             noise[i] = b * noise[i]
 
-    return noise    
+    return noise
 
-@njit  
+
+@njit
 def _lag1(
-        Te: float,
-        dt: float = 1.0,
-    ) -> float:
+    Te: float,
+    dt: float = 1.0,
+) -> float:
     """
     Lag-1 autocorrelation coefficient for an exponential decay process.
 
@@ -174,7 +179,7 @@ def _lag1(
         raise ValueError("Te must be positive or zero.")
     if Te == 0:
         return 0.0
-    
+
     lag1 = np.exp(-dt / Te)
     return lag1
 
@@ -182,6 +187,7 @@ def _lag1(
 ####################################################################################################
 ############################################# TREND ################################################
 ####################################################################################################
+
 
 class Trend(BackgroundMethod):
     def __init__(

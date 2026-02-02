@@ -18,6 +18,7 @@ from numpy.typing import NDArray
 ############################################ Plot Maps ############################################
 ###################################################################################################
 
+
 def worldmap(
     ponds: Any,
     ax: Axes | None = None,
@@ -48,7 +49,7 @@ def worldmap(
             subplot_kw={"projection": ccrs.PlateCarree()},
         )
     else:
-        figsize = None # type: ignore
+        figsize = None  # type: ignore
         fig = ax.figure
 
     # Extract cluster masks
@@ -294,7 +295,7 @@ def plot_some_ts(
             color="grey",
             alpha=alpha,
             linewidth=linewidth,
-            )
+        )
 
     # eyecandy
     ax.set_title(title, fontsize=fontsize)  # type: ignore
@@ -302,15 +303,16 @@ def plot_some_ts(
     ax.set_xlabel("Time", fontsize=fontsize)  # type: ignore
     x_ticks = np.arange(
         0,
-        ponds.data.sizes["time"]+1,     # +1 to include last tick
-        step=max(1, ponds.data.sizes["time"] // 10)) # type: ignore
+        ponds.data.sizes["time"] + 1,  # +1 to include last tick
+        step=max(1, ponds.data.sizes["time"] // 10),
+    )  # type: ignore
     ax.set_xticks(x_ticks)  # type: ignore
-    ax.set_xticklabels(np.round(x_ticks,5), fontsize=fontsize)  # type: ignore
+    ax.set_xticklabels(np.round(x_ticks, 5), fontsize=fontsize)  # type: ignore
     ax.set_xlim(-1, ponds.data.sizes["time"])  # type: ignore
     # - set y-axis
     ax.set_ylabel("Observable Value", fontsize=fontsize)  # type: ignore
     ax.set_yticks(ax.get_yticks())  # type: ignore
-    ax.set_yticklabels(np.round(ax.get_yticks(),5), fontsize=fontsize)  # type: ignore
+    ax.set_yticklabels(np.round(ax.get_yticks(), 5), fontsize=fontsize)  # type: ignore
 
     return fig, ax
 

@@ -1,6 +1,5 @@
 import numpy as np
 from ponds import SIGMOID, PONDS
-from ponds.correlationgen import CorrelationMethod
 
 """
 Things to Test:
@@ -131,6 +130,7 @@ def test_sigmoid_custom_parameters_used(err_tol=1e-1):
 ######################################## Correlation ##############################################
 ###################################################################################################
 
+
 def test_sigmoid_correlation(mock_corr, mock_shape):
     """
     - apply mock correlation method to sigmoid shift features, on at a time
@@ -225,21 +225,39 @@ def test_sigmoid_correlation(mock_corr, mock_shape):
     # - compare the shifted data at position (0,0) where the offset is applied
     # - baseline data
     data0 = pd0.data.ts.values
-    assert np.all(data0[:50,0,0] <= 0.3), "Baseline data incorrect at central_time feature."
-    assert np.all(data0[50:,0,0] >= 0.3), "Baseline data incorrect at central_time feature."
-    assert np.isclose(np.max(data0), 1.0), "Baseline data exceeds expected maximum value."
+    assert np.all(data0[:50, 0, 0] <= 0.3), (
+        "Baseline data incorrect at central_time feature."
+    )
+    assert np.all(data0[50:, 0, 0] >= 0.3), (
+        "Baseline data incorrect at central_time feature."
+    )
+    assert np.isclose(np.max(data0), 1.0), (
+        "Baseline data exceeds expected maximum value."
+    )
 
     # - central time should be shifted by 2 at position (0,0)
     data1 = pd1.data.ts.values
-    assert np.all(data1[:52,0,0] <= 0.3), "Correlation offset not applied correctly to central_time feature."
-    assert np.all(data1[52:,0,0] >= 0.3), "Correlation offset not applied correctly to central_time feature."
-    assert np.isclose(np.max(data1), 1.0), "Baseline data exceeds expected maximum value."
+    assert np.all(data1[:52, 0, 0] <= 0.3), (
+        "Correlation offset not applied correctly to central_time feature."
+    )
+    assert np.all(data1[52:, 0, 0] >= 0.3), (
+        "Correlation offset not applied correctly to central_time feature."
+    )
+    assert np.isclose(np.max(data1), 1.0), (
+        "Baseline data exceeds expected maximum value."
+    )
 
     # - shift_steepness should be shifted by 2 at position (0,0)
     ...
 
     # - shift_magnitude should be shifted by 2 at position (0,0) -> so 1.0 + 2.0 = 3.0
     data3 = pd3.data.ts.values
-    assert np.all(data3[:50,0,0] <= 0.3*3), "Correlation offset not applied correctly to shift_magnitude feature."
-    assert np.all(data3[50:,0,0] >= 0.3*3), "Correlation offset not applied correctly to shift_magnitude feature."
-    assert np.isclose(np.max(data3), 3.0), "Data exceeds expected maximum value after applying correlation to shift_magnitude feature."
+    assert np.all(data3[:50, 0, 0] <= 0.3 * 3), (
+        "Correlation offset not applied correctly to shift_magnitude feature."
+    )
+    assert np.all(data3[50:, 0, 0] >= 0.3 * 3), (
+        "Correlation offset not applied correctly to shift_magnitude feature."
+    )
+    assert np.isclose(np.max(data3), 3.0), (
+        "Data exceeds expected maximum value after applying correlation to shift_magnitude feature."
+    )

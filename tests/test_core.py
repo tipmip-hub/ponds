@@ -54,8 +54,8 @@ def test_ponds_initialization_shape():
 
 
 def test_ponds_reproducibility(
-        R: int=5,
-    ):
+    R: int = 5,
+):
     """
     - check if same input parameters produces the same data
     R: int
@@ -105,9 +105,9 @@ def test_ponds_reproducibility(
 
 
 def test_add_background_shape(
-        mock_shape: MockShape,
-        mock_background: MockBackground,
-    ):
+    mock_shape: MockShape,
+    mock_background: MockBackground,
+):
     """
     - check if the shape of the time series is unaltered after adding a background
     - check if the background metadata is added to the ts attributes
@@ -150,9 +150,9 @@ def test_add_background_shape(
 
 
 def test_add_shift_shape_unaltered(
-        mock_shape: MockShape,
-        mock_shift: MockShift,
-    ):
+    mock_shape: MockShape,
+    mock_shift: MockShift,
+):
     # 1) setup variables
     lat_size = 10
     lon_size = 20
@@ -171,9 +171,9 @@ def test_add_shift_shape_unaltered(
 
 
 def test_add_shift_parameter_storage(
-        mock_shape: MockShape,
-        mock_shift: MockShift,
-    ):
+    mock_shape: MockShape,
+    mock_shift: MockShift,
+):
     """
     - check if the shift- and shape type is stored as an attribute in the xarray DataArray
     - check if PONDS takes a custom cluster_key for the variable name
@@ -208,6 +208,7 @@ def test_add_shift_parameter_storage(
     assert ponds.data.custom_key1.attrs["shape_type"] == mock_shape
     assert ponds.data.custom_key2.attrs["shape_type"] == mock_shape
 
+
 ###################################################################################################
 #################################### Apply transformation #########################################
 ###################################################################################################
@@ -240,8 +241,8 @@ def test_apply_transformation(mock_dynamical_system):
 
 
 def test_reproducibility(
-        R: int=5,
-    ):
+    R: int = 5,
+):
     """
     - check if stored attributes can be used to reproduce a shift
         -> do this using SIGMOID, ELLIPSIS and WhiteNoise

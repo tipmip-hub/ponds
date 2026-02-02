@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-from typing import Optional, Any
+from typing import Any
 from numpy.typing import NDArray
 
 from numba import njit
@@ -25,12 +25,10 @@ class ShiftMethod(ABC):
         time_arr: NDArray[np.float64],
         feature_name: str,
     ) -> object:
-        
         @abstractmethod
         def make_shift(
-                feature_offset: float = 0.0,
+            feature_offset: float = 0.0,
         ) -> tuple[NDArray[np.float64], int]:
-            
             pass
 
         return make_shift
@@ -39,6 +37,7 @@ class ShiftMethod(ABC):
 ###################################################################################################
 ############################################ SIGMOID ##############################################
 ###################################################################################################
+
 
 class SIGMOID(ShiftMethod):
     def __init__(
@@ -93,16 +92,18 @@ class SIGMOID(ShiftMethod):
                 np.round(self.central_time_rel * (len(time_arr) - 1))
             )
             self.param_dict["central_time"] = self.central_time
-        
+
         if not hasattr(self, feature_name):
-            raise AttributeError(f"Feature '{feature_name}' does not exist in the shiftgen method.")
+            raise AttributeError(
+                f"Feature '{feature_name}' does not exist in the shiftgen method."
+            )
 
         original_val = getattr(self, feature_name)
 
         # bind the feature_name for fast access when called repeatedly
         def make_shift(
-                feature_offset: int | float = 0,
-                ) -> tuple[NDArray[np.float64], int]:
+            feature_offset: int | float = 0,
+        ) -> tuple[NDArray[np.float64], int]:
             shifted_value = original_val + feature_offset
             # temporary change the feature value by the offset
             if feature_name == "central_time":
@@ -118,7 +119,9 @@ class SIGMOID(ShiftMethod):
                 shift_steepness = self.shift_steepness
                 t_shift = self.central_time
             else:
-                raise ValueError(f"Feature '{feature_name}' cannot be shifted in SIGMOID method.")
+                raise ValueError(
+                    f"Feature '{feature_name}' cannot be shifted in SIGMOID method."
+                )
             # make computations with altered feature value
             # - ensure t_shift is within bounds
             t_shift = max(0, min(t_shift, len(time_arr) - 1))
@@ -136,7 +139,7 @@ class SIGMOID(ShiftMethod):
             setattr(self, feature_name, original_val)  # reset to original value
 
             return shift_effect, t_shift
-        
+
         return make_shift
 
 
@@ -166,6 +169,7 @@ def _sigmoid_shift_core(
         out[i] = magnitude / (1.0 + np.exp(-steepness * (time_arr[i] - t0)))
 
     return out
+
 
 # @njit
 # def _sigmoid(
@@ -253,14 +257,16 @@ class BIMODAL(ShiftMethod):
                 np.round(self.central_time_rel * (len(time_arr) - 1))
             )
             self.param_dict["central_time"] = self.central_time
-        
+
         if not hasattr(self, feature_name):
-            raise AttributeError(f"Feature '{feature_name}' does not exist in the shiftgen method.")
+            raise AttributeError(
+                f"Feature '{feature_name}' does not exist in the shiftgen method."
+            )
 
         # bind the feature_name for fast access when called repeatedly
         def make_shift(
-                feature_offset: int | float = 0,
-                ) -> tuple[NDArray[np.float64], int]:
+            feature_offset: int | float = 0,
+        ) -> tuple[NDArray[np.float64], int]:
             original_val = getattr(self, feature_name)
             # temporary change the feature value by the offset
             setattr(self, feature_name, original_val + feature_offset)

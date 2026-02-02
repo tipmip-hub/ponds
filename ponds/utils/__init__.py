@@ -5,6 +5,7 @@ Utility functions and constants for PONDS.
 import inspect
 from typing import get_origin, get_args, Union
 
+
 def get_first_annotation_type(cls, arg_name: str):
     """
     Function to extract the first non-NoneType annotation from a possibly

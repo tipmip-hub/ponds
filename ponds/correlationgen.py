@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import warnings
 
-from typing import Optional, Any
+from typing import Any
 from numpy.typing import NDArray
 
 # for Gauss
@@ -314,16 +314,18 @@ class Propagating(CorrelationMethod):
         yy, xx = np.mgrid[0 : shape_mask.shape[0], 0 : shape_mask.shape[1]]
         # compute squared distances of all grid cells from each cell center and
         # ensure an explicit integer dtype
-        lon_dim = shape_mask.shape[1]       # grid width
+        lon_dim = shape_mask.shape[1]  # grid width
         d2: NDArray[np.float_] = np.stack(
             [
                 # Δlat calculated normally
-                (yy - self.cell_centers[i, 0]) ** 2 +
+                (yy - self.cell_centers[i, 0]) ** 2
+                +
                 # Δlon computed with wrap-around
-                np.minimum(     # - choose smaller distance considering lon-periodicity
+                np.minimum(  # - choose smaller distance considering lon-periodicity
                     np.abs(xx - self.cell_centers[i, 1]),
-                    lon_dim - np.abs(xx - self.cell_centers[i, 1])
-                ) ** 2
+                    lon_dim - np.abs(xx - self.cell_centers[i, 1]),
+                )
+                ** 2
                 for i in range(self.n_cells)
             ],
             axis=0,
@@ -339,7 +341,7 @@ class Propagating(CorrelationMethod):
                 for i in range(mask_offset_ix.shape[0])
             ]
         )
-        #print(f"{mask_offset=}")
+        # print(f"{mask_offset=}")
 
         return mask_offset
 
@@ -363,20 +365,24 @@ class Propagating(CorrelationMethod):
         # chose a random index which will determine where the first tipping event occurs
         start_ix = rng.integers(0, self.n_cells - 1, size=1)
         # compute how close each cell center is to the starting index
-        lon_dim = np.max(self.cell_centers[:, 1]) + 1  # grid width only relevant for wrapping masks
+        lon_dim = (
+            np.max(self.cell_centers[:, 1]) + 1
+        )  # grid width only relevant for wrapping masks
         distance_to_start = np.array(
             [
                 # Δlat normal
                 (self.cell_centers[i, 0] - self.cell_centers[start_ix, 0]) ** 2
                 +
                 # Δlon wrapping
-                np.minimum(     # - choose smaller distance considering lon-periodicity
+                np.minimum(  # - choose smaller distance considering lon-periodicity
                     abs(self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]),
-                    lon_dim - abs(self.cell_centers[i, 1] - self.cell_centers[start_ix, 1])
-                ) ** 2
+                    lon_dim
+                    - abs(self.cell_centers[i, 1] - self.cell_centers[start_ix, 1]),
+                )
+                ** 2
                 for i in range(self.n_cells)
             ],
-            dtype=float
+            dtype=float,
         )
 
         # assign offset values linearly increasing with distance to starting index

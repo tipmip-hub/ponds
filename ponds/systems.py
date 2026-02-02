@@ -129,15 +129,15 @@ class Lorenz(DynamicalSystem):
         return np.array(timeseries)[:, 0]
 
     def integrate_step(
-            self,
-            x: float,
-            y: float,
-            z: float,
-            dt: float,
-            sigma: float,
-            rho: float,
-            beta: float,
-        ) -> tuple[float, float, float]:
+        self,
+        x: float,
+        y: float,
+        z: float,
+        dt: float,
+        sigma: float,
+        rho: float,
+        beta: float,
+    ) -> tuple[float, float, float]:
         """
         Returns an integration timestep X_(n+1) of the Lorenz system,
         given X_n and the bifurcation parameters.
@@ -149,9 +149,9 @@ class Lorenz(DynamicalSystem):
         return x_step, y_step, z_step
 
     def get_parameter_value(
-            self,
-            state: str = "c1",
-        ) -> float:
+        self,
+        state: str = "c1",
+    ) -> float:
         """
         Get the parameter value for the desired type of state.
         """

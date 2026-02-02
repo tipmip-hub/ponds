@@ -79,8 +79,8 @@ def test_noise_offsets_within_range(R=5):
         shape_mask = np.ones((lat_size, lon_size), dtype=bool)
         seed = np.random.randint(0, 10000)
         noise = Noise(
-            feature_name="central_time",
-            max_offset=max_offset, corr_seed=seed)
+            feature_name="central_time", max_offset=max_offset, corr_seed=seed
+        )
 
         offsets = noise.make_feature_offsets(shape_mask)
 
@@ -96,8 +96,9 @@ def test_noise_param_dict():
     """
     max_offset = 3
     corr_seed = 101
-    noise = Noise(feature_name="central_time",
-                  max_offset=max_offset, corr_seed=corr_seed)
+    noise = Noise(
+        feature_name="central_time", max_offset=max_offset, corr_seed=corr_seed
+    )
 
     pdict = noise.param_dict
     assert pdict["correlation_type"] == Noise, "Wrong correlation_type stored."
@@ -117,12 +118,8 @@ def test_reproducibility():
     lat_size, lon_size = 25, 35
     shape_mask = np.ones((lat_size, lon_size), dtype=bool)
     seed = 1234
-    noise1 = Noise(
-        feature_name="central_time",
-        max_offset=7, corr_seed=seed)
-    noise2 = Noise(
-        feature_name="central_time",
-        max_offset=7, corr_seed=seed)
+    noise1 = Noise(feature_name="central_time", max_offset=7, corr_seed=seed)
+    noise2 = Noise(feature_name="central_time", max_offset=7, corr_seed=seed)
 
     offsets1 = noise1.make_feature_offsets(shape_mask)
     offsets2 = noise2.make_feature_offsets(shape_mask)

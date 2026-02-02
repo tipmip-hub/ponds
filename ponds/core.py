@@ -13,7 +13,9 @@ from ponds.utils import get_first_annotation_type
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class PONDS:
     """
@@ -124,7 +126,7 @@ class PONDS:
 
         # check if method has magnitude attribute; if set to 0.0, skip background addition (increase performance)
         if hasattr(background_method, "magnitude"):
-            #if getattr(background_method, "magnitude") == 0.0:
+            # if getattr(background_method, "magnitude") == 0.0:
             if getattr(background_method, "magnitude", None) == 0.0:
                 logger.debug("Skipping background addition (magnitude = 0.0).")
                 return
@@ -246,13 +248,15 @@ class PONDS:
         # right dtype for the shift method (e.g. time *must* be int for indexing)
         feature_offsets = correlation_method.make_feature_offsets(
             shape_mask
-        )                                               # generate offset values
-        feature_offsets = np.array(feature_offsets)     # must be numpy array for rounding function
+        )  # generate offset values
+        feature_offsets = np.array(
+            feature_offsets
+        )  # must be numpy array for rounding function
         dtype = get_first_annotation_type(
             shift_method.param_dict["shift_type"],
             correlation_method.feature_name,
         )
-        if dtype is int:                                # round values to full integers
+        if dtype is int:  # round values to full integers
             feature_offsets = feature_offsets.round(0)  # to omit value truncation
         feature_offsets = feature_offsets.astype(dtype)
         # 3) generate shift data
@@ -261,8 +265,9 @@ class PONDS:
         )  # provide some space -> will be later added as cluster DataArray to the Dataset
         # prepare the shift-generator
         make_shift = shift_method.prepare_shift(
-            time_arr=self.time, feature_name=correlation_method.feature_name,
-            )
+            time_arr=self.time,
+            feature_name=correlation_method.feature_name,
+        )
         # - iterate through every cell
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
@@ -452,7 +457,6 @@ class PONDS:
             output_label = "system_ts"
         self.data[output_label] = system_ts
 
-
     ###################################################################################################
     ######################################## Delete Functions #########################################
     ###################################################################################################
@@ -554,8 +558,9 @@ class PONDS:
             # 3) generate shift data
             # prepare the shift-generator
             make_shift = shift_method.prepare_shift(
-                time_arr=self.time, feature_name=correlation_method.feature_name,
-                )
+                time_arr=self.time,
+                feature_name=correlation_method.feature_name,
+            )
             # - iterate through every cell
             for i in range(self.data.sizes["lat"]):
                 for j in range(self.data.sizes["lon"]):
@@ -880,7 +885,7 @@ class PONDS:
         )
 
         return fig, ax
-    
+
     def plot_single_ts(
         self,
         lat: float,

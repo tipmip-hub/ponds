@@ -75,6 +75,7 @@ def test_random_seed(R=5):
             "PONDS data is reproducible with different random seeds."
         )
 
+
 def test_ac_time(err=1e-1):
     """
     - check if different ac-times produce different data
@@ -123,15 +124,19 @@ def test_ac_time(err=1e-1):
     )
     # - check that lag-1 (ac_time) is correctly implemented
     ts1 = ponds1.data.ts.values.flatten()
-    Tcorr1 = np.correlate((ts1-np.mean(ts1)),(ts1-np.mean(ts1))/(len(ts1)*np.var(ts1)),'same')
-    lag1_1 = np.exp(-1/ ac_time1)
-    assert np.isclose(Tcorr1[time_length//2 + 1], lag1_1, atol=err), (
+    Tcorr1 = np.correlate(
+        (ts1 - np.mean(ts1)), (ts1 - np.mean(ts1)) / (len(ts1) * np.var(ts1)), "same"
+    )
+    lag1_1 = np.exp(-1 / ac_time1)
+    assert np.isclose(Tcorr1[time_length // 2 + 1], lag1_1, atol=err), (
         "Lag-1 autocorrelation for ac_time1 is not correctly implemented."
     )
     ts2 = ponds2.data.ts.values.flatten()
-    Tcorr2 = np.correlate((ts2-np.mean(ts2)),(ts2-np.mean(ts2))/(len(ts2)*np.var(ts2)),'same')
-    lag1_2 = np.exp(-1/ ac_time2)
-    assert np.isclose(Tcorr2[time_length//2 + 1], lag1_2, atol=err), (
+    Tcorr2 = np.correlate(
+        (ts2 - np.mean(ts2)), (ts2 - np.mean(ts2)) / (len(ts2) * np.var(ts2)), "same"
+    )
+    lag1_2 = np.exp(-1 / ac_time2)
+    assert np.isclose(Tcorr2[time_length // 2 + 1], lag1_2, atol=err), (
         "Lag-1 autocorrelation for ac_time2 is not correctly implemented."
     )
 

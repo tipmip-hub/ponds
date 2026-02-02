@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 import copy
 
-from typing import Any, Optional, Union
+from typing import Any, Union
 from numpy.typing import NDArray
 
 # for BLOB
