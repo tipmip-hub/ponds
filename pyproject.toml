@@ -41,6 +41,7 @@ dependencies = [
         "cartopy",
         "scipy",
         "numba",
+        "tqdm",
 ]
 
 [project.optional-dependencies]
