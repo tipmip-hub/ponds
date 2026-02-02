@@ -1,26 +1,20 @@
 import numpy as np
 import xarray as xr
-
 import warnings
 from typing import Optional, Any
 from numpy.typing import NDArray
 import logging
 logger = logging.getLogger(__name__)
-
-from ponds import (
-    visualization,
-)
+from ponds import visualization
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
 from ponds.systems import DynamicalSystem
 from ponds.utils import get_first_annotation_type
-
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-
 
 class PONDS:
     """
