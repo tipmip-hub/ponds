@@ -26,8 +26,10 @@ def test_bimodal_reproducibility_seed(R=5):
         bimodal_shift1 = BIMODAL(shift_seed=seed)
         bimodal_shift2 = BIMODAL(shift_seed=seed)
         time_arr = np.arange(0, 100)
-        shift_effect1, _ = bimodal_shift1.make_shift(time_arr)
-        shift_effect2, _ = bimodal_shift2.make_shift(time_arr)
+        make_shift1 = bimodal_shift1.prepare_shift(time_arr)
+        make_shift2 = bimodal_shift2.prepare_shift(time_arr)
+        shift_effect1, _ = make_shift1()
+        shift_effect2, _ = make_shift2()
 
         assert np.array_equal(shift_effect1, shift_effect2)
 
@@ -55,8 +57,11 @@ def test_bimodal_reproducibility_custom_params(R=5):
             duration=duration,
             shift_magnitude=shift_magnitude,
         )
-        shift_effect1, _ = bimodal_shift1.make_shift(time_arr)
-        shift_effect2, _ = bimodal_shift2.make_shift(time_arr)
+
+        make_shift1 = bimodal_shift1.prepare_shift(time_arr)
+        make_shift2 = bimodal_shift2.prepare_shift(time_arr)
+        shift_effect1, _ = make_shift1()
+        shift_effect2, _ = make_shift2()
 
         assert np.array_equal(shift_effect1, shift_effect2)
 
@@ -72,7 +77,8 @@ def test_bimodal_central_time():
         interval_length=10,
         shift_magnitude=1.0,
     )
-    shift_effect, actual_central_time = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, actual_central_time = make_shift()
 
     assert actual_central_time == central_time
     assert np.all(shift_effect[: central_time + 1] == 0)
@@ -91,7 +97,8 @@ def test_bimodal_interval_length():
         interval_length=interval_length,
         shift_magnitude=1.0,
     )
-    shift_effect, _ = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, _ = make_shift()
 
     assert np.all(
         shift_effect[central_time + 1 : central_time + interval_length + 1] != 0
@@ -120,7 +127,8 @@ def test_bimodal_shift_duration():
         interval_length=interval_length,
         shift_magnitude=1.0,
     )
-    shift_effect, _ = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, _ = make_shift()
 
     assert shift_effect[-1] != 0
 
@@ -135,7 +143,8 @@ def test_bimodal_shift_duration():
         duration=duration,
         shift_magnitude=1.0,
     )
-    shift_effect, _ = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, _ = make_shift()
 
     assert np.all(shift_effect[central_time + 1 + duration :] == 0)
 
@@ -150,7 +159,8 @@ def test_bimodal_shift_duration():
         duration=duration,
         shift_magnitude=1.0,
     )
-    shift_effect, _ = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, _ = make_shift()
 
     assert np.all(shift_effect[: central_time - duration + 1] == 0)
 
@@ -168,7 +178,8 @@ def test_bimodal_shift_magnitude():
         interval_length=interval_length,
         shift_magnitude=shift_magnitude,
     )
-    shift_effect, _ = bimodal_shift.make_shift(time_arr)
+    make_shift = bimodal_shift.prepare_shift(time_arr)
+    shift_effect, _ = make_shift()
 
     assert np.all(
         shift_effect[central_time + 1 : central_time + interval_length + 1]

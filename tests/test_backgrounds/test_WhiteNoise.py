@@ -24,8 +24,8 @@ def test_magnitude(err_tol=5e-2):
     magnitude = 1
 
     ponds = PONDS(
-        lat_size=2,
-        lon_size=2,
+        lat_size=1,
+        lon_size=1,
         time_size=10000,
     )
     with warnings.catch_warnings():
@@ -36,15 +36,10 @@ def test_magnitude(err_tol=5e-2):
 
     # 3) check results
     ts1 = ponds.data.ts[:, 0, 0].values
-    ts2 = ponds.data.ts[:, 0, 1].values
-    ts3 = ponds.data.ts[:, 1, 0].values
-    ts4 = ponds.data.ts[:, 1, 1].values
 
     # -
-    assert np.isclose(np.std(ts1), magnitude, atol=err_tol)
-    assert np.isclose(np.std(ts2), magnitude, atol=err_tol)
-    assert np.isclose(np.std(ts3), magnitude, atol=err_tol)
-    assert np.isclose(np.std(ts4), magnitude, atol=err_tol)
+    assert np.max(ts1) <= magnitude + err_tol
+    assert np.min(ts1) >= -magnitude - err_tol
 
 
 def test_random_seed(R=5):

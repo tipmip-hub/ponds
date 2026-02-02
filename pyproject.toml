@@ -40,7 +40,8 @@ dependencies = [
         "netCDF4",
         "cartopy",
         "scipy",
-        "tqdm"
+        "numba",
+        "tqdm",
 ]
 
 [project.optional-dependencies]

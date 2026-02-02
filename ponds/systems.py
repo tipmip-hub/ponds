@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from numpy.typing import NDArray
 
 from tqdm.auto import tqdm
 
@@ -9,15 +10,18 @@ from tqdm.auto import tqdm
 
 class DynamicalSystem(ABC):
     @abstractmethod
-    def integrate(self, parameter_array: np.ndarray) -> np.ndarray:
+    def integrate(
+        self,
+        parameter_array: NDArray[np.floating],
+    ) -> NDArray[np.floating]:
         """
         Integrates the dynamical system over time.
 
         Parameters:
-            parameter_array (np.ndarray): Array of parameter values for the integration.
+            parameter_array (NDArray[np.floating]): Array of parameter values for the integration.
 
         Returns:
-            np.ndarray: The integrated states over time.
+            NDArray[np.floating]: The integrated states over time.
         """
 
     @abstractmethod
@@ -61,8 +65,11 @@ class Lorenz(DynamicalSystem):
         }
 
     def integrate(
-        self, parameter_array, dt: float = 1e-4, sampling_factor: int = 500
-    ) -> np.ndarray:
+        self,
+        parameter_array: NDArray[np.floating],
+        dt: float = 1e-4,
+        sampling_factor: int = 500,
+    ) -> NDArray[np.floating]:
         """
         Generate a Lorenz time series.
 
@@ -121,7 +128,16 @@ class Lorenz(DynamicalSystem):
         # return only the first dimension of the timeseries
         return np.array(timeseries)[:, 0]
 
-    def integrate_step(self, x, y, z, dt, sigma, rho, beta):
+    def integrate_step(
+            self,
+            x: float,
+            y: float,
+            z: float,
+            dt: float,
+            sigma: float,
+            rho: float,
+            beta: float,
+        ) -> tuple[float, float, float]:
         """
         Returns an integration timestep X_(n+1) of the Lorenz system,
         given X_n and the bifurcation parameters.
@@ -132,7 +148,10 @@ class Lorenz(DynamicalSystem):
 
         return x_step, y_step, z_step
 
-    def get_parameter_value(self, state: str = "c1") -> float:
+    def get_parameter_value(
+            self,
+            state: str = "c1",
+        ) -> float:
         """
         Get the parameter value for the desired type of state.
         """

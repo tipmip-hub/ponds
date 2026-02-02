@@ -57,8 +57,8 @@ class SINGLE(ShapeMethod):
 class CELL(ShapeMethod):
     def __init__(
         self,
-        center_lat: Optional[float] = None,
-        center_lon: Optional[float] = None,
+        center_lat: float | None = None,
+        center_lon: float | None = None,
     ) -> None:
         if center_lat is None:
             center_lat = np.random.randint(-80, 80)
@@ -101,11 +101,11 @@ class CELL(ShapeMethod):
 class ELLIPSIS(ShapeMethod):
     def __init__(
         self,
-        center_lat: Optional[float] = None,  # center latitude degree of the ellipsis
-        center_lon: Optional[float] = None,  # center longitude degree of the ellipsis
-        ecc_lat: Optional[float] = None,  # standard deviation in latitude degrees
-        ecc_lon: Optional[float] = None,  # standard deviation in longitude degrees
-        shape_seed: Optional[int] = None,
+        center_lat: float | None = None,  # center latitude degree of the ellipsis
+        center_lon: float | None = None,  # center longitude degree of the ellipsis
+        ecc_lat: float | None = None,  # standard deviation in latitude degrees
+        ecc_lon: float | None = None,  # standard deviation in longitude degrees
+        shape_seed: int | None = None,
     ) -> None:
         if shape_seed is not None:
             # np.random.seed(random_seed)
@@ -177,7 +177,10 @@ class ELLIPSIS(ShapeMethod):
 
 
 class CUSTOM(ShapeMethod):
-    def __init__(self, shape_mask: NDArray[np.bool_]) -> None:
+    def __init__(
+        self,
+        shape_mask: NDArray[np.bool_],
+    ) -> None:
         """
         Custom shape method that uses a pre-defined mask.
 
@@ -223,12 +226,12 @@ class CUSTOM(ShapeMethod):
 class BLOB(ShapeMethod):
     def __init__(
         self,
-        center_lat: Optional[float] = None,
-        center_lon: Optional[float] = None,
-        size: Optional[float] = None,
-        max_bellys: Optional[int] = None,
-        goo: Optional[float] = None,
-        shape_seed: Optional[int] = None,
+        center_lat: float | None = None,
+        center_lon: float | None = None,
+        size: float | None = None,
+        max_bellys: int | None = None,
+        goo: float | None = None,
+        shape_seed: int | None = None,
     ) -> None:
         """
         Creates a shape using the following algorithm:
@@ -443,13 +446,13 @@ class _Metaball:
 class CLUSTER(ShapeMethod):
     def __init__(
         self,
-        center_lat: Optional[float] = None,
-        center_lon: Optional[float] = None,
-        size_lat: Optional[float] = None,
-        size_lon: Optional[float] = None,
-        n: Optional[int] = None,
-        mode: Optional[ShapeMethod] = None,
-        shape_seed: Optional[int] = None,
+        center_lat: float | None = None,
+        center_lon: float | None = None,
+        size_lat: float | None = None,
+        size_lon: float | None = None,
+        n: int | None = None,
+        mode: ShapeMethod | None = None,
+        shape_seed: int | None = None,
     ) -> None:
         if shape_seed is not None:
             rng = np.random.default_rng(shape_seed)
