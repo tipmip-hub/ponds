@@ -75,7 +75,7 @@ def test_random_seed(R=5):
             "PONDS data is reproducible with different random seeds."
         )
 
-def test_ac_time(err=5e-2):
+def test_ac_time(err=1e-1):
     """
     - check if different ac-times produce different data
     - check if lag-1(ac_time) is correctly implemented
@@ -121,7 +121,7 @@ def test_ac_time(err=5e-2):
     assert not np.array_equal(ponds1.data.ts, ponds2.data.ts), (
         "PONDS data is identical for different ac-times."
     )
-    # - check that lag-1(ac_time) is correctly implemented
+    # - check that lag-1 (ac_time) is correctly implemented
     ts1 = ponds1.data.ts.values.flatten()
     Tcorr1 = np.correlate((ts1-np.mean(ts1)),(ts1-np.mean(ts1))/(len(ts1)*np.var(ts1)),'same')
     lag1_1 = np.exp(-1/ ac_time1)

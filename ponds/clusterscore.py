@@ -239,7 +239,7 @@ def match_time(
     time_dim, lat_dim, lon_dim = first_mask.shape[0], first_mask.shape[1], first_mask.shape[2]
 
     #for j in range(len(D_masks)):
-    for j, d_mask in enumerate(D_masks):
+    for j, d_mask in D_masks.items():
         # make space for new detection mask
         D_mask_shifted = np.zeros((time_dim, lat_dim, lon_dim), dtype=bool)
         # get indices of detected cells in this D_mask
@@ -249,7 +249,7 @@ def match_time(
             lat_D0 = ix_D0[1][k]
             lon_D0 = ix_D0[2][k]
 
-            for _, gt_mask in enumerate(GT_masks):
+            for gt_mask in GT_masks.values():
                 ix_GT = np.where(gt_mask)
                 for h in range(len(ix_GT[1])): # loop over all cells in GT cluster
                     t_GT = ix_GT[0][h]
