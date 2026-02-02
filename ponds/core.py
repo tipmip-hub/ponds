@@ -15,9 +15,7 @@ from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
 from ponds.systems import DynamicalSystem
-from ponds.utils import (
-    get_first_annotation_type,
-)
+from ponds.utils import get_first_annotation_type
 
 # import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
