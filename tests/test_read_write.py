@@ -2,6 +2,8 @@ import os
 import tempfile
 import numpy as np
 from ponds import PONDS
+from conftest import MockShape, MockShift, MockBackground, MockCorrelation
+
 
 """
 Testing the PONDS read and write functions.
@@ -25,7 +27,12 @@ Legend:
 ###################################################################################################
 
 
-def test_save_and_load(mock_shape, mock_shift, mock_background, mock_corr):
+def test_save_and_load(
+    mock_shape: MockShape,
+    mock_shift: MockShift,
+    mock_background: MockBackground,
+    mock_corr: MockCorrelation,
+):
     # Create dummy PONDS instance
     ponds = PONDS(
         lat_size=4,

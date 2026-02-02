@@ -33,10 +33,11 @@ def test_custom_mask_usage():
     shape_mask = custom_mask.astype(bool)
 
     corr_instance = Custom(
+        feature_name="central_time",
         offset_mask=custom_mask,
     )
 
-    offsets = corr_instance.make_time_offsets(shape_mask)
+    offsets = corr_instance.make_feature_offsets(shape_mask)
 
     # Check that offsets are only applied where custom_mask is True
     assert np.all(offsets[~shape_mask] == 0), (

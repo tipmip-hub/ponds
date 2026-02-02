@@ -21,6 +21,7 @@ from numpy.typing import NDArray
 
 def worldmap(
     ponds: Any,
+    ax: Axes | None = None,
     verbose: bool = False,
     figsize: tuple[float, float] = (16, 8),
     coastline: bool = True,
@@ -40,6 +41,16 @@ def worldmap(
         show_cells: If True, draw grid lines based on xarray resolution.
         title: Title for the plot.
     """
+    # Create figure/axes only if not provided
+    if ax is None:
+        # Set up map with Cartopy
+        fig, ax = plt.subplots(
+            figsize=figsize,
+            subplot_kw={"projection": ccrs.PlateCarree()},
+        )
+    else:
+        figsize = None  # type: ignore
+        fig = ax.figure
 
     # Extract cluster masks
     cluster_masks: list[NDArray[np.float64]] = []
@@ -70,11 +81,6 @@ def worldmap(
         "#52b788",  # soft teal
         "#6c5ce7",  # indigo
     ]
-
-    # Set up map with Cartopy
-    fig, ax = plt.subplots(  # type: ignore
-        figsize=figsize, subplot_kw={"projection": ccrs.PlateCarree()}
-    )
 
     # Add map features
     if borders:
@@ -262,6 +268,7 @@ def plot_some_ts(
     linewidth: float = 0.5,
     figsize: tuple[float, float] = (16, 4),
     title: str = "Time Series for Some Example Cells",
+    fontsize: int = 12,
 ) -> tuple[Figure, Axes]:
     """
     Plots time series of some exemplary grid cell from the PONDS dataset.
@@ -271,23 +278,41 @@ def plot_some_ts(
         figsize=figsize,
     )
 
-    for i in range(ponds.data.sizes["lat"]):
-        for j in range(ponds.data.sizes["lon"]):
-            if np.random.rand() > ratio:
-                continue
-            ax.plot(  # type: ignore
-                ponds.data.ts[:, i, j],
-                linestyle="-",
-                linewidth=linewidth,
-                marker=None,
-                color="grey",
-                alpha=alpha,
-            )
+    ts = ponds.data.ts  # shape: (time, lat, lon)
+    # stack spatial dimensions (no copy!)
+    ts_stacked = ts.stack(cell=("lat", "lon"))
+
+    n_cells = ts_stacked.sizes["cell"]
+    n_plot = max(1, int(n_cells * ratio))
+
+    # randomly sample cells
+    cell_idx = np.random.choice(n_cells, size=n_plot, replace=False)
+
+    # plot in chunks for further speedup ( -> ---.values is expensive for large arrays)
+    for chunk in np.array_split(cell_idx, 10):
+        ax.plot(
+            ts_stacked.isel(cell=chunk).values,
+            color="grey",
+            alpha=alpha,
+            linewidth=linewidth,
+        )
 
     # eyecandy
-    ax.set_title(title)  # type: ignore
-    ax.set_xlabel("Time")  # type: ignore
-    ax.set_ylabel("Value")  # type: ignore
+    ax.set_title(title, fontsize=fontsize)  # type: ignore
+    # - set x-axis
+    ax.set_xlabel("Time", fontsize=fontsize)  # type: ignore
+    x_ticks = np.arange(
+        0,
+        ponds.data.sizes["time"] + 1,  # +1 to include last tick
+        step=max(1, ponds.data.sizes["time"] // 10),
+    )  # type: ignore
+    ax.set_xticks(x_ticks)  # type: ignore
+    ax.set_xticklabels(np.round(x_ticks, 5), fontsize=fontsize)  # type: ignore
+    ax.set_xlim(-1, ponds.data.sizes["time"])  # type: ignore
+    # - set y-axis
+    ax.set_ylabel("Observable Value", fontsize=fontsize)  # type: ignore
+    ax.set_yticks(ax.get_yticks())  # type: ignore
+    ax.set_yticklabels(np.round(ax.get_yticks(), 5), fontsize=fontsize)  # type: ignore
 
     return fig, ax
 

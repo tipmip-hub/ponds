@@ -1,22 +1,20 @@
 import numpy as np
 import xarray as xr
 import warnings
-
 from typing import Optional, Any
 from numpy.typing import NDArray
-
-from ponds import (
-    visualization,
-)
+from ponds import visualization
 from ponds.shapegen import ShapeMethod, SINGLE
 from ponds.shiftgen import ShiftMethod
 from ponds.backgroundgen import BackgroundMethod
 from ponds.correlationgen import CorrelationMethod, NoCorr
 from ponds.systems import DynamicalSystem
-
-# import matplotlib.pyplot as plt
+from ponds.utils import get_first_annotation_type
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PONDS:
@@ -126,9 +124,21 @@ class PONDS:
         )
         shape_dict = shape_method.param_dict
 
+        # check if method has magnitude attribute; if set to 0.0, skip background addition (increase performance)
+        if hasattr(background_method, "magnitude"):
+            # if getattr(background_method, "magnitude") == 0.0:
+            if getattr(background_method, "magnitude", None) == 0.0:
+                logger.debug("Skipping background addition (magnitude = 0.0).")
+                return
+
+                # warnings.warn(
+                #     "Background method magnitude set to 0.0. Skipping background addition to increase performance."
+                # )
+                # return
+
         # check for seed for random process
         if hasattr(background_method, "background_seed"):
-            if getattr(background_method, "background_seed", None) is not None:
+            if getattr(background_method, "background_seed") is not None:
                 rng = np.random.default_rng(
                     getattr(background_method, "background_seed")
                 )
@@ -234,22 +244,37 @@ class PONDS:
         if not shape_mask.any():
             raise ValueError("Shape mask is empty. Please check the shape method.")
 
-        # 2) generate time offsets according to correlation method
-        time_offsets = correlation_method.make_time_offsets(
+        # 2) generate feature offsets according to correlation method and make sure they are in the
+        # right dtype for the shift method (e.g. time *must* be int for indexing)
+        feature_offsets = correlation_method.make_feature_offsets(
             shape_mask
-        )  # -> generate offset values
-
+        )  # generate offset values
+        feature_offsets = np.array(
+            feature_offsets
+        )  # must be numpy array for rounding function
+        dtype = get_first_annotation_type(
+            shift_method.param_dict["shift_type"],
+            correlation_method.feature_name,
+        )
+        if dtype is int:  # round values to full integers
+            feature_offsets = feature_offsets.round(0)  # to omit value truncation
+        feature_offsets = feature_offsets.astype(dtype)
         # 3) generate shift data
         mask3d = np.zeros(
             (self.data.sizes["time"], *shape_mask.shape), dtype=bool
         )  # provide some space -> will be later added as cluster DataArray to the Dataset
+        # prepare the shift-generator
+        make_shift = shift_method.prepare_shift(
+            time_arr=self.time,
+            feature_name=correlation_method.feature_name,
+        )
         # - iterate through every cell
         for i in range(self.data.sizes["lat"]):
             for j in range(self.data.sizes["lon"]):
                 if shape_mask[i, j]:
                     # - generate shift data using the shift method
-                    shift_effect, t_shift = shift_method.make_shift(
-                        time_arr=self.time, time_offset=time_offsets[i, j]
+                    shift_effect, t_shift = make_shift(
+                        feature_offset=feature_offsets[i, j]
                     )
 
                     # - add shift effect to the data in single grid cell, all time steps at once
@@ -525,19 +550,24 @@ class PONDS:
             if not shape_mask.any():
                 raise ValueError("Shape mask is empty. Please check the shape method.")
 
-            # 2) generate time offsets according to correlation method
-            time_offsets = correlation_method.make_time_offsets(
+            # 2) generate feature offsets according to correlation method
+            feature_offsets = correlation_method.make_feature_offsets(
                 shape_mask
             )  # -> generate offset values
 
             # 3) generate shift data
+            # prepare the shift-generator
+            make_shift = shift_method.prepare_shift(
+                time_arr=self.time,
+                feature_name=correlation_method.feature_name,
+            )
             # - iterate through every cell
             for i in range(self.data.sizes["lat"]):
                 for j in range(self.data.sizes["lon"]):
                     if shape_mask[i, j]:
                         # - generate shift data using the shift method
-                        shift_effect, _ = shift_method.make_shift(
-                            time_arr=self.time, time_offset=time_offsets[i, j]
+                        shift_effect, _ = make_shift(
+                            feature_offset=feature_offsets[i, j]
                         )
 
                         # - subtract shift effect to the data in single grid cell, all time steps at once
@@ -821,6 +851,7 @@ class PONDS:
 
     def worldmap(
         self,
+        ax: Axes | None = None,
         verbose: bool = False,
         figsize: tuple[float, float] = (16, 8),
         borders: bool = True,
@@ -843,12 +874,38 @@ class PONDS:
 
         fig, ax = visualization.worldmap(
             ponds=self,
+            ax=ax,
             verbose=verbose,
             figsize=figsize,
             borders=borders,
             coastline=coastline,
             show_cells=show_cells,
             shift_type=shift_type,
+            title=title,
+        )
+
+        return fig, ax
+
+    def plot_single_ts(
+        self,
+        lat: float,
+        lon: float,
+        alpha: float = 0.5,
+        linewidth: float = 0.5,
+        figsize: tuple[float, float] = (16, 4),
+        title: str = "Time Series for Single Cell",
+    ) -> tuple[Figure, Axes]:
+        """
+        Plots time series of some exemplary grid cell from the PONDS dataset.
+        """
+
+        fig, ax = visualization.plot_single_ts(
+            ponds=self,
+            lat=lat,
+            lon=lon,
+            alpha=alpha,
+            linewidth=linewidth,
+            figsize=figsize,
             title=title,
         )
 
@@ -871,6 +928,31 @@ class PONDS:
             alpha=alpha,
             figsize=figsize,
             title=title,
+        )
+
+        return fig, ax
+
+    def plot_some_ts(
+        self,
+        ratio: float = 0.1,
+        alpha: float = 0.5,
+        linewidth: float = 0.5,
+        figsize: tuple[float, float] = (16, 4),
+        title: str = "Time Series for Some Example Cells",
+        fontsize: int = 12,
+    ) -> tuple[Figure, Axes]:
+        """
+        Plots time series of some exemplary grid cell from the PONDS dataset.
+        """
+
+        fig, ax = visualization.plot_some_ts(
+            ponds=self,
+            ratio=ratio,
+            alpha=alpha,
+            linewidth=linewidth,
+            figsize=figsize,
+            title=title,
+            fontsize=fontsize,
         )
 
         return fig, ax

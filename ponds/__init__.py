@@ -1,7 +1,7 @@
 from ponds.core import PONDS
 from ponds.shapegen import ShapeMethod, SINGLE, CELL, ELLIPSIS, CUSTOM, BLOB, CLUSTER
 from ponds.shiftgen import ShiftMethod, SIGMOID, BIMODAL
-from ponds.backgroundgen import BackgroundMethod, WhiteNoise, Trend
+from ponds.backgroundgen import BackgroundMethod, WhiteNoise, RedNoise, Trend
 from ponds.correlationgen import (
     CorrelationMethod,
     NoCorr,
@@ -28,6 +28,7 @@ __all__ = [
     "BIMODAL",
     "BackgroundMethod",
     "WhiteNoise",
+    "RedNoise",
     "Trend",
     "CorrelationMethod",
     "NoCorr",
@@ -48,6 +49,7 @@ type_dict: Dict[str, Any] = {
     "SIGMOID": SIGMOID,
     "BIMODAL": BIMODAL,
     "WhiteNoise": WhiteNoise,
+    "RedNoise": RedNoise,
     "Trend": Trend,
     "NoCorr": NoCorr,
     "Noise": Noise,

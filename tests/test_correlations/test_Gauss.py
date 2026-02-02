@@ -35,6 +35,7 @@ def test_gauss_center_coordinates(err=2):
 
     for center_lat, center_lon in test_centers:
         gauss = Gauss(
+            feature_name="central_time",
             corr_center_lat=center_lat,
             corr_center_lon=center_lon,
             sigma_lat=5,  # <- smaller sigma for sharper peak
@@ -43,7 +44,7 @@ def test_gauss_center_coordinates(err=2):
         )
 
         mask = np.ones((lat_size, lon_size), dtype=bool)
-        offsets = gauss.make_time_offsets(mask)
+        offsets = gauss.make_feature_offsets(mask)
 
         # Find indices of max offset (should correspond to center)
         max_pos = np.unravel_index(np.argmax(offsets), offsets.shape)
@@ -107,6 +108,7 @@ def test_gauss_max_offset_scaling():
     mask = np.ones((lat_size, lon_size), dtype=bool)
 
     g_low = Gauss(
+        feature_name="central_time",
         corr_center_lat=0,
         corr_center_lon=0,
         sigma_lat=10,
@@ -114,6 +116,7 @@ def test_gauss_max_offset_scaling():
         max_offset=5,
     )
     g_high = Gauss(
+        feature_name="central_time",
         corr_center_lat=0,
         corr_center_lon=0,
         sigma_lat=10,
@@ -121,8 +124,8 @@ def test_gauss_max_offset_scaling():
         max_offset=10,
     )
 
-    off_low = g_low.make_time_offsets(mask)
-    off_high = g_high.make_time_offsets(mask)
+    off_low = g_low.make_feature_offsets(mask)
+    off_high = g_high.make_feature_offsets(mask)
 
     # Compare means or max values (excluding zeros)
     assert np.abs(off_high).max() > np.abs(off_low).max(), (
@@ -145,7 +148,9 @@ def test_gauss_and_ellipsis_alignment(mock_shift):
     pd.add_shift(
         shift_method=mock_shift(),
         shape_method=ELLIPSIS(),
-        correlation_method=Gauss(),
+        correlation_method=Gauss(
+            feature_name="central_time",
+        ),
     )
 
     # Get centers
