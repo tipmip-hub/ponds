@@ -86,6 +86,9 @@ def FC_measure(
     """
     Computes the clustering F-measure between ground truth masks and detected masks.
 
+    NOTE: Due to the definition of tp, fp, fn in terms of pairs of cells, this measure is
+    blind to single cell clusters.
+
     Arguments:
     - GT_masks: dict[int, NDArray[np.bool_]]: dictionary of ground truth cluster masks
     - D_masks: dict[int, NDArray[np.bool_]]: dictionary of detected cluster masks
@@ -96,9 +99,9 @@ def FC_measure(
     if len(GT_masks) == 0:
         raise ValueError("GT_masks is empty. FC measure cannot be computed.")
 
-    tp = 0  # true positive: number of pairs of objects in same cluster in GT and D
-    fn = 0  # false negatives: number of pairs of objects in same cluster in GT but not in D
-    fp = 0  # false positives: number of pairs of objects in same cluster in D but not in GT
+    tp = 0  # true positive: number of pairs of cells in same cluster in GT and D
+    fn = 0  # false negatives: number of pairs of cells in same cluster in GT but not in D
+    fp = 0  # false positives: number of pairs of cells in same cluster in D but not in GT
 
     # count true positives
     for gt in GT_masks.values():
@@ -117,9 +120,9 @@ def FC_measure(
         fp += d_size * (d_size - 1) / 2
     fp -= tp
 
-    # print(f"{tp=}, {fp=}, {fn=}")
+    print(f"{tp=}, {fp=}, {fn=}")
 
-    score = 2 * tp / (2 * tp + fp + fn)
+    score = 2 * tp / (2 * tp + fp + fn) if (2 * tp + fp + fn) > 0 else 0.0
     return float(score)
 
 
@@ -177,7 +180,7 @@ def Frag(
     os = overlap_score(GT_masks, D_masks)
     for i in range(len(GT_masks)):
         # bm = best_match(os, i)
-        fs = F_score(np.sum(GT_masks[i]), os[i, :])
+        fs = Frag_score(np.sum(os[i, :]))
         score[i] = fs
     return score
 
@@ -210,7 +213,7 @@ def Uni(
     os = overlap_score(GT_masks, D_masks)
     for i in range(len(GT_masks)):
         bm = best_match(os, i)
-        us = U_score(np.sum(os[:, bm]), np.sum(GT_masks[i]), os[i, bm])
+        us = Uni_score(np.sum(os[:, bm]), os[i, bm])
         score[i] = us
     return score
 
@@ -302,7 +305,7 @@ def overlap_score(
     return score
 
 
-def F_score(
+def Frag_score(
     D_ov_mags: NDArray[np.floating],
 ) -> float:
     """
@@ -313,7 +316,6 @@ def F_score(
     return 1.0: perfect match
 
     Arguments:
-    - GT_mag (int): number of GT-cluster cells
     - D_ov_mags (np.ndarray): array of numbers of D-cluster cells overlapping with the target GT cluster
     """
     o = np.sum(D_ov_mags)
@@ -325,7 +327,7 @@ def F_score(
         return float(F)
 
 
-def U_score(
+def Uni_score(
     D_ov_mag: int,
     overlap: int,
 ) -> float:
@@ -344,7 +346,6 @@ def U_score(
 
     Arguments:
     - D_ov_mag (int): number of D-cluster cells overlapping with any GT cluster
-    - GT_mag (int): number of GT-cluster cells
     - overlap (int): number of D-cluster cells overlapping with target GT cluster
     """
     if overlap <= 0:
