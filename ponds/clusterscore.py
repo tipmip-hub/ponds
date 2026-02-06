@@ -132,6 +132,8 @@ def RC(
 ) -> float:
     """
     Computes the ratio of number of ground truth clusters to number of detected clusters.
+    Result can be interpreted as the number found cluster as a percentage of the number
+    true clusters.
 
     Arguments:
     - GT_masks: dict[int, NDArray[np.bool_]]: dictionary of ground truth cluster masks
@@ -142,13 +144,10 @@ def RC(
     # check if GT_masks is not empty
     if len(GT_masks) == 0:
         raise ValueError("GT_masks is empty. RC measure cannot be computed.")
-    # check if D_masks is not empty
-    if len(D_masks) == 0:
-        return np.nan
     if len(D_masks) == 1 and np.sum(D_masks[0]) == 0:
         return np.nan
 
-    score = len(GT_masks) / len(D_masks)
+    score =  len(D_masks) / len(GT_masks)
     return float(score)
 
 
