@@ -101,7 +101,7 @@ def test_noise_param_dict():
     )
 
     pdict = noise.param_dict
-    assert pdict["correlation_type"] == Noise, "Wrong correlation_type stored."
+    assert pdict["correlation_type"] == "Noise", "Wrong correlation_type stored."
     assert pdict["max_offset"] == max_offset, (
         f"Expected max_offset={max_offset}, got {pdict['max_offset']}"
     )

@@ -9,11 +9,12 @@ from ponds.shiftgen import ShiftMethod                      # type: ignore
 from ponds.backgroundgen import BackgroundMethod            # type: ignore
 from ponds.correlationgen import CorrelationMethod, NoCorr  # type: ignore
 from ponds.systems import DynamicalSystem                   # type: ignore
-from ponds.utils import get_first_annotation_type           # type: ignore
+from ponds.utils import get_first_annotation_type, string_to_generator, generator_to_string # type: ignore
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import cartopy.crs as ccrs  # type: ignore
 import logging
+import numbers
 
 logger = logging.getLogger(__name__)
 
@@ -343,9 +344,15 @@ class PONDS:
         self.data.ts.attrs[new_background_name] = "### HEADER ###"
         # - add background attributes
         for k, v in background_dict.items():
+            # make sure the dtype is compatible with netcdf: str, Number, ndarray, number, list, tuple, bytes
+            if not isinstance(v, (str, bytes, numbers.Number, np.ndarray)):
+                v = str(v)
             self.data.ts.attrs[f"{new_background_name}_{k}"] = v
         # - add shape attributes
         for k, v in shape_dict.items():
+            # make sure the dtype is compatible with netcdf: str, Number, ndarray, number, list, tuple, bytes
+            if not isinstance(v, (str, bytes, numbers.Number, np.ndarray)):
+                v = str(v)
             self.data.ts.attrs[f"{new_background_name}_{k}"] = v
 
     def _add_shift_to_ds(
@@ -379,12 +386,21 @@ class PONDS:
         # Add attributes to the DataArray
         # - add shift attributes
         for k, v in shift_dict.items():
+            # make sure the dtype is compatible with netcdf: str, Number, ndarray, number, list, tuple, bytes
+            if not isinstance(v, (str, bytes, numbers.Number, np.ndarray)):
+                v = str(v)
             new_da.attrs[k] = v
         # - add shape attributes
         for k, v in shape_dict.items():
+            # make sure the dtype is compatible with netcdf: str, Number, ndarray, number, list, tuple, bytes
+            if not isinstance(v, (str, bytes, numbers.Number, np.ndarray)):
+                v = str(v)
             new_da.attrs[k] = v
         # - add correlation attributes
         for k, v in correlation_dict.items():
+            # make sure the dtype is compatible with netcdf: str, Number, ndarray, number, list, tuple, bytes
+            if not isinstance(v, (str, bytes, numbers.Number, np.ndarray)):
+                v = str(v)
             new_da.attrs[k] = v
 
         # Append the new DataArray to the Dataset
@@ -678,18 +694,22 @@ class PONDS:
         )
 
         b_specs: dict[str, Any] = {
-            "class": self.data.ts.attrs[keys[b_index]],
+            "class": string_to_generator(self.data.ts.attrs[keys[b_index]]),
             "params": {},
         }
         for key in keys[b_index + 1 : s_index]:
             # remove prefix from key
             key_parts = key.split(background_key + "_")
             # save the parameters in ts_index + 1 :he dictionary
-            b_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
+            v = self.data.ts.attrs[key]
+            # handle None values which are stored as "None" strings in the netCDF file
+            if v == "None":
+                v = None
+            b_specs["params"][key_parts[1]] = v
         b_instance = b_specs["class"](**b_specs["params"])
 
         s_specs: dict[str, Any] = {
-            "class": self.data.ts.attrs[keys[s_index]],
+            "class": string_to_generator(self.data.ts.attrs[keys[s_index]]),
             "params": {},
         }
         for key in keys[s_index + 1 : last_index + 1]:
@@ -697,7 +717,11 @@ class PONDS:
             key_parts = key.split(background_key + "_")
             # save the parameters in the dictionary
             try:
-                s_specs["params"][key_parts[1]] = self.data.ts.attrs[key]
+                v = self.data.ts.attrs[key]
+                # handle None values which are stored as "None" strings in the netCDF file
+                if v == "None":
+                    v = None
+                s_specs["params"][key_parts[1]] = v
             except AttributeError:
                 print(
                     f"Warning: Key 'params' not found in shape attributes of {background_key}."
@@ -730,31 +754,43 @@ class PONDS:
         # split keys into shift, shape and correlation dicts
         # - shift dict contains all keys before "shape_type"
         shift_dict: dict[str, Any] = {
-            "class": self.data[cluster].attrs["shift_type"],
+            "class": string_to_generator(self.data[cluster].attrs["shift_type"]),
             "params": {},
         }
         for key in keys[1:shape_type_index]:
-            shift_dict["params"][key] = self.data[cluster].attrs[key]
+            v = self.data[cluster].attrs[key]
+            # handle None values which are stored as "None" strings in the netCDF file
+            if v == "None":
+                v = None
+            shift_dict["params"][key] = v
         # - create shift instance
         shift_instance = shift_dict["class"](**shift_dict["params"])
 
         # - shape dict contains all keys between "shape_type" and "correlation_type"
         shape_dict: dict[str, Any] = {
-            "class": self.data[cluster].attrs["shape_type"],
+            "class": string_to_generator(self.data[cluster].attrs["shape_type"]),
             "params": {},
         }
         for key in keys[shape_type_index + 1 : correlation_type_index]:
-            shape_dict["params"][key] = self.data[cluster].attrs[key]
+            v = self.data[cluster].attrs[key]
+            # handle None values which are stored as "None" strings in the netCDF file
+            if v == "None":
+                v = None
+            shape_dict["params"][key] = v
         # - create shape instance
         shape_instance = shape_dict["class"](**shape_dict["params"])
 
         # - correlation dict contains all keys after "correlation_type"
         correlation_dict: dict[str, Any] = {
-            "class": self.data[cluster].attrs["correlation_type"],
+            "class": string_to_generator(self.data[cluster].attrs["correlation_type"]),
             "params": {},
         }
         for key in keys[correlation_type_index + 1 :]:
-            correlation_dict["params"][key] = self.data[cluster].attrs[key]
+            v = self.data[cluster].attrs[key]
+            # handle None values which are stored as "None" strings in the netCDF file
+            if v == "None":
+                v = None
+            correlation_dict["params"][key] = v
         # - create correlation instance
         correlation_instance = correlation_dict["class"](**correlation_dict["params"])
 
@@ -820,25 +856,25 @@ class PONDS:
             data = ds.load()  # type: ignore # Detach from file completely
 
         # locate all the attributes in every variable which key contains "shape_type" or "background_type" or "shift_type"
-        for var in data.data_vars:
-            keys = [
-                key
-                for key in data[var].attrs.keys()
-                if "shape_type" in key
-                or "background_type" in key
-                or "shift_type" in key
-                or "correlation_type" in key
-            ]
-            # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
-            for key in keys:
-                type_str = data[var].attrs[key]
-                data[var].attrs[key] = type_dict[type_str.split(".")[-1][:-2]]
+        #for var in data.data_vars:
+        #    keys = [
+        #        key
+        #        for key in data[var].attrs.keys()
+        #        if "shape_type" in key
+        #        or "background_type" in key
+        #        or "shift_type" in key
+        #        or "correlation_type" in key
+        #    ]
+        #    # for these keys, set the value to the class instance using the type_dict stored in ponds/__init__.py
+        #    for key in keys:
+        #        type_str = data[var].attrs[key]
+        #        data[var].attrs[key] = type_dict[type_str.split(".")[-1]]
 
         # locate all the 'None' entries and replace them with None
-        for var in data.data_vars:
-            for key in data[var].attrs.keys():
-                if data[var].attrs[key] == "None":
-                    data[var].attrs[key] = None
+        #for var in data.data_vars:
+        #    for key in data[var].attrs.keys():
+        #        if data[var].attrs[key] == "None":
+        #            data[var].attrs[key] = None
 
         pd = PONDS.__new__(PONDS)
         pd.data = data

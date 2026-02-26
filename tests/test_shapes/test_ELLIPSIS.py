@@ -106,7 +106,11 @@ def test_ellipsis_add_shift_integration(mock_shift):
     ponds = PONDS(lat_size=10, lon_size=20, time_size=30)
 
     # 2) call function
-    ponds.add_shift(shape_method=ELLIPSIS(), shift_method=mock_shift())
+    ponds.add_shift(
+        shape_method=ELLIPSIS(),
+        shift_method=mock_shift(),
+        #type_dict={"MockShift": MockShift, "ELLIPSIS", ELLIPSIS},
+        )
 
     # 3) check results
     # - Check if cluster mask is True at least somewhere
@@ -144,7 +148,7 @@ def test_ellipsis_custom_parameter_storage():
 
     # 3) check results
     shape_dict = shape_method.param_dict
-    assert shape_dict["shape_type"] == ELLIPSIS, "Type should be 'ELLIPSIS'."
+    assert shape_dict["shape_type"] == "ELLIPSIS", "Type should be 'ELLIPSIS'."
     assert shape_dict["center_lat"] == custom_center_lat, (
         f"Expected center_lat: {custom_center_lat}, got: {shape_dict['center_lat']}"
     )

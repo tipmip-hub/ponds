@@ -11,6 +11,7 @@ from ponds.correlationgen import (
     Propagating,
 )
 from ponds.systems import DynamicalSystem, Lorenz
+from tests.conftest import MockShape, MockBackground, MockShift, MockCorrelation, MockDynamicalSystem
 
 from typing import Any, Dict
 
@@ -40,6 +41,11 @@ __all__ = [
     "Lorenz",
 ]
 type_dict: Dict[str, Any] = {
+    "MockShift": MockShift,
+    "MockShape": MockShape,
+    "MockBackground": MockBackground,
+    "MockCorrelation": MockCorrelation,
+    "MockDynamicalSystem": MockDynamicalSystem,
     "SINGLE": SINGLE,
     "CELL": CELL,
     "ELLIPSIS": ELLIPSIS,

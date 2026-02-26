@@ -138,10 +138,10 @@ def test_add_background_shape(
     # - check if the background metadata is added to the ts attributes
     assert (
         ponds.data.ts.attrs[background_key + "1_" + "background_type"]
-        == mock_background
+        == "MockBackground"
     )
     # assert background_key+"shape_type" in ponds.data.ts.attrs
-    assert ponds.data.ts.attrs[background_key + "1_" + "shape_type"] == mock_shape
+    assert ponds.data.ts.attrs[background_key + "1_" + "shape_type"] == "MockShape"
 
 
 ###################################################################################################
@@ -202,11 +202,11 @@ def test_add_shift_parameter_storage(
     # 3) check results
     # - check DataArray attributes
     # -- check if shift_type is stored
-    assert ponds.data.custom_key1.attrs["shift_type"] == mock_shift
-    assert ponds.data.custom_key2.attrs["shift_type"] == mock_shift
+    assert ponds.data.custom_key1.attrs["shift_type"] == "MockShift"
+    assert ponds.data.custom_key2.attrs["shift_type"] == "MockShift"
     # -- check if shape_type is stored
-    assert ponds.data.custom_key1.attrs["shape_type"] == mock_shape
-    assert ponds.data.custom_key2.attrs["shape_type"] == mock_shape
+    assert ponds.data.custom_key1.attrs["shape_type"] == "MockShape"
+    assert ponds.data.custom_key2.attrs["shape_type"] == "MockShape"
 
 
 ###################################################################################################

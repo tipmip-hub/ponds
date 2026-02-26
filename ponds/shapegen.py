@@ -36,7 +36,7 @@ class SINGLE(ShapeMethod):
         """
 
         self.param_dict = {
-            "shape_type": SINGLE,
+            "shape_type": "SINGLE",
         }
 
     def make_shape(
@@ -69,7 +69,7 @@ class CELL(ShapeMethod):
         self.center_lon = center_lon
 
         self.param_dict = {
-            "shape_type": CELL,
+            "shape_type": "CELL",
             "center_lat": center_lat,
             "center_lon": center_lon,
         }
@@ -128,7 +128,7 @@ class ELLIPSIS(ShapeMethod):
         self.ecc_lon = ecc_lon
 
         self.param_dict = {
-            "shape_type": ELLIPSIS,
+            "shape_type": "ELLIPSIS",
             "center_lat": center_lat,
             "center_lon": center_lon,
             "ecc_lat": ecc_lat,
@@ -191,7 +191,7 @@ class CUSTOM(ShapeMethod):
 
         self.shape_mask = np.array(shape_mask)
         self.param_dict = {
-            "shape_type": CUSTOM,
+            "shape_type": "CUSTOM",
         }
 
     def make_shape(
@@ -272,7 +272,7 @@ class BLOB(ShapeMethod):
         self.random_seed = shape_seed
 
         self.param_dict = {
-            "shape_type": BLOB,
+            "shape_type": "BLOB",
             "center_lat": center_lat,
             "center_lon": center_lon,
             "size": size,
@@ -483,7 +483,7 @@ class CLUSTER(ShapeMethod):
         self.shape_seed = shape_seed
 
         self.param_dict = {
-            "shape_type": CLUSTER,
+            "shape_type": "CLUSTER",
             "center_lat": center_lat,
             "center_lon": center_lon,
             "size_lat": size_lat,

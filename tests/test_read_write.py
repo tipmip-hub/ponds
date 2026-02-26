@@ -71,12 +71,12 @@ def test_save_and_load(
         # 2. Load from file
         loaded = PONDS.load(
             filepath,
-            type_dict={
-                "MockShape": mock_shape,
-                "MockBackground": mock_background,
-                "MockShift": mock_shift,
-                "MockCorrelation": mock_corr,
-            },
+            #type_dict={
+            #    "MockShape": mock_shape,
+            #    "MockBackground": mock_background,
+            #    "MockShift": mock_shift,
+            #    "MockCorrelation": mock_corr,
+            #},
         )
 
         # 2a. Time series data matches

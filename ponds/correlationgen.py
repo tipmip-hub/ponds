@@ -49,7 +49,7 @@ class NoCorr(CorrelationMethod):
     ) -> None:
         self.feature_name = feature_name
         self.param_dict = {
-            "correlation_type": NoCorr,
+            "correlation_type": "NoCorr",
             "feature_name": feature_name,
         }
 
@@ -79,7 +79,7 @@ class Noise(CorrelationMethod):
         self.corr_seed = corr_seed
 
         self.param_dict = {
-            "correlation_type": Noise,
+            "correlation_type": "Noise",
             "feature_name": feature_name,
             "max_offset": max_offset,
             "corr_seed": corr_seed,
@@ -133,7 +133,7 @@ class Gauss(CorrelationMethod):
         self.max_offset = max_offset
 
         self.param_dict = {
-            "correlation_type": Gauss,
+            "correlation_type": "Gauss",
             "feature_name": feature_name,
             "corr_center_lat": corr_center_lat,
             "corr_center_lon": corr_center_lon,
@@ -198,7 +198,7 @@ class Custom(CorrelationMethod):
         self.feature_name = feature_name
         self.offset_mask = offset_mask
         self.param_dict = {
-            "correlation_type": Custom,
+            "correlation_type": "Custom",
             "feature_name": feature_name,
             "offset_mask": offset_mask,
         }
@@ -246,7 +246,7 @@ class Propagating(CorrelationMethod):
         self.corr_seed = corr_seed
 
         self.param_dict = {
-            "correlation_type": Propagating,
+            "correlation_type": "Propagating",
             "feature_name": feature_name,
             "n_cells": n_cells,
             "max_offset": max_offset,

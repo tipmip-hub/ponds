@@ -21,7 +21,10 @@ class MockShape(ShapeMethod):
     ) -> None:
         self.random_seed = random_seed
 
-        self.param_dict = {"shape_type": MockShape}
+        self.param_dict = {
+            "shape_type": "MockShape",
+            "random_seed": random_seed,
+        }
 
     def make_shape(
         self,
@@ -43,7 +46,9 @@ class MockBackground(BackgroundMethod):
     def __init__(
         self,
     ) -> None:
-        self.param_dict = {"background_type": MockBackground}
+        self.param_dict = {
+            "background_type": "MockBackground",
+            }
 
     def make_background(
         self,
@@ -66,7 +71,10 @@ class MockShift(ShiftMethod):
         self.random_seed = random_seed
         self.central_time = central_time
 
-        self.param_dict = {"shift_type": MockShift}
+        self.param_dict = {
+            "shift_type": "MockShift",
+            "central_time": central_time,
+            "random_seed": random_seed,}
 
     def prepare_shift(
         self,
@@ -97,7 +105,8 @@ class MockCorrelation(CorrelationMethod):
     ) -> None:
         self.feature_name = feature_name
         self.param_dict = {
-            "correlation_type": MockCorrelation,
+            "correlation_type": "MockCorrelation",
+            "feature_name": feature_name,
         }
 
     def make_feature_offsets(

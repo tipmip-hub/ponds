@@ -65,7 +65,7 @@ class SIGMOID(ShiftMethod):
         self.central_time = central_time
 
         self.param_dict = {
-            "shift_type": SIGMOID,
+            "shift_type": "SIGMOID",
             "central_time": central_time,
             "shift_steepness": shift_steepness,
             "shift_magnitude": shift_magnitude,
@@ -224,7 +224,7 @@ class BIMODAL(ShiftMethod):
         # self.shift_seed = shift_seed
 
         self.param_dict = {
-            "shift_type": BIMODAL,
+            "shift_type": "BIMODAL",
             "central_time": central_time,
             "interval_length": interval_length,
             "duration": duration,

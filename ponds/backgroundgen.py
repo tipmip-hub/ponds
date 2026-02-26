@@ -53,7 +53,7 @@ class WhiteNoise(BackgroundMethod):
         self.background_time = background_time
 
         self.param_dict: Dict[str, Any] = {
-            "background_type": WhiteNoise,
+            "background_type": "WhiteNoise",
             "magnitude": magnitude,
             "background_seed": background_seed,
             "background_time": background_time,
@@ -105,7 +105,7 @@ class RedNoise(BackgroundMethod):
         self.background_time = background_time
 
         self.param_dict: Dict[str, Any] = {
-            "background_type": RedNoise,
+            "background_type": "RedNoise",
             "magnitude": magnitude,
             "ac_time": ac_time,
             "dt": dt,
@@ -213,7 +213,7 @@ class Trend(BackgroundMethod):
             self.background_time = None
 
         self.param_dict: Dict[str, Any] = {
-            "background_type": Trend,
+            "background_type": "Trend",
             "slope": slope,
             "intercept": intercept,
             "background_time": background_time,
