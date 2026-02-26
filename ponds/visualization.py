@@ -18,35 +18,47 @@ from numpy.typing import NDArray
 ############################################ Plot Maps ############################################
 ###################################################################################################
 
-
 def worldmap(
     ponds: Any,
     ax: Axes | None = None,
-    verbose: bool = False,
     figsize: tuple[float, float] = (16, 8),
+    projection: ccrs.Projection = ccrs.PlateCarree(),
+    colors_map: list[str] = ["#fff3e0", "#e0f7fa"], # land-color, ocean-color
     coastline: bool = True,
     borders: bool = True,
     show_cells: bool = False,
+    show_coords: bool = True,
     shift_type: bool = False,
+    shift_fontsize: int = 10,
     title: str = "Cluster Masks",
+    title_fontsize: int = 14,
+    label_fontsize: int = 12,
+    verbose: bool = False,
 ) -> tuple[Figure, Axes]:
-    """Plot the PONDS data on a world map using lat/lon as axis ticks.
+    """
+    Plot the PONDS data on a world map using lat/lon as axis ticks.
 
     Args:
-        ponds: PONDS dataset containing cluster masks.
-        verbose: If True, print additional information during processing.
-        figsize: Size of the figure to create.
-        coastline: If True, add coastline features to the map.
-        borders: If True, add country borders to the map.
-        show_cells: If True, draw grid lines based on xarray resolution.
-        title: Title for the plot.
+        figsize (tuple): Size of the figure.
+        projection (ccrs.Projection): The map projection to use.
+        colors_map (list): List of two color hex codes for land and ocean.
+        borders (bool): If True, draw country borders.
+        coastline (bool): If True, draw coastlines.
+        show_cells (bool): If True, draw grid lines based on xarray resolution.
+        show_coords (bool): If True, show latitude and longitude coordinates.
+        shift_type (bool): If True, annotate the plot with the shift types.
+        shift_fontsize (int): Font size for shift type annotations.
+        title (str): Title of the plot.
+        title_fontsize (int): Font size for the title.
+        label_fontsize (int): Font size for the coordinate labels.
+        verbose (bool): If True, print additional information during processing.
     """
     # Create figure/axes only if not provided
     if ax is None:
         # Set up map with Cartopy
         fig, ax = plt.subplots(
             figsize=figsize,
-            subplot_kw={"projection": ccrs.PlateCarree()},
+            subplot_kw={"projection": projection},#ccrs.PlateCarree()},
         )
     else:
         figsize = None  # type: ignore
@@ -66,8 +78,14 @@ def worldmap(
         print(f"Found {len(cluster_masks)} cluster variables.")
 
     # Specify Colors
-    cland = "#fff3e0"
-    cocean = "#e0f7fa"
+    try:
+        cland = colors_map[0]
+    except:
+        cland = "#fff3e0"
+    try:
+        cocean = colors_map[1]
+    except:
+        cocean = "#e0f7fa"
     cblobs = [
         "#d36060",  # soft red
         "#f0a830",  # warm orange
@@ -91,14 +109,18 @@ def worldmap(
         ax.add_feature(cfeature.COASTLINE)  # type: ignore
         ax.add_feature(cfeature.LAND, facecolor=cland)  # type: ignore
         ax.add_feature(cfeature.OCEAN, facecolor=cocean)  # type: ignore
-    if not show_cells:
-        ax.gridlines(  # type: ignore
+    if show_coords:
+        gl = ax.gridlines(  # type: ignore
             draw_labels=True,
             colors="gray",
             linestyle="-.",
         )
-    else:
-        ax.gridlines(draw_labels=True, color="none")  # type: ignore
+
+        # Apply fontsize regardless of projection
+        gl.xlabel_style = {"size": label_fontsize}
+        gl.ylabel_style = {"size": label_fontsize}
+        gl.top_labels = False
+        gl.right_labels = False
 
     for i, mask in enumerate(cluster_masks):
         collapsed = mask.any(dim="time").astype(int)  # type: ignore
@@ -128,7 +150,7 @@ def worldmap(
             levels=[0.5],
             colors=cblobs[i % len(cblobs)],
             linewidths=2,
-            transform=ccrs.PlateCarree(),
+            transform=ccrs.PlateCarree(),           # data is in lat/lon coordinates
         )
 
     # Add optional grid lines based on lat/lon spacing
@@ -181,7 +203,7 @@ def worldmap(
                 center_lon,  # type: ignore
                 center_lat,  # type: ignore
                 f"{shift_type}",
-                fontsize=10,
+                fontsize=shift_fontsize,
                 color="black",
                 ha="center",
                 va="center",
@@ -194,7 +216,7 @@ def worldmap(
                 ),
             )
 
-    ax.set_title(title)  # type: ignore
+    ax.set_title(title, fontsize=title_fontsize)  # type: ignore
 
     return fig, ax
 
@@ -229,14 +251,20 @@ def plot_single_ts(
     linewidth: float = 0.5,
     figsize: tuple[float, float] = (16, 4),
     title: str = "Time Series for Single Cell",
+    color: str ="grey",
+    axis: Axes | None = None,
 ) -> tuple[Figure, Axes]:
     """
     Plots time series of some exemplary grid cell from the PONDS dataset.
     """
 
-    fig, ax = plt.subplots(  # type: ignore
-        figsize=figsize,
-    )
+    if axis is None:
+        fig, ax = plt.subplots(  # type: ignore
+            figsize=figsize,
+        )
+    else:
+        fig = axis.figure
+        ax = axis
 
     # find nearest grid cell
     latitudes = ponds.data.coords["lat"].values  # type: ignore
@@ -249,7 +277,7 @@ def plot_single_ts(
         linestyle="-",
         linewidth=linewidth,
         marker=None,
-        color="grey",
+        color=color,
         alpha=alpha,
     )
 
@@ -269,14 +297,20 @@ def plot_some_ts(
     figsize: tuple[float, float] = (16, 4),
     title: str = "Time Series for Some Example Cells",
     fontsize: int = 12,
+    color: str ="grey",
+    axis: Axes | None = None,
 ) -> tuple[Figure, Axes]:
     """
     Plots time series of some exemplary grid cell from the PONDS dataset.
     """
-
-    fig, ax = plt.subplots(  # type: ignore
-        figsize=figsize,
-    )
+    
+    if axis is None:
+        fig, ax = plt.subplots(  # type: ignore
+            figsize=figsize,
+        )
+    else:
+        fig = axis.figure
+        ax = axis
 
     ts = ponds.data.ts  # shape: (time, lat, lon)
     # stack spatial dimensions (no copy!)
@@ -292,7 +326,7 @@ def plot_some_ts(
     for chunk in np.array_split(cell_idx, 10):
         ax.plot(
             ts_stacked.isel(cell=chunk).values,
-            color="grey",
+            color=color,
             alpha=alpha,
             linewidth=linewidth,
         )

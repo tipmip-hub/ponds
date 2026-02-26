@@ -1,17 +1,18 @@
 import numpy as np
 import xarray as xr
-import warnings
+import warnings 
 from typing import Optional, Any
 from numpy.typing import NDArray
-from ponds import visualization
-from ponds.shapegen import ShapeMethod, SINGLE
-from ponds.shiftgen import ShiftMethod
-from ponds.backgroundgen import BackgroundMethod
-from ponds.correlationgen import CorrelationMethod, NoCorr
-from ponds.systems import DynamicalSystem
-from ponds.utils import get_first_annotation_type
+from ponds import visualization                             # type: ignore
+from ponds.shapegen import ShapeMethod, SINGLE              # type: ignore
+from ponds.shiftgen import ShiftMethod                      # type: ignore
+from ponds.backgroundgen import BackgroundMethod            # type: ignore
+from ponds.correlationgen import CorrelationMethod, NoCorr  # type: ignore
+from ponds.systems import DynamicalSystem                   # type: ignore
+from ponds.utils import get_first_annotation_type           # type: ignore
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+import cartopy.crs as ccrs  # type: ignore
 import logging
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class PONDS:
         self,
         background_method: BackgroundMethod,
         shape_method: ShapeMethod = SINGLE(),
+        var_name: Optional[str] = "ts",
     ) -> None:
         """
         Adds a background to the time series data.
@@ -158,7 +160,7 @@ class PONDS:
                     )
 
                     # add shift effect to the data in single grid cell, all time steps at once
-                    self.data.ts.values[:, i, j] += background_effect
+                    self.data[var_name].values[:, i, j] += background_effect
 
         # 3) store background metadata
         self._add_background_to_ds(
@@ -852,36 +854,55 @@ class PONDS:
     def worldmap(
         self,
         ax: Axes | None = None,
-        verbose: bool = False,
         figsize: tuple[float, float] = (16, 8),
+        projection:  ccrs.Projection = ccrs.PlateCarree(),
+        colors_map: list[str] = ["#fff3e0", "#e0f7fa"], # color-land, color-ocean
         borders: bool = True,
         coastline: bool = True,
         show_cells: bool = False,
+        show_coords: bool = True,
         shift_type: bool = False,
+        shift_fontsize: int = 10,
         title: str = "Cluster Masks",
+        title_fontsize: int = 14,
+        label_fontsize: int = 12,
+        verbose: bool = False,
     ) -> tuple[Figure, Axes]:
         """
         Plot the cluster masks on a world map using Cartopy.
 
         Args:
-            verbose (bool): If True, print additional information during processing.
             figsize (tuple): Size of the figure.
+            projection (ccrs.Projection): The map projection to use.
+            colors_map (list): List of two color hex codes for land and ocean.
             borders (bool): If True, draw country borders.
             coastline (bool): If True, draw coastlines.
             show_cells (bool): If True, draw grid lines based on xarray resolution.
+            show_coords (bool): If True, show latitude and longitude coordinates.
+            shift_type (bool): If True, annotate the plot with the shift types.
+            shift_fontsize (int): Font size for shift type annotations.
             title (str): Title of the plot.
+            title_fontsize (int): Font size for the title.
+            label_fontsize (int): Font size for the coordinate labels.
+            verbose (bool): If True, print additional information during processing.
         """
 
         fig, ax = visualization.worldmap(
             ponds=self,
             ax=ax,
-            verbose=verbose,
             figsize=figsize,
+            projection=projection,
+            colors_map=colors_map,
             borders=borders,
             coastline=coastline,
             show_cells=show_cells,
+            show_coords=show_coords,
             shift_type=shift_type,
+            shift_fontsize=shift_fontsize,
             title=title,
+            title_fontsize=title_fontsize,
+            label_fontsize=label_fontsize,
+            verbose=verbose,
         )
 
         return fig, ax
@@ -894,6 +915,8 @@ class PONDS:
         linewidth: float = 0.5,
         figsize: tuple[float, float] = (16, 4),
         title: str = "Time Series for Single Cell",
+        color: str ="grey",
+        axis: Axes | None = None,
     ) -> tuple[Figure, Axes]:
         """
         Plots time series of some exemplary grid cell from the PONDS dataset.
@@ -907,6 +930,8 @@ class PONDS:
             linewidth=linewidth,
             figsize=figsize,
             title=title,
+            color=color,
+            axis=axis,
         )
 
         return fig, ax
@@ -939,6 +964,8 @@ class PONDS:
         linewidth: float = 0.5,
         figsize: tuple[float, float] = (16, 4),
         title: str = "Time Series for Some Example Cells",
+        color: str ="grey",
+        axis: Axes | None = None,
         fontsize: int = 12,
     ) -> tuple[Figure, Axes]:
         """
@@ -952,6 +979,8 @@ class PONDS:
             linewidth=linewidth,
             figsize=figsize,
             title=title,
+            color=color,
+            axis=axis,
             fontsize=fontsize,
         )
 
