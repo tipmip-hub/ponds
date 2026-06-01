@@ -42,6 +42,7 @@ dependencies = [
         "scipy",
         "numba",
         "tqdm",
+        "pytest",
 ]
 
 [project.optional-dependencies]
